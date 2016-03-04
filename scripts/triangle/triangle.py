@@ -35,11 +35,25 @@ output_console()
 logger.setLevel(logging.DEBUG)
 
 
-parser.add_argument("-s", "--seed", default=-1, help="Supply a random seed", type=int)
 parser.add_argument("-n", "--num-initial-bots", default=3,
                     help="Number of initial bots", type=int)
 parser.add_argument("-f", "--fast", help="Short reproduction wait.",
                     action="store_true")
+
+
+parser.add_argument(
+    '--robot-file',
+    type=str,
+    help="path to file containing robot morphology description in YAML format"
+)
+
+parser.add_argument(
+    '--brain-genotype-file',
+    type=str,
+    default=None,
+    help="path to file containing brain genotype description in YAML format"
+)
+
 
 parent_color = (1, 0, 0, 0.5)
 child_color = (0, 1, 0, 0.5)
@@ -57,9 +71,6 @@ time_per_food = 1
 
 # food density grid:
 food_field = Food_Grid(xmin=-10, ymin=-10, xmax=10, ymax=10, xresol=100, yresol=100, value=init_food_density)
-
-# initial population size:
-init_pop_size = 5
 
 # maximum mating distance:
 mating_distance = 2
@@ -92,105 +103,6 @@ def sleep_sim_time(world, seconds, state_break=[False]):
         remain = seconds - float(now - start)
 
 
-spider_yaml = '''
----
-body:
-  id          : Core
-  type        : Core
-  children:
-    0:
-      id: Brick11
-      type: FixedBrick
-      children:
-        1:
-          id: Hinge11
-          type: ActiveHinge
-          children:
-            1:
-              id: Hinge12
-              type: ActiveHinge
-    1:
-      id: Brick21
-      type: FixedBrick
-      children:
-        1:
-          id: Hinge21
-          type: ActiveHinge
-          children:
-            1:
-              id: Hinge22
-              type: ActiveHinge
-    2:
-      id: Brick31
-      type: FixedBrick
-      children:
-        1:
-          id: Hinge31
-          type: ActiveHinge
-          children:
-            1:
-              id: Hinge32
-              type: ActiveHinge
-    3:
-      id: Brick41
-      type: FixedBrick
-      children:
-        1:
-          id: Hinge41
-          type: ActiveHinge
-          children:
-            1:
-              id: Hinge42
-              type: ActiveHinge
-
-'''
-
-snake_yaml = '''
----
-body:
-  id          : Core
-  type        : Core
-  children:
-    0:
-      id: Hinge11
-      type: FixedBrick
-      children:
-        1:
-          id: Hinge12
-          type: ActiveHinge
-          children:
-            1:
-              id: Hinge13
-              type: ActiveHinge
-              children:
-                1:
-                  id: Hinge14
-                  type: ActiveHinge
-                  children:
-                    1:
-                      id: Hinge15
-                      type: ActiveHinge
-    1:
-      id: Hinge21
-      type: FixedBrick
-      children:
-        1:
-          id: Hinge22
-          type: ActiveHinge
-          children:
-            1:
-              id: Hinge23
-              type: ActiveHinge
-              children:
-                1:
-                  id: Hinge24
-                  type: ActiveHinge
-                  children:
-                    1:
-                      id: Hinge25
-                      type: ActiveHinge
-
-'''
 
 @trollius.coroutine
 def run_server(conf):
@@ -211,6 +123,9 @@ def run_server(conf):
 
     conf.pose_update_frequency = 20
 
+    # initial population size:
+    init_pop_size = conf.num_initial_bots
+
 
     # initialize world:
     world = yield From(World.create(conf))
@@ -219,13 +134,10 @@ def run_server(conf):
 
     print "WORLD CREATED"
 
-
-
     # robot accounts:
     accounts = Population(init_life_time = init_life_time, food_field = food_field,
                           mating_distance = mating_distance, time_per_food = time_per_food,
                           world = world)
-
 
 
     # Request callback for the subscriber
@@ -239,8 +151,20 @@ def run_server(conf):
     yield From(subscriber.wait_for_connection())
 
 
+    # open files with body and brain descriptions:
+    with open(conf.robot_file,'r') as robot_file:
+        bot_yaml = robot_file.read()
+
+    brain_genotype_yaml = None
+
+    # if brain genotype file exists:
+    if conf.brain_genotype_file != '':
+        with open (conf.brain_genotype_file, 'r') as gen_file:
+            brain_genotype_yaml = gen_file.read()
+
+
     # spawn initial population of robots:
-    yield From(accounts.spawn_initial_given_robots(conf, init_pop_size, spider_yaml))
+    yield From(accounts.spawn_initial_given_robots(conf, init_pop_size, bot_yaml, brain_genotype_yaml))
 
     yield From(world.pause(False))
     print "WORLD UNPAUSED"
@@ -270,9 +194,6 @@ def main():
     print "START"
 
     args = parser.parse_args()
-    seed = random.randint(1, 1000000) if args.seed < 0 else args.seed
-    random.seed(seed)
-    print("Seed: %d" % seed)
 
     def handler(loop, context):
         exc = context['exception']

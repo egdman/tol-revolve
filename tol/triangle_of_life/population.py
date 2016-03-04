@@ -19,7 +19,7 @@ from ..config import parser
 from ..manage import World
 from util import Timers
 from ..logging import logger, output_console
-
+from .combine_body_brain import robot_brain_to_tree
 
 
 #insertion height in meters:
@@ -192,15 +192,24 @@ class Population:
         for index in range(number):
             yield From(self.spawn_robot(trees[index], poses[index]))
 
+
     @trollius.coroutine
-    def spawn_initial_given_robots(self, conf, number, bot_yaml):
+    def spawn_initial_given_robots(self, conf, number, bot_yaml, brain_yaml=None):
         poses = [Pose(position=pick_position()) for _ in range(number)]
         body_spec = get_body_spec(conf)
         brain_spec = get_brain_spec(conf)
-        for index in range(number):
-            bot = yaml_to_robot(body_spec, brain_spec, bot_yaml)
-            tree = Tree.from_body_brain(bot.body, bot.brain, body_spec)
-            yield From(self.spawn_robot(tree, poses[index]))
+
+        if brain_yaml:
+            for index in range(number):
+                body_pb, brain_pb = robot_brain_to_tree(bot_yaml, brain_yaml, body_spec, brain_spec)
+                tree = Tree.from_body_brain(body_pb, brain_pb, body_spec)
+                yield From(self.spawn_robot(tree, poses[index]))
+
+        else:
+            for index in range(number):
+                bot = yaml_to_robot(body_spec, brain_spec, bot_yaml)
+                tree = Tree.from_body_brain(bot.body, bot.brain, body_spec)
+                yield From(self.spawn_robot(tree, poses[index]))
 
 
     def append(self, account):
