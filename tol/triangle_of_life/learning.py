@@ -390,25 +390,24 @@ class RobotLearner:
             print "saving parent #{0}, fitness = {1}".format(str(i+1), brain_fitness_list[i][1])
             self.evaluation_queue.append(brain_fitness_list[i][0])
 
-        # Log best 3 genotypes in this generation:
+        # log important information:
         if logging_callback:
             log_data = {}
             genotypes_string = ""
-            fitness_string = ""
 
-            avg_fitness = 0
+            # Log best 3 genotypes in this generation:
             genotypes_string += "generation #{0}\n".format(self.generation_number)
             for i in range(3):
                 genotypes_string += "velocity : {0}\n".format(brain_velocity_list[i][1])
                 genotypes_string += brain_velocity_list[i][0].to_yaml()
                 genotypes_string += "\n"
-                avg_fitness += brain_velocity_list[i][1]
 
-            avg_fitness = avg_fitness / float(3)
+            # Log velocity values of all genotypes in this generation:
+            velocities_string = "- generation: {0}\n  velocities:\n".format(self.generation_number)
+            for i in range(len(brain_velocity_list)):
+                velocities_string += "  - {0}\n".format(brain_velocity_list[i][1])
 
-            fitness_string += str(avg_fitness)
-            fitness_string += "\n"
-            log_data["average_velocity.log"] = fitness_string
+            log_data["velocities.log"] = velocities_string
             log_data["genotypes.log"] = genotypes_string
             logging_callback(log_data)
 
