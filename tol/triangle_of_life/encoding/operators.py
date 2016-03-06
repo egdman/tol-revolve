@@ -95,19 +95,22 @@ class Mutator:
 
     def add_connection_mutation(self, genotype, sigma):
         mark_from = random.choice(genotype.neuron_genes).historical_mark
-        mark_to = random.choice(genotype.neuron_genes).historical_mark
+        neuron_to = random.choice(genotype.neuron_genes)
+        mark_to = neuron_to.historical_mark
 
         num_attempts = 1
-        while genotype.connection_exists(mark_from, mark_to):
+
+        # disallow incoming connections to input neurons:
+        while genotype.connection_exists(mark_from, mark_to) or neuron_to.neuron.layer == "input":
             mark_from = random.choice(genotype.neuron_genes).historical_mark
-            mark_to = random.choice(genotype.neuron_genes).historical_mark
+            neuron_to = random.choice(genotype.neuron_genes)
+            mark_to = neuron_to.historical_mark
 
             num_attempts += 1
             if num_attempts >= self.max_attempts:
                 return False
 
         self.add_connection(mark_from, mark_to, weight = random.gauss(0, sigma), genotype = genotype)
-
 
         return True
 

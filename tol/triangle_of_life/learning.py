@@ -170,8 +170,10 @@ class RobotLearner:
         displacement = math.sqrt(pow(current_position[0] - self.initial_position[0], 2) + \
                                  pow(current_position[1] - self.initial_position[1], 2))
 
-        # fitness is a combination of displacement and traveled distance:
-        self.fitness = 5*displacement# + self.traveled_distance
+        # # fitness is a combination of displacement and traveled distance:
+        # self.fitness = 5*displacement + self.traveled_distance
+
+        self.fitness = displacement
 
 
     def get_fitness(self):
