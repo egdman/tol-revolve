@@ -1,6 +1,6 @@
 #!/bin/bash
 # Runs gazebo with the correct plugin path
-WORLD=tol_env.world
+WORLD=empty.world
 CMD=gazebo
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
@@ -26,12 +26,13 @@ echo "BODY FILE="$BODY_FILE
 
 GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:`pwd`/../../build GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:`pwd`/../../tools/models $CMD -u $WORLD &
 GZ_PID=$!
+
 ../../../revolve/tools/analyzer/run-analyzer &
 ANALYZER_PID=$!
 sleep 2
 ACTUAL_ANALYZER_PID=`ps -ef | awk '$3 == '${ANALYZER_PID}' { print $2 } '`
 sleep 3
-python $DIR/../scripts/triangle.py --robot-file "$BODY_FILE" --brain-genotype-file "$BRAIN_FILE" &
+python $DIR/triangle.py --robot-file "$BODY_FILE" --brain-genotype-file "$BRAIN_FILE" &
 PY_PID=$!
 wait $GZ_PID
 kill ${ACTUAL_ANALYZER_PID}

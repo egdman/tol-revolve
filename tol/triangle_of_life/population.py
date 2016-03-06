@@ -52,7 +52,7 @@ def pick_position():
 # account that keeps track of robot's achievements:
 class RobotAccount:
     def __init__(self, world, population, robot, life_time, time_per_food,
-                 max_mates = 9999, mating_cooldown = 15, mating_distance = 2):
+                 max_mates = 9999, mating_cooldown = 50, mating_distance = 2):
 
         self.robot = robot
         self.world = world

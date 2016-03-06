@@ -12,7 +12,7 @@ from pygazebo.pygazebo import DisconnectError
 from trollius.py33_exceptions import ConnectionResetError, ConnectionRefusedError
 
 # Add "tol" directory to Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../')
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
 
 # Trollius / Pygazebo
 import trollius
@@ -60,14 +60,14 @@ child_color = (0, 1, 0, 0.5)
 
 
 # initial food density
-init_food_density = 20
+init_food_density = 2000
 
 
 #time before robots die
 init_life_time = 20
 
 #bonus life time per food item
-time_per_food = 1
+time_per_food = 10
 
 # food density grid:
 food_field = Food_Grid(xmin=-10, ymin=-10, xmax=10, ymax=10, xresol=100, yresol=100, value=init_food_density)

@@ -171,7 +171,7 @@ class RobotLearner:
                                  pow(current_position[1] - self.initial_position[1], 2))
 
         # fitness is a combination of displacement and traveled distance:
-        self.fitness = 5*displacement + self.traveled_distance
+        self.fitness = 5*displacement# + self.traveled_distance
 
 
     def get_fitness(self):

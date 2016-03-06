@@ -1,88 +1,78 @@
 connections:
-- enabled: false
+- enabled: true
   from: 0
   hist_mark: 15
   to: 11
-  weight: 1.6178363135800877
+  weight: 4.718638311024262
 - enabled: false
   from: 0
   hist_mark: 16
   to: 14
-  weight: 24.974872943408183
-- enabled: false
+  weight: -1.607370988409559
+- enabled: true
   from: 0
   hist_mark: 17
   to: 13
-  weight: 13.231034763993332
+  weight: 18.852522870467407
 - enabled: true
   from: 0
   hist_mark: 18
   to: 4
-  weight: 5.677727560571178
-- enabled: true
+  weight: -0.8288165801007237
+- enabled: false
   from: 0
   hist_mark: 19
   to: 1
-  weight: -30.190469772610115
+  weight: 29.17491447825133
 - enabled: true
   from: 0
   hist_mark: 20
   to: 3
-  weight: 16.526074123658084
+  weight: 7.9466515152563915
 - enabled: true
   from: 0
   hist_mark: 21
   to: 2
-  weight: 11.609265624109497
+  weight: 4.3322013893499625
 - enabled: false
   from: 0
   hist_mark: 22
   to: 12
-  weight: 12.49287951159534
+  weight: 9.081951218462322
+- enabled: false
+  from: 6
+  hist_mark: 26
+  to: 12
+  weight: -3.9137844258097614
 - enabled: true
   from: 0
-  hist_mark: 73
-  to: 72
-  weight: 7.541507556999387
+  hist_mark: 32
+  to: 31
+  weight: 26.717178444774042
 - enabled: true
-  from: 72
-  hist_mark: 74
-  to: 4
-  weight: 2.172430905633651
+  from: 31
+  hist_mark: 33
+  to: 1
+  weight: -3.5020565069994847
 - enabled: true
-  from: 0
-  hist_mark: 99
-  to: 98
-  weight: 8.40816363590026
+  from: 6
+  hist_mark: 181
+  to: 180
+  weight: -7.053146447776359
 - enabled: true
-  from: 98
-  hist_mark: 100
-  to: 2
-  weight: 2.8634065654867245
-- enabled: true
-  from: 12
-  hist_mark: 299
-  to: 4
-  weight: -1.81008443156543
-- enabled: true
-  from: 0
-  hist_mark: 353
-  to: 352
-  weight: 13.231034763993332
-- enabled: true
-  from: 352
-  hist_mark: 354
-  to: 13
-  weight: 1.0
+  from: 180
+  hist_mark: 182
+  to: 12
+  weight: 2.195678840965809
 neurons:
 - enabled: true
   hist_mark: 0
   id: Core-hidden-0
   layer: hidden
   params:
-    amplitude: 2
-    period: 3.8454784181559454
-    phase_offset: 0.8992445387356223
+    amplitude: 1
+    period: 5.272462287311245
+    phase_offset: 0
   part_id: Core
   type: Oscillator
 - enabled: true
@@ -91,7 +81,7 @@ neurons:
   layer: output
   params:
     bias: -1
-    gain: 1
+    gain: 0
   part_id: Leg20Joint
   type: Simple
 - enabled: true
@@ -108,7 +98,7 @@ neurons:
   id: Leg21Joint-out-0
   layer: output
   params:
-    bias: 1
+    bias: -1
     gain: 0
   part_id: Leg21Joint
   type: Simple
@@ -117,8 +107,8 @@ neurons:
   id: Leg11Joint-out-0
   layer: output
   params:
-    bias: -1
-    gain: 1
+    bias: 1
+    gain: 0
   part_id: Leg11Joint
   type: Simple
 - enabled: true
@@ -168,8 +158,8 @@ neurons:
   id: Leg00Joint-out-0
   layer: output
   params:
-    bias: -1
-    gain: 1
+    bias: 1
+    gain: 0
   part_id: Leg00Joint
   type: Simple
 - enabled: true
@@ -195,37 +185,25 @@ neurons:
   id: Leg01Joint-out-0
   layer: output
   params:
-    bias: -1
-    gain: 1
+    bias: 1
+    gain: 0
   part_id: Leg01Joint
   type: Simple
 - enabled: true
-  hist_mark: 72
-  id: augment72
+  hist_mark: 31
+  id: augment31
   layer: hidden
   params:
-    amplitude: 1.5564518336984223
-    period: 10
-    phase_offset: 0
-  part_id: Core
-  type: Oscillator
+    bias: -0.40999614010494073
+    gain: 1
+  part_id: Leg20Joint
+  type: Sigmoid
 - enabled: true
-  hist_mark: 98
-  id: augment98
+  hist_mark: 180
+  id: augment180
   layer: hidden
   params:
-    amplitude: 0.11120429115726571
-    period: 0.16003127555197372
-    phase_offset: 2.266320200428987
+    bias: 0.339656836002878
+    gain: 0.693192797179734
   part_id: Core
-  type: Oscillator
-- enabled: true
-  hist_mark: 352
-  id: augment352
-  layer: hidden
-  params:
-    amplitude: 1.692328725660417
-    period: 0.9062491343614287
-    phase_offset: 3.0780619084951324
-  part_id: Core
-  type: Oscillator
+  type: Sigmoid
