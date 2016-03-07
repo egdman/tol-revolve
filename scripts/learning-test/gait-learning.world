@@ -5,19 +5,30 @@
         <origin_visual>0</origin_visual>
         <grid>0</grid>
     </scene>
-    <gui />
+
     <physics type="ode">
-      <!--<max_contacts>32</max_contacts>-->
-      <real_time_factor>1.0</real_time_factor>
-      <max_step_size>0.001</max_step_size>
+      <max_step_size>0.005</max_step_size>
+    
+      <!-- Run as fast as possible -->
+      <real_time_update_rate>1.0</real_time_update_rate>
+
       <ode>
         <constraints>
           <!-- Simulator.cpp -->
-            <cfm>10e-6</cfm>
-            <erp>0.1</erp>
+          <erp>0.1</erp>
+          <cfm>10e-6</cfm>
+
+          <!-- Making this smaller seems to decrease rather than increase stability. -->
+          <contact_max_correcting_vel>100</contact_max_correcting_vel>
+          <contact_surface_layer>1e-8</contact_surface_layer>
         </constraints>
+        <solver>
+          <type>world</type>
+        </solver>
       </ode>
     </physics>
+
+    <gui />
 
     <!-- A global light source -->
     <include>
