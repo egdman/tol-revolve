@@ -94,16 +94,19 @@ class Mutator:
 
 
     def add_connection_mutation(self, genotype, sigma):
-        mark_from = random.choice(genotype.neuron_genes).historical_mark
+        neuron_from = random.choice(genotype.neuron_genes)
         neuron_to = random.choice(genotype.neuron_genes)
+        mark_from = neuron_from.historical_mark
         mark_to = neuron_to.historical_mark
 
         num_attempts = 1
 
         # disallow incoming connections to input neurons:
-        while genotype.connection_exists(mark_from, mark_to) or neuron_to.neuron.layer == "input":
-            mark_from = random.choice(genotype.neuron_genes).historical_mark
+        while genotype.connection_exists(mark_from, mark_to) or \
+                        neuron_to.neuron.layer == "input" or neuron_from.neuron.layer == "output":
+            neuron_from = random.choice(genotype.neuron_genes)
             neuron_to = random.choice(genotype.neuron_genes)
+            mark_from = neuron_from.historical_mark
             mark_to = neuron_to.historical_mark
 
             num_attempts += 1
