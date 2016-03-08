@@ -325,7 +325,6 @@ class RobotLearner:
             parent_pairs.append((parent_a, parent_b))
 
         for i, pair in enumerate(parent_pairs):
-
             # print "\nchild #{0}\nSELECTED PARENTS:".format(str(i+1))
             # print str(pair[0][0]) + ", fitness = " + str(pair[0][1])
             # print str(pair[1][0]) + ", fitness = " + str(pair[1][1])
@@ -393,22 +392,28 @@ class RobotLearner:
         # log important information:
         if logging_callback:
             log_data = {}
-            genotypes_string = ""
+            best_genotypes_string = ""
+            all_genotypes_string = ""
 
             # Log best 3 genotypes in this generation:
-            genotypes_string += "generation #{0}\n".format(self.generation_number)
+            best_genotypes_string += "generation #{0}\n".format(self.generation_number)
             for i in range(3):
-                genotypes_string += "velocity : {0}\n".format(brain_velocity_list[i][1])
-                genotypes_string += brain_velocity_list[i][0].to_yaml()
-                genotypes_string += "\n"
+                best_genotypes_string += "velocity : {0}\n".format(brain_velocity_list[i][1])
+                best_genotypes_string += brain_velocity_list[i][0].to_yaml()
+                best_genotypes_string += "\n"
 
             # Log velocity values of all genotypes in this generation:
+            # Log all genotypes in the curent generation to a separate file:
             velocities_string = "- generation: {0}\n  velocities:\n".format(self.generation_number)
             for i in range(len(brain_velocity_list)):
                 velocities_string += "  - {0}\n".format(brain_velocity_list[i][1])
+                all_genotypes_string += "velocity : {0}\n".format(brain_velocity_list[i][1])
+                all_genotypes_string += brain_velocity_list[i][0].to_yaml()
+                all_genotypes_string += "\n"
 
             log_data["velocities.log"] = velocities_string
-            log_data["genotypes.log"] = genotypes_string
+            log_data["genotypes.log"] = best_genotypes_string
+            log_data["gen_{0}_genotypes.log".format(self.generation_number)] = all_genotypes_string
             logging_callback(log_data)
 
 

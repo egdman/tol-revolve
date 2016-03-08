@@ -150,7 +150,7 @@ class GeneticEncoding:
         max_mark2 = genes_sorted2[-1].historical_mark
         
         pairs = GeneticEncoding.get_pairs(genes_sorted1, genes_sorted2)
-    
+
         excess_num = 0
         disjoint_num = 0
         

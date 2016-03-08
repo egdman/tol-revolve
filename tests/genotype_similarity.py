@@ -49,8 +49,8 @@ def main():
 
     print "CALCULATING SIMILARITY!!!!!!!!!!!!!!!!!!"
 
-    similarity = GeneticEncoding.get_dissimilarity(genotype1, genotype2)
-    print "SIMILARITY = {0}".format(similarity)
+    dissimilarity = GeneticEncoding.get_dissimilarity(genotype1, genotype2)
+    print "DISSIMILARITY = {0}".format(dissimilarity)
 
 
 if __name__ == '__main__':
