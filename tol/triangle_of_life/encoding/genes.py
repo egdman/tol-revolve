@@ -197,28 +197,56 @@ class GeneticEncoding:
         gene_pairs = []
 
         # search for pairs of genes with equal marks:
-        for mark in range(min_mark, max_mark+1):
-            
+        mark = min_mark
+        while mark < max_mark + 1:
+
+            # jump1 and jump2 are here to skip long sequences of empty historical marks
+
             gene1 = None
+            jump1 = mark + 1
             for i in range(num_genes1):
                 if genes_sorted1[i].historical_mark == mark:
                     gene1 = genes_sorted1[i]
                     break
+
+                # if there is a gap, jump over it:
                 elif genes_sorted1[i].historical_mark > mark:
+                    jump1 = genes_sorted1[i].historical_mark
                     break
 
-                    
+                # if the end of the gene sequence is reached:
+                elif i == num_genes1 - 1:
+                    jump1 = max_mark + 1
+
             gene2 = None
+            jump2 = mark + 1
             for i in range(num_genes2):
                 if genes_sorted2[i].historical_mark == mark:
                     gene2 = genes_sorted2[i]
                     break
+
+                # if there is a gap, jump over it:
                 elif genes_sorted2[i].historical_mark > mark:
+                    jump2 = genes_sorted2[i].historical_mark
                     break
-                    
-                    
+
+                # if the end of the gene sequence is reached:
+                elif i == num_genes2 - 1:
+                    jump2 = max_mark + 1
+
+            # # FOR DEBUG:
+            # #####################################################
+            # print "mark = {0}, {1} :: {2}".format(mark,
+            #         "-" if gene1 is None else "+",
+            #         "-" if gene2 is None else "+")
+            # #####################################################
+
+            # do not add a pair if both genes are None:
             if gene1 or gene2:
                 gene_pairs.append((gene1, gene2))
+
+            mark = min(jump1, jump2)
+#            mark += 1
             
         return gene_pairs
 
