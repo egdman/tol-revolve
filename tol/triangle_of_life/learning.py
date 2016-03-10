@@ -18,7 +18,6 @@ from .encoding import Crossover, GeneticEncoding, validate_genotype
 from .convert import NeuralNetworkParser, yaml_to_genotype
 
 
-
 class RobotLearner:
 
     def __init__(self, world, robot, body_spec, brain_spec, mutator,
@@ -148,6 +147,7 @@ class RobotLearner:
                         yaml_string = ''
                     continue
                 yaml_string += line
+            init_pop.append(yaml_to_genotype(yaml_string, self.brain_spec))
         return init_pop
 
 

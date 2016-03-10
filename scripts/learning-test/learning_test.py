@@ -94,6 +94,29 @@ parser.add_argument(
 )
 
 
+@trollius.coroutine
+def sleep_sim_time(world, seconds, state_break=[False]):
+    """
+    Sleeps for a certain number of simulation seconds,
+    note that this is always approximate as it relies
+    on real world sleeping.
+    :param world:
+    :param seconds:
+    :param state_break: List containing one boolean, the
+                        wait will be terminated if this
+                        is set to True (basically a hack
+                        to break out of automatic mode early).
+    :return:
+    """
+    start = world.last_time if world.last_time else Time()
+    remain = seconds
+
+    while remain > 0 and not state_break[0]:
+        yield From(trollius.sleep(0.1))
+        now = world.last_time if world.last_time else Time()
+        remain = seconds - float(now - start)
+
+
 
 class LearningManager(World):
     def __init__(self, conf, _private):
@@ -294,6 +317,11 @@ class LearningManager(World):
         subscriber = self.manager.subscribe(
             '/gazebo/default/request', 'gazebo.msgs.Request', callback)
         yield From(subscriber.wait_for_connection())
+
+        # # sleep for 60 seconds:
+        # yield From(self.pause(False))
+        # yield From(sleep_sim_time(self, 60))
+        # yield From(self.pause(True))
 
         # run loop:
         while True:
