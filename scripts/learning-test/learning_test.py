@@ -32,6 +32,7 @@ from tol.logging import logger, output_console
 from tol.spec import get_body_spec, get_brain_spec
 from tol.triangle_of_life import RobotLearner
 from tol.triangle_of_life.encoding import Mutator, Crossover
+from tol.triangle_of_life.convert import yaml_to_genotype
 
 
 # Log output to console
@@ -275,15 +276,27 @@ class LearningManager(World):
             if num_generations > 0:
                 num_brains_evaluated = pop_size*num_generations
                 learner.total_brains_evaluated = num_brains_evaluated
+                learner.generation_number = num_generations
                 # sort genotype files alphanumerically:
                 gen_files = sorted(gen_files, key=lambda item: int(item.split('_')[1]))
 
                 last_gen_file = gen_files[-1]
                 print "last generation file = {0}".format(last_gen_file)
-                yield From(learner.initialize(world=self, init_genotypes_path=('./output/restore/' + last_gen_file)))
+
+                init_brain_list, min_mark, max_mark = \
+                    get_brains_from_file('./output/restore/' + last_gen_file, self.brain_spec)
+
+                print "Max historical mark = {0}".format(max_mark)
+
+                # set mutator's innovation number according to the max historical mark:
+                self.mutator.innovation_number = max_mark + 1
+
+                # initialize learner:
+                yield From(learner.initialize(world=self, init_genotypes=init_brain_list))
 
             # if we don't have a file with an initial population, we generate it ourselves:
             else:
+                # initialize learner:
                 yield From(learner.initialize(world=self))
 
             self.add_learner(learner)
@@ -347,6 +360,39 @@ def run():
 
     print "WORLD CREATED"
     yield From(world.run(conf))
+
+
+def get_brains_from_file(brain_file_path, brain_spec):
+        '''
+        generate a population of brains by reading them from file
+        :param brain_file:
+        :return:
+        '''
+        brain_list = []
+        with open(brain_file_path, 'r') as brain_file:
+            yaml_string = ''
+            for line in brain_file:
+                if 'velocity' in line:
+                    if yaml_string != '':
+                        brain_list.append(yaml_to_genotype(yaml_string, brain_spec, keep_historical_marks=True))
+                        yaml_string = ''
+                    continue
+                yaml_string += line
+            brain_list.append(yaml_to_genotype(yaml_string, brain_spec, keep_historical_marks=True))
+
+        # find min and max historical marks:
+        min_mark, max_mark = brain_list[0].min_max_hist_mark()
+        for br in brain_list:
+            loc_min, loc_max = br.min_max_hist_mark()
+            if loc_min < min_mark:
+                min_mark = loc_min
+
+            if loc_max > max_mark:
+                max_mark = loc_max
+
+        return brain_list, min_mark, max_mark
+
+
 
 
 def main():

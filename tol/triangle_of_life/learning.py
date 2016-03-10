@@ -15,7 +15,7 @@ from revolve.angle import Tree
 # ToL
 from . import Timers
 from .encoding import Crossover, GeneticEncoding, validate_genotype
-from .convert import NeuralNetworkParser, yaml_to_genotype
+from .convert import NeuralNetworkParser
 
 
 class RobotLearner:
@@ -82,11 +82,11 @@ class RobotLearner:
 
 
     @trollius.coroutine
-    def initialize(self, world, init_genotypes_path=None):
-        if init_genotypes_path is None:
+    def initialize(self, world, init_genotypes=None):
+        if init_genotypes is None:
             brain_population = self.get_init_brains()
         else:
-            brain_population = self.get_init_brains_from_file(init_genotypes_path)
+            brain_population = init_genotypes
 
         for br in brain_population:
             validate_genotype(br, "initial generation created invalid genotype")
@@ -128,26 +128,6 @@ class RobotLearner:
 
             init_pop.append(mutated_genotype)
 
-        return init_pop
-
-
-    def get_init_brains_from_file(self, brain_file_path):
-        '''
-        generate an initial population by reading it from file
-        :param brain_file:
-        :return:
-        '''
-        init_pop = []
-        with open(brain_file_path, 'r') as brain_file:
-            yaml_string = ''
-            for line in brain_file:
-                if 'velocity' in line:
-                    if yaml_string != '':
-                        init_pop.append(yaml_to_genotype(yaml_string, self.brain_spec))
-                        yaml_string = ''
-                    continue
-                yaml_string += line
-            init_pop.append(yaml_to_genotype(yaml_string, self.brain_spec))
         return init_pop
 
 

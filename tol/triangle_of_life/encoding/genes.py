@@ -251,6 +251,13 @@ class GeneticEncoding:
         return gene_pairs
 
 
+    def min_max_hist_mark(self):
+        genes_sorted = sorted(self.neuron_genes + self.connection_genes,
+                        key = lambda gene: gene.historical_mark)
+
+        return genes_sorted[0].historical_mark, genes_sorted[-1].historical_mark
+
+
     def find_gene_by_mark(self, mark):
         for gene in self.neuron_genes + self.connection_genes:
             if gene.historical_mark == mark:
