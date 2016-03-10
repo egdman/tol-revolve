@@ -44,8 +44,143 @@ def pick_position():
     return Vector3(x, y, insert_z)
 
 
+class EvolutionManager(World):
+
+    def __init__(self, conf, _private):
+        super(EvolutionManager, self).__init__(conf, _private)
+        self.organism_list = []
+
+        self.init_life_time = conf.init_life_time
+        self.time_per_food = conf.time_per_food
+        self.mating_distance = conf.mating_distance
+
+    def __iter__(self):
+        return iter(self.organism_list)
 
 
+    @trollius.coroutine
+    def spawn_robot(self, tree, pose, parents=None):
+        if parents is None:
+            fut = yield From(self.insert_robot(tree, pose))
+        else:
+            fut = yield From(self.insert_robot(tree, pose, parents=parents))
+
+        robot = yield From(fut)
+        print("new robot id = %d" %robot.robot.id)
+        self.append(RobotAccount(
+            world = self,
+            robot = robot, life_time = self.init_life_time,
+            time_per_food = self.time_per_food))
+
+
+    @trollius.coroutine
+    def spawn_initial_robots(self, conf, number):
+        poses = [Pose(position=pick_position()) for _ in range(number)]
+        trees, bboxes = yield From(self.generate_population(len(poses)))
+        for index in range(number):
+            yield From(self.spawn_robot(trees[index], poses[index]))
+
+
+    @trollius.coroutine
+    def spawn_initial_given_robots(self, conf, number, bot_yaml, brain_yaml=None):
+        poses = [Pose(position=pick_position()) for _ in range(number)]
+        body_spec = get_body_spec(conf)
+        brain_spec = get_brain_spec(conf)
+
+        if brain_yaml:
+            for index in range(number):
+                body_pb, brain_pb = robot_brain_to_tree(bot_yaml, brain_yaml, body_spec, brain_spec)
+                tree = Tree.from_body_brain(body_pb, brain_pb, body_spec)
+                yield From(self.spawn_robot(tree, poses[index]))
+
+        else:
+            for index in range(number):
+                bot = yaml_to_robot(body_spec, brain_spec, bot_yaml)
+                tree = Tree.from_body_brain(bot.body, bot.brain, body_spec)
+                yield From(self.spawn_robot(tree, poses[index]))
+
+
+    def append(self, account):
+        self.organism_list.append(account)
+
+
+    def remove(self, remove_these_accounts):
+        list_upd = [acc for acc in self.organism_list if acc not in remove_these_accounts]
+        self.organism_list = list_upd
+
+
+
+    def find_mate_pairs(self):
+
+        bots_ready = [r for r in self.organism_list if r.ready_to_mate()]
+        num_bots = len(bots_ready)
+
+        pairs = []
+        for i in range(num_bots):
+            robot_a = bots_ready[i]
+            a_pos = robot_a.my_position()
+            for j in range(i+1, num_bots):
+                robot_b = bots_ready[j]
+                b_pos = robot_b.my_position()
+                dist = dist2d(a_pos, b_pos)
+                if dist < self.mating_distance:
+                    pairs.append((robot_a, robot_b))
+
+        return pairs
+
+
+
+    @trollius.coroutine
+    def cleanup(self):
+
+        dead_accounts = []
+        dead_bots = []
+        for account in self.organism_list:
+            if account.am_i_dead():
+                dead_accounts.append(account)
+                dead_bots.append(account.robot)
+
+        # delete dead robots from the world:
+        for dead_bot in dead_bots:
+            yield From(self.delete_robot(dead_bot))
+
+        # delete accounts of dead robots:
+        self.remove(dead_accounts)
+
+
+    @trollius.coroutine
+    def reproduce(self, parent_pairs):
+        for pair in parent_pairs:
+            parent_a = pair[0]
+            parent_b = pair[1]
+
+            if parent_a.want_to_mate(parent_b) and parent_b.want_to_mate(parent_b):
+
+                mate = None
+                num_attempts = 0
+                while num_attempts < 10:
+                    # Attempt reproduction
+                    mate = yield From(self.attempt_mate(parent_a.robot, parent_b.robot))
+
+                    if mate:
+                        break
+                    num_attempts += 1
+
+
+                new_pos = pick_position()
+                new_pos.z = insert_z
+
+                if mate:
+                    logger.debug("Inserting child...")
+                    child, bbox = mate
+                    pose = Pose(position=new_pos)
+
+                    parent_a.notify_mating()
+                    parent_b.notify_mating()
+
+                    yield From(self.spawn_robot(tree=child, pose=pose, parents=[parent_a.robot, parent_b.robot]))
+                else:
+                    logger.debug("Could not mate")
 
 
 
