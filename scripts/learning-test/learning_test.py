@@ -1,5 +1,6 @@
 import os
 import sys
+import fnmatch
 import csv
 import logging
 import shutil
@@ -91,7 +92,6 @@ parser.add_argument(
     help='number of generations in the experiment'
          'the experiment stops when it reaches this number of generations'
 )
-
 
 
 
@@ -200,7 +200,7 @@ class LearningManager(World):
         # evaluation_time = 2  # in simulation seconds
         # ###############################################
 
-        yield From(self.pause(False))
+        yield From(self.pause(True))
         print "### time now is {0}".format(self.last_time)
 
         if not self.do_restore:
@@ -239,11 +239,33 @@ class LearningManager(World):
                                        max_num_generations=max_generations,
                                        speciation_threshold=speciation_threshold)
 
-            # THIS IS IMPORTANT!
-            yield From(learner.initialize(world=self))
+
+            gen_files = []
+            for file_name in os.listdir('./output/restore'):
+                if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
+                    gen_files.append(file_name)
+
+
+            num_generations = len(gen_files)
+
+            # if we are reading an initial population from a file:
+            if num_generations > 0:
+                num_brains_evaluated = pop_size*num_generations
+                learner.total_brains_evaluated = num_brains_evaluated
+                # sort genotype files alphanumerically:
+                gen_files = sorted(gen_files, key=lambda item: int(item.split('_')[1]))
+
+                last_gen_file = gen_files[-1]
+                print "last generation file = {0}".format(last_gen_file)
+                yield From(learner.initialize(world=self, init_genotypes_path=('./output/restore/' + last_gen_file)))
+
+            # if we don't have a file with an initial population, we generate it ourselves:
+            else:
+                yield From(learner.initialize(world=self))
 
             self.add_learner(learner)
 
+        # if the state is being restored:
         else:
             # set new experiment parameters:
             learner = self.learner_list[0]

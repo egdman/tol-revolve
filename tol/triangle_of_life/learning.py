@@ -15,7 +15,7 @@ from revolve.angle import Tree
 # ToL
 from . import Timers
 from .encoding import Crossover, GeneticEncoding, validate_genotype
-from .convert import NeuralNetworkParser
+from .convert import NeuralNetworkParser, yaml_to_genotype
 
 
 
@@ -83,9 +83,12 @@ class RobotLearner:
 
 
     @trollius.coroutine
-    def initialize(self, world):
+    def initialize(self, world, init_genotypes_path=None):
+        if init_genotypes_path is None:
+            brain_population = self.get_init_brains()
+        else:
+            brain_population = self.get_init_brains_from_file(init_genotypes_path)
 
-        brain_population = self.get_init_brains()
         for br in brain_population:
             validate_genotype(br, "initial generation created invalid genotype")
             self.evaluation_queue.append(br)
@@ -95,19 +98,14 @@ class RobotLearner:
         yield From(self.activate_brain(world, first_brain))
 
 
-
-    @trollius.coroutine
-    def activate_brain(self, world, brain):
-
-        # pause world:
-        yield From(world.pause(True))
-        yield From(self.insert_brain(world, brain))
-        self.active_brain = brain
-        # unpause world:
-        yield From(world.pause(False))
-
-
     def get_init_brains(self):
+
+        '''
+        generate an initial population by mutating the default brain
+        :return:
+        '''
+
+        # get default brain tfrom robot morphology:
         init_genotype = self.robot_to_genotype(self.robot)
 
         # FOR DEBUG
@@ -134,6 +132,37 @@ class RobotLearner:
         return init_pop
 
 
+    def get_init_brains_from_file(self, brain_file_path):
+        '''
+        generate an initial population by reading it from file
+        :param brain_file:
+        :return:
+        '''
+        init_pop = []
+        with open(brain_file_path, 'r') as brain_file:
+            yaml_string = ''
+            for line in brain_file:
+                if 'velocity' in line:
+                    if yaml_string != '':
+                        init_pop.append(yaml_to_genotype(yaml_string, self.brain_spec))
+                        yaml_string = ''
+                    continue
+                yaml_string += line
+        return init_pop
+
+
+    @trollius.coroutine
+    def activate_brain(self, world, brain):
+
+        # pause world:
+        yield From(world.pause(True))
+        yield From(self.insert_brain(world, brain))
+        self.active_brain = brain
+        # unpause world:
+        yield From(world.pause(False))
+
+
+
     @trollius.coroutine
     def insert_brain(self, world, brain_genotype):
         pb_robot = self.robot.tree.to_robot()
@@ -147,7 +176,6 @@ class RobotLearner:
         tree = Tree.from_body_brain(pb_body, pb_brain, self.body_spec)
         pose = Pose(position=Vector3(0, 0, 0))
         self.robot = yield From(wait_for(world.insert_robot(tree, pose)))
-        yield From(world.pause(False))
 
 
     def reset_fitness(self):
