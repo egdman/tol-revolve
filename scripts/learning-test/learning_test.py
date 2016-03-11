@@ -134,7 +134,6 @@ class LearningManager(World):
         self.fitness_file = None
         self.write_fitness = None
         self.learner_list = []
-        self.learner_data = []
         self.path_to_log_dir = conf.output_directory + "/" + conf.log_directory + "/"
 
         try:
@@ -212,6 +211,23 @@ class LearningManager(World):
                 genotype_log_file = open(genotype_log_filename, "a")
                 genotype_log_file.write(data)
                 genotype_log_file.close()
+
+
+
+    @trollius.coroutine
+    def delete_robot(self, robot):
+        yield From(super(LearningManager, self).delete_robot(robot))
+        # delete .sdf and .pb files when deleting a robot:
+        try:
+            os.remove(os.path.join(self.output_directory, 'robot_{0}.sdf'.format(robot.robot.id)))
+        except OSError:
+            pass
+
+        try:
+            os.remove(os.path.join(self.output_directory, 'robot_{0}.pb'.format(robot.robot.id)))
+        except OSError:
+            pass
+
 
 
     @trollius.coroutine
