@@ -44,7 +44,6 @@ class RobotLearner:
         self.nn_parser = NeuralNetworkParser(brain_spec)
         self.mutator = mutator
 
- #       self.timers = Timers(['evaluate'], world.last_time)
         self.timers = Timers(['evaluate'], 0)
         self.evaluation_queue = deque()
         self.brain_fitness = {}
@@ -186,7 +185,13 @@ class RobotLearner:
 
     def get_fitness(self):
         return self.fitness
-        
+
+
+    def get_world_time(self, world):
+        if world.last_time is None:
+            return 0.0
+        else:
+            return world.last_time
 
 
     @trollius.coroutine
@@ -200,19 +205,19 @@ class RobotLearner:
 
         # # FOR DEBUG
         # ################################################
-        # print "world time: " + str(world.last_time)
+        # print "world time: " + str(self.get_world_time(world))
         # print "timer time: " + str(self.timers.get_last_time('evaluate'))
         # ################################################
 
 
 
         # when evaluation is over:
-        if self.timers.is_it_time('evaluate', self.evaluation_time_actual, world.last_time):
+        if self.timers.is_it_time('evaluate', self.evaluation_time_actual, self.get_world_time(world)):
 
 
             # # FOR DEBUG
             # ################################################
-            # print "world time: " + str(world.last_time)
+            # print "world time: " + str(self.get_world_time(world))
             # print "timer time: " + str(self.timers.get_last_time('evaluate'))
             # ################################################
 
@@ -224,7 +229,7 @@ class RobotLearner:
             print "queue length = {0}".format(len(self.evaluation_queue))
             print "fitness (distance covered): {0}".format(self.fitness )
             print "evaluation time was {0}s".format(self.evaluation_time_actual)
-            print "simulation time: {0}\n\n%%%%%%%%%%%%%%%%%%".format(world.last_time)
+            print "simulation time: {0}\n\n%%%%%%%%%%%%%%%%%%".format(self.get_world_time(world))
 
             self.brain_fitness[self.active_brain] = self.get_fitness() / self.evaluation_time_actual
             self.brain_velocity[self.active_brain] =  self.get_fitness() / self.evaluation_time_actual
@@ -253,7 +258,7 @@ class RobotLearner:
             self.total_brains_evaluated += 1
             self.evaluation_queue.popleft()
 
-            self.timers.reset('evaluate', world.last_time)
+            self.timers.reset('evaluate', self.get_world_time(world))
 
             self.reset_fitness()
             # randomize evaluation time:
