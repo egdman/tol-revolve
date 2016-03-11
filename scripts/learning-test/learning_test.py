@@ -43,6 +43,13 @@ parent_color = (1, 0, 0, 0.5)
 child_color = (0, 1, 0, 0.5)
 
 parser.add_argument(
+    "--log-directory",
+    type=str,
+    default="log",
+    help="directory where experiment logs are stored"
+)
+
+parser.add_argument(
     '--population-size',
     default=10,
     type=int,
@@ -128,7 +135,12 @@ class LearningManager(World):
         self.write_fitness = None
         self.learner_list = []
         self.learner_data = []
+        self.path_to_log_dir = conf.output_directory + "/" + conf.log_directory + "/"
 
+        try:
+            os.mkdir(self.path_to_log_dir)
+        except OSError:
+            print "Directory " + self.path_to_log_dir + " already exists."
 
         self.body_spec = get_body_spec(conf)
         self.brain_spec = get_brain_spec(conf)
@@ -196,7 +208,7 @@ class LearningManager(World):
     def log_info(self, log_data):
         if self.output_directory:
             for filename, data in log_data.items():
-                genotype_log_filename = os.path.join(self.output_directory, filename)
+                genotype_log_filename = os.path.join(self.path_to_log_dir, filename)
                 genotype_log_file = open(genotype_log_filename, "a")
                 genotype_log_file.write(data)
                 genotype_log_file.close()
@@ -265,26 +277,31 @@ class LearningManager(World):
 
 
             gen_files = []
-            for file_name in os.listdir('./output/restore'):
+
+            for file_name in os.listdir(self.path_to_log_dir):
                 if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
                     gen_files.append(file_name)
 
 
-            num_generations = len(gen_files)
-
             # if we are reading an initial population from a file:
-            if num_generations > 0:
+            if len(gen_files) > 0:
+
+                gen_files = sorted(gen_files, key=lambda item: int(item.split('_')[1]))
+                last_gen_file = gen_files[-1]
+
+                num_generations = int(last_gen_file.split('_')[1]) + 1
+
                 num_brains_evaluated = pop_size*num_generations
                 learner.total_brains_evaluated = num_brains_evaluated
                 learner.generation_number = num_generations
                 # sort genotype files alphanumerically:
-                gen_files = sorted(gen_files, key=lambda item: int(item.split('_')[1]))
 
-                last_gen_file = gen_files[-1]
+
+
                 print "last generation file = {0}".format(last_gen_file)
 
                 init_brain_list, min_mark, max_mark = \
-                    get_brains_from_file('./output/restore/' + last_gen_file, self.brain_spec)
+                    get_brains_from_file(self.path_to_log_dir + last_gen_file, self.brain_spec)
 
                 print "Max historical mark = {0}".format(max_mark)
 
