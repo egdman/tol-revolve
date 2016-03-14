@@ -70,4 +70,8 @@ target/
 *.*~
 
 # snapshots directory
-scripts/learning-test/output/restore/*
+scripts/learning-test/output/*
+
+# emacs backup files
+\#*
+

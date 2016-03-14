@@ -197,6 +197,9 @@ class GeneticEncoding:
         gene_pairs = []
 
         # search for pairs of genes with equal marks:
+        start_from1 = 0
+        start_from2 = 0
+
         mark = min_mark
         while mark < max_mark + 1:
 
@@ -204,35 +207,41 @@ class GeneticEncoding:
 
             gene1 = None
             jump1 = mark + 1
-            for i in range(num_genes1):
+            for i in range(start_from1, num_genes1):
                 if genes_sorted1[i].historical_mark == mark:
                     gene1 = genes_sorted1[i]
+                    start_from1 = i
                     break
 
                 # if there is a gap, jump over it:
                 elif genes_sorted1[i].historical_mark > mark:
                     jump1 = genes_sorted1[i].historical_mark
+                    start_from1 = i
                     break
 
                 # if the end of the gene sequence is reached:
                 elif i == num_genes1 - 1:
                     jump1 = max_mark + 1
+                    start_from1 = i
 
             gene2 = None
             jump2 = mark + 1
-            for i in range(num_genes2):
+            for i in range(start_from2, num_genes2):
                 if genes_sorted2[i].historical_mark == mark:
                     gene2 = genes_sorted2[i]
+                    start_from2 = i
                     break
 
                 # if there is a gap, jump over it:
                 elif genes_sorted2[i].historical_mark > mark:
                     jump2 = genes_sorted2[i].historical_mark
+                    start_from2 = i
                     break
 
                 # if the end of the gene sequence is reached:
                 elif i == num_genes2 - 1:
                     jump2 = max_mark + 1
+                    start_from2 = i
 
             # # FOR DEBUG:
             # #####################################################

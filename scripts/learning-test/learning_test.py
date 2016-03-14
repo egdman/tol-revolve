@@ -252,7 +252,7 @@ class LearningManager(World):
         # evaluation_time = 2  # in simulation seconds
         # ###############################################
 
-        yield From(self.pause(True))
+        yield From(wait_for(self.pause(True)))
         print "### time now is {0}".format(self.last_time)
 
         if not self.do_restore:
@@ -387,7 +387,7 @@ def run():
     conf.initial_age_mu = 99999
     conf.initial_age_sigma = 1
     conf.age_cutoff = 99999
-    conf.pose_update_frequency = 20
+    conf.pose_update_frequency = 5
 
     world = yield From(LearningManager.create(conf))
 

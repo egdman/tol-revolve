@@ -103,7 +103,7 @@ class RobotLearner:
         :return:
         '''
 
-        # get default brain tfrom robot morphology:
+        # get default brain from robot morphology:
         init_genotype = self.robot_to_genotype(self.robot)
 
         # FOR DEBUG
@@ -134,11 +134,11 @@ class RobotLearner:
     def activate_brain(self, world, brain):
 
         # pause world:
-        yield From(world.pause(True))
+        yield From(wait_for(world.pause(True)))
         yield From(self.insert_brain(world, brain))
         self.active_brain = brain
         # unpause world:
-        yield From(world.pause(False))
+        yield From(wait_for(world.pause(False)))
 
 
 
@@ -234,7 +234,7 @@ class RobotLearner:
             self.brain_fitness[self.active_brain] = self.get_fitness() / self.evaluation_time_actual
             self.brain_velocity[self.active_brain] =  self.get_fitness() / self.evaluation_time_actual
 
-            # make snapshot (freezes when evaluation queue is empty:
+            # make snapshot:
             yield From(world.create_snapshot())
 
             # if all brains are evaluated, produce new generation:
@@ -284,13 +284,19 @@ class RobotLearner:
         new_fitness = {}
 
         for cur_brain, cur_fitness in self.brain_fitness.items():
-            sum = 1
+            species_size = 1
             for other_brain, other_fitness in self.brain_fitness.items():
                 if not other_brain == cur_brain:
                     distance = GeneticEncoding.get_dissimilarity(other_brain, cur_brain)
                     if distance < self.speciation_threshold:
-                        sum += 1
-            new_fitness[cur_brain] = cur_fitness / float(sum)
+                        species_size += 1
+            new_fitness[cur_brain] = cur_fitness / float(species_size)
+            
+            # FOR DEBUG
+            ################################################
+            print 'SHARED FITNESS = {0}, species size = {1}'.format(new_fitness[cur_brain], species_size)
+            ################################################
+
         self.brain_fitness = new_fitness
 
 
@@ -306,29 +312,12 @@ class RobotLearner:
         brain_fitness_list = sorted(brain_fitness_list, key = lambda elem: elem[1], reverse=True)
         brain_velocity_list = sorted(brain_velocity_list, key = lambda elem: elem[1], reverse=True)
 
-        # FOR DEBUG:
-        ########################################################
-        for b_f in brain_fitness_list:
-            print 'SHARED FITNESS = {0}'.format(b_f[1])
-        ########################################################
-
-
-        # select the best ones:
-  #      brain_fitness_list_best = [brain_fitness_list[i] for i in range(self.pop_size - self.num_children)]
-
         parent_pairs = []
 
         # create children:
         for _ in range(self.num_children):
 
-            # select for tournament only from the best parents:
             selected = self.select_for_tournament(brain_fitness_list)
-
-            # # OR
-
-            # # select for tournament from all parents:
-            # selected = self.select_for_tournament(brain_fitness_list)
-
 
             # select 2 best parents from the tournament:
             parent_a = selected[0]
@@ -337,70 +326,15 @@ class RobotLearner:
             # first in pair must be the best of two:
             parent_pairs.append((parent_a, parent_b))
 
+        # create children and append them to the queue:
         for i, pair in enumerate(parent_pairs):
-            # print "\nchild #{0}\nSELECTED PARENTS:".format(str(i+1))
-            # print str(pair[0][0]) + ", fitness = " + str(pair[0][1])
-            # print str(pair[1][0]) + ", fitness = " + str(pair[1][1])
-
-            # apply crossover:
-  #          print "applying crossover..."
-            child_genotype = Crossover.crossover(pair[0][0], pair[1][0])
-            validate_genotype(child_genotype, "crossover created invalid genotype")
-   #         print "crossover successful"
-
-
-            # apply mutations:
-
-   #         print "applying weight mutations..."
-            self.mutator.mutate_weights(
-                genotype=child_genotype,
-                probability=self.weight_mutation_probability,
-                sigma=self.weight_mutation_sigma)
-            validate_genotype(child_genotype, "weight mutation created invalid genotype")
-   #         print "weight mutation successful"
-
-
-   #         print "applying neuron parameters mutations..."
-            self.mutator.mutate_neuron_params(
-                genotype=child_genotype,
-                probability=self.param_mutation_probability,
-                sigma=self.param_mutation_sigma)
-            validate_genotype(child_genotype, "neuron parameters mutation created invalid genotype")
-    #        print "neuron parameters mutation successful"
-
-
-            # apply structural mutations:
-            if random.random() < self.structural_mutation_probability:
-    #            print "applying structural mutation..."
-
-                # if no connections, add connection
-                if len(child_genotype.connection_genes) == 0:
-    #                print "inserting new CONNECTION..."
-                    self.mutator.add_connection_mutation(child_genotype, self.mutator.new_connection_sigma)
-                    validate_genotype(child_genotype, "inserting new CONNECTION created invalid genotype")
-    #                print "inserting new CONNECTION successful"
-
-                # otherwise add connection or neuron with equal probability
-                else:
-                    if random.random() < 0.5:
-    #                    print "inserting new CONNECTION..."
-                        self.mutator.add_connection_mutation(child_genotype, self.mutator.new_connection_sigma)
-                        validate_genotype(child_genotype, "inserting new CONNECTION created invalid genotype")
-    #                    print "inserting new CONNECTION successful"
-
-                    else:
-     #                   print "inserting new NEURON..."
-                        self.mutator.add_neuron_mutation(child_genotype)
-                        validate_genotype(child_genotype, "inserting new NEURON created invalid genotype")
-     #                   print "inserting new NEURON successful"
-
+            child_genotype = self.produce_child(pair[0][0], pair[1][0])
             self.evaluation_queue.append(child_genotype)
-
 
         # bringing the best parents into next generation:
         for i in range(self.pop_size - self.num_children):
-            print "saving parent #{0}, fitness = {1}".format(str(i+1), brain_fitness_list[i][1])
-            self.evaluation_queue.append(brain_fitness_list[i][0])
+            print "saving parent #{0}, velocity = {1}".format(str(i+1), brain_velocity_list[i][1])
+            self.evaluation_queue.append(brain_velocity_list[i][0])
 
         # log important information:
         if logging_callback:
@@ -429,6 +363,60 @@ class RobotLearner:
             log_data["gen_{0}_genotypes.log".format(self.generation_number)] = all_genotypes_string
             logging_callback(log_data)
 
+
+    def produce_child(self, parent1, parent2):
+        # apply crossover:
+#        print "applying crossover..."
+        child_genotype = Crossover.crossover(parent1, parent2)
+        validate_genotype(child_genotype, "crossover created invalid genotype")
+#         print "crossover successful"
+
+
+        # apply mutations:
+
+#         print "applying weight mutations..."
+        self.mutator.mutate_weights(
+            genotype=child_genotype,
+            probability=self.weight_mutation_probability,
+            sigma=self.weight_mutation_sigma)
+        validate_genotype(child_genotype, "weight mutation created invalid genotype")
+#         print "weight mutation successful"
+
+
+#         print "applying neuron parameters mutations..."
+        self.mutator.mutate_neuron_params(
+            genotype=child_genotype,
+            probability=self.param_mutation_probability,
+            sigma=self.param_mutation_sigma)
+        validate_genotype(child_genotype, "neuron parameters mutation created invalid genotype")
+#        print "neuron parameters mutation successful"
+
+
+        # apply structural mutations:
+        if random.random() < self.structural_mutation_probability:
+#            print "applying structural mutation..."
+
+            # if no connections, add connection
+            if len(child_genotype.connection_genes) == 0:
+#                print "inserting new CONNECTION..."
+                self.mutator.add_connection_mutation(child_genotype, self.mutator.new_connection_sigma)
+                validate_genotype(child_genotype, "inserting new CONNECTION created invalid genotype")
+#                print "inserting new CONNECTION successful"
+
+            # otherwise add connection or neuron with equal probability
+            else:
+                if random.random() < 0.5:
+#                    print "inserting new CONNECTION..."
+                    self.mutator.add_connection_mutation(child_genotype, self.mutator.new_connection_sigma)
+                    validate_genotype(child_genotype, "inserting new CONNECTION created invalid genotype")
+#                    print "inserting new CONNECTION successful"
+
+                else:
+ #                   print "inserting new NEURON..."
+                    self.mutator.add_neuron_mutation(child_genotype)
+                    validate_genotype(child_genotype, "inserting new NEURON created invalid genotype")
+ #                   print "inserting new NEURON successful"
+        return child_genotype
 
 
     def select_for_tournament(self, candidates):

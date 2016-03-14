@@ -61,16 +61,16 @@ def main():
     plt.plot(generation_num, med_val, linewidth=3, label="median", linestyle='--', color = 'black', ms=10, markevery=100)
 
 #   set size of the legend like this: 'size':number
-    plt.legend(loc=2, prop={'size':24})
+    plt.legend(loc=0, prop={'size':20})
 
     #plt.plot(values1, values2)
-    #plt.plot(values1, values2)
+    #plt.plot(values1, values2)nn
  #   plt.title("5242 nodes, 28980 edges", fontsize=26, y=1.02)
     plt.title(args.title, fontsize=26, y=1.02)
     plt.xlabel('generation #', fontsize=26)
     plt.ylabel('fitness', fontsize=26)
- #   plt.xlim(0, 1800)
-    plt.legend(loc=0)
+#    plt.xlim(100, None)
+#    plt.legend(loc=0)
     plt.grid()
     if args.output == '':
         plt.show()

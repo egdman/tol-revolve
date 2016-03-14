@@ -196,47 +196,6 @@ class Crossover:
         genes_worse = sorted(genotype_less_fit.neuron_genes + genotype_less_fit.connection_genes,
                         key = lambda gene: gene.historical_mark)
 
-        # assume that each genotype has at most 1 gene per historical_mark
-
-        # min_hist_mark = min(genes_better[0].historical_mark, genes_worse[0].historical_mark)
-        #
-        # max_hist_mark = max(genes_better[-1].historical_mark,
-        #                     genes_worse[-1].historical_mark)
-
-
-        # # FOR DEBUG
-        # ############################################
-        # print "MIN hist mark = {0}".format(min_hist_mark)
-        # print "MAX hist mark = {0}".format(max_hist_mark)
-        # ############################################
-
-
-        # gene_pairs = []
-        #
-        # # search for pairs of genes with equal marks:
-        # for mark in range(min_hist_mark, max_hist_mark+1):
-        #     better_gene = None
-        #     for i in range(len(genes_better)):
-        #         if genes_better[i].historical_mark == mark:
-        #             better_gene = genes_better[i]
-        #             break
-        #
-        #     worse_gene = None
-        #     for i in range(len(genes_worse)):
-        #         if genes_worse[i].historical_mark == mark:
-        #             worse_gene = genes_worse[i]
-        #             break
-        #
-        #     gene_pairs.append((better_gene, worse_gene))
-
-
-        # # FOR DEBUG
-        # ############################################
-        # print "PAIRS:"
-        # for pair in gene_pairs:
-        #     print str(pair[0]) + "," + str(pair[1])
-        # ############################################
-
         gene_pairs = GeneticEncoding.get_pairs(genes_better, genes_worse)
 
         child_genes = []
