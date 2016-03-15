@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import math
 from revolve.build.sdf import PID
 
-MAX_HIDDEN_NEURONS = 10
+MAX_HIDDEN_NEURONS = 2000
 """ Maximum number of hidden neurons """
 
 MAX_SERVO_TORQUE = 1.8 * 9.81 / 100

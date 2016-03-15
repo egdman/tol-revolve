@@ -114,7 +114,10 @@ def run_server(conf):
  #   conf.proposal_threshold = 0
  #   conf.output_directory = None
     conf.min_parts = 1
-    conf.max_parts = 3
+    conf.max_parts = 2000
+    conf.max_inputs = 2000
+    conf.max_outputs = 2000
+
     conf.arena_size = (3, 3)
     conf.max_lifetime = 99999
     conf.initial_age_mu = 99999
