@@ -69,9 +69,11 @@ target/
 # gedit backup files
 *.*~
 
-# snapshots directory
+# learning-test snapshots directory
 scripts/learning-test/output/*
 
 # emacs backup files
 \#*
 
+# files with .invis suffix
+*.invis

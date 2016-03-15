@@ -19,16 +19,16 @@ import trollius
 from trollius import From, Return, Future
 from pygazebo.msg.request_pb2 import Request
 
-# Revolve / sdfbuilder
-from sdfbuilder.math import Vector3
-from sdfbuilder import Pose, Model, Link, SDF
+# # Revolve / sdfbuilder
+# from sdfbuilder.math import Vector3
+# from sdfbuilder import Pose, Model, Link, SDF
 
 # ToL
 from tol.config import parser
-from tol.manage import World
+# from tol.manage import World
 from tol.logging import logger, output_console
-from revolve.util import multi_future
-from tol.triangle_of_life import Food_Grid, Population, RobotAccount
+# from revolve.util import multi_future
+from tol.triangle_of_life import Food_Grid, RobotAccount, EvolutionManager
 
 # Log output to console
 output_console()
@@ -37,8 +37,9 @@ logger.setLevel(logging.DEBUG)
 
 parser.add_argument("-n", "--num-initial-bots", default=3,
                     help="Number of initial bots", type=int)
-parser.add_argument("-f", "--fast", help="Short reproduction wait.",
-                    action="store_true")
+
+# parser.add_argument("-f", "--fast", help="Short reproduction wait.",
+#                     action="store_true")
 
 
 parser.add_argument(
@@ -60,7 +61,7 @@ child_color = (0, 1, 0, 0.5)
 
 
 # initial food density
-init_food_density = 2000
+init_food_density = 200
 
 
 #time before robots die
@@ -69,15 +70,8 @@ init_life_time = 20
 #bonus life time per food item
 time_per_food = 10
 
-# food density grid:
-food_field = Food_Grid(xmin=-10, ymin=-10, xmax=10, ymax=10, xresol=100, yresol=100, value=init_food_density)
-
 # maximum mating distance:
-mating_distance = 2
-
-# maximum matings per robot:
-max_mates_per_robot = 9999
-
+mating_distance = 200
 
 
 @trollius.coroutine
@@ -124,23 +118,24 @@ def run_server(conf):
     conf.initial_age_sigma = 1
     conf.age_cutoff = 99999
 
-    conf.pose_update_frequency = 20
+    conf.pose_update_frequency = 5
 
-    # initial population size:
-    init_pop_size = conf.num_initial_bots
-
-
-    # initialize world:
-    world = yield From(World.create(conf))
-    yield From(world.pause(False))
-
+    conf.init_life_time = init_life_time
+    conf.mating_distance = mating_distance
+    conf.time_per_food = time_per_food
+    conf.init_food_density = init_food_density
 
     print "WORLD CREATED"
 
-    # robot accounts:
-    accounts = Population(init_life_time = init_life_time, food_field = food_field,
-                          mating_distance = mating_distance, time_per_food = time_per_food,
-                          world = world)
+    # # robot accounts:
+    # accounts = Population(init_life_time = init_life_time, food_field = food_field,
+    #                       mating_distance = mating_distance, time_per_food = time_per_food,
+    #                       world = world)
+
+
+    # initialize world:
+    world = yield From(EvolutionManager.create(conf))
+    yield From(world.pause(True))
 
 
     # Request callback for the subscriber
@@ -167,7 +162,7 @@ def run_server(conf):
 
 
     # spawn initial population of robots:
-    yield From(accounts.spawn_initial_given_robots(conf, init_pop_size, bot_yaml, brain_genotype_yaml))
+    yield From(world.spawn_initial_given_robots(conf, conf.num_initial_bots, bot_yaml, brain_genotype_yaml))
 
     yield From(world.pause(False))
     print "WORLD UNPAUSED"
@@ -177,16 +172,16 @@ def run_server(conf):
     # run loop:
     while True:
         # detect food acquisition:
-        for account in accounts:
+        for account in world:
             yield From(account.update())
 
 
         # reproduce:
-        parents = accounts.find_mate_pairs()
-        yield From(accounts.reproduce(parents))
+        parents = world.find_mate_pairs()
+        yield From(world.reproduce(parents))
 
         # remove dead robots:
-        yield From(accounts.cleanup())
+        yield From(world.cleanup())
 
         yield From(trollius.sleep(deltaT))
 

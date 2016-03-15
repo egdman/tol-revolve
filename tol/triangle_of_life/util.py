@@ -1,3 +1,25 @@
+import random
+import math
+from sdfbuilder.math import Vector3, Quaternion
+
+
+def random_rotation():
+    """
+    :return:
+    :rtype: Quaternion
+    """
+    x = random.random()*2.0 - 1.0
+    y = random.random()*2.0 - 1.0
+    z = random.random()*2.0 - 1.0
+
+    norm = math.sqrt(x*x + y*y + z*z)
+    x /= norm
+    y /= norm
+    z /= norm
+
+    angle = random.random() * 2 * 3.14159
+    return Quaternion.from_angle_axis(angle, Vector3(x, y, z))
+
 
 class Timers:
     """
