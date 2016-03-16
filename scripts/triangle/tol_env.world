@@ -9,14 +9,26 @@
     <gui>
         <plugin name="interactive-evolution" filename="libtolinteractiveevolution.so" />
     </gui>
+
     <physics type="ode">
-      <!--<max_contacts>32</max_contacts>-->
+      <max_step_size>0.005</max_step_size>
+    
+      <!-- Set to 0.0 to run as fast as possible -->
+      <real_time_update_rate>0.0</real_time_update_rate>
+
       <ode>
         <constraints>
           <!-- Simulator.cpp -->
-          <erp>0.5</erp> 
+          <erp>0.1</erp>
           <cfm>10e-6</cfm>
+
+          <!-- Making this smaller seems to decrease rather than increase stability. -->
+          <contact_max_correcting_vel>100</contact_max_correcting_vel>
+          <contact_surface_layer>1e-8</contact_surface_layer>
         </constraints>
+        <solver>
+          <type>world</type>
+        </solver>
       </ode>
     </physics>
 

@@ -1,5 +1,6 @@
 import os
 import sys
+import atexit
 import fnmatch
 import csv
 import logging
@@ -182,8 +183,8 @@ class LearningManager(World):
         if not ret:
             raise Return(ret)
 
-        self.fitness_file.flush()
-        shutil.copy(self.fitness_filename, self.fitness_filename + '.snapshot')
+        # self.fitness_file.flush()
+        # shutil.copy(self.fitness_filename, self.fitness_filename + '.snapshot')
 
 
     @trollius.coroutine
@@ -227,7 +228,6 @@ class LearningManager(World):
             os.remove(os.path.join(self.output_directory, 'robot_{0}.pb'.format(robot.robot.id)))
         except OSError:
             pass
-
 
 
     @trollius.coroutine

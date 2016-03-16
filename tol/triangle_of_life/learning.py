@@ -237,6 +237,7 @@ class RobotLearner:
             # make snapshot:
             yield From(world.create_snapshot())
 
+
             # if all brains are evaluated, produce new generation:
             if len(self.evaluation_queue) == 0:
 
