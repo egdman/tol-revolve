@@ -24,7 +24,7 @@ echo "BRAIN FILE="$BRAIN_FILE
 echo "BODY FILE="$BODY_FILE
 
 
-GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:`pwd`/../../build GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:`pwd`/../../tools/models $CMD -u $WORLD &
+GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:`pwd`/../../build GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:`pwd`/../../tools/models $CMD -u $WORLD 2> >(grep -v -e '^$' -e 'LCP internal error') &
 GZ_PID=$!
 
 ../../../revolve/tools/analyzer/run-analyzer &
@@ -34,7 +34,9 @@ ACTUAL_ANALYZER_PID=`ps -ef | awk '$3 == '${ANALYZER_PID}' { print $2 } '`
 sleep 3
 python $DIR/triangle.py --robot-file "$BODY_FILE" --brain-genotype-file "$BRAIN_FILE" --num-initial-bots 5 &
 PY_PID=$!
+
 wait $GZ_PID
+
 kill ${ACTUAL_ANALYZER_PID}
 kill $(jobs -rp)
 wait $(jobs -rp) 2>/dev/null

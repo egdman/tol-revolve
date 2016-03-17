@@ -65,13 +65,16 @@ init_food_density = 200
 
 
 #time before robots die
-init_life_time = 20
+init_life_time = 40
 
 #bonus life time per food item
 time_per_food = 10
 
 # maximum mating distance:
 mating_distance = 200
+
+# mating cooldown time
+mating_cooldown = 40
 
 
 @trollius.coroutine
@@ -124,17 +127,13 @@ def run_server(conf):
     conf.mating_distance = mating_distance
     conf.time_per_food = time_per_food
     conf.init_food_density = init_food_density
-
-    print "WORLD CREATED"
-
-    # # robot accounts:
-    # accounts = Population(init_life_time = init_life_time, food_field = food_field,
-    #                       mating_distance = mating_distance, time_per_food = time_per_food,
-    #                       world = world)
+    conf.mating_cooldown = mating_cooldown
 
 
     # initialize world:
     world = yield From(EvolutionManager.create(conf))
+    print "WORLD CREATED"
+
     yield From(world.pause(True))
 
 
@@ -175,9 +174,12 @@ def run_server(conf):
         for account in world:
             yield From(account.update())
 
-
         # reproduce:
         parents = world.find_mate_pairs()
+
+        if len(parents) != 0:
+            print 'got parents'
+
         yield From(world.reproduce(parents))
 
         # remove dead robots:
