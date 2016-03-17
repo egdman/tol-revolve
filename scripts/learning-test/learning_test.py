@@ -183,8 +183,8 @@ class LearningManager(World):
         if not ret:
             raise Return(ret)
 
-        # self.fitness_file.flush()
-        # shutil.copy(self.fitness_filename, self.fitness_filename + '.snapshot')
+        self.fitness_file.flush()
+        shutil.copy(self.fitness_filename, self.fitness_filename + '.snapshot')
 
 
     @trollius.coroutine
