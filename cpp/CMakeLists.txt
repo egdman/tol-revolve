@@ -63,8 +63,14 @@ file(GLOB_RECURSE
 	 tol/plugin/RobotController.cpp
 )
 
+file(GLOB_RECURSE
+         TOL_SOUND_SRC
+         tol/plugin/SoundPlugin.cpp
+)
+
 add_library(tolworldcontrol SHARED ${TOL_WORLD_SRC})
 add_library(tolrobotcontrol SHARED ${TOL_ROBOT_SRC})
+add_library(tolsoundplugin  SHARED ${TOL_SOUND_SRC})
 
 if (DEFINED REVOLVE_BUILD_PATH)
     message("Deriving include path / libary path from custom build path.")
@@ -124,6 +130,7 @@ set(TOL_DEPS ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${REVOLVE_LIBRARIES} ${GAZEB
 
 target_link_libraries(tolworldcontrol ${TOL_DEPS})
 target_link_libraries(tolrobotcontrol ${TOL_DEPS})
+target_link_libraries(tolsoundplugin  ${TOL_DEPS})
 
 # Evolution keys library
 find_package(Qt4)
