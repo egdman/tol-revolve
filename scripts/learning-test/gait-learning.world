@@ -39,5 +39,6 @@
     </include>
 
     <plugin name="tol-control" filename="libtolworldcontrol.so" />
+    <plugin name="tol-sound-plugin" filename="libtolsoundplugin.so" />
   </world>
 </sdf>

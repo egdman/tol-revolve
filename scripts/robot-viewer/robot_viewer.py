@@ -32,6 +32,7 @@ from tol.spec import get_body_spec, get_brain_spec
 from tol.triangle_of_life import RobotLearner
 from tol.triangle_of_life.encoding import Mutator, Crossover
 from tol.triangle_of_life.convert import NeuralNetworkParser, yaml_to_genotype
+from tol.triangle_of_life.util import random_rotation
 
 
 # Log output to console
@@ -48,7 +49,7 @@ parser.add_argument(
 parser.add_argument(
     '--genotype-file',
     type=str,
-    default=None,
+    default='',
     help="path to YAML file containing brain genotype"
 )
 
@@ -85,7 +86,8 @@ def run():
     world = yield From(World.create(conf))
     yield From(world.pause(True))
 
-    pose = Pose(position=Vector3(0, 0, 0))
+    pose = Pose(position=Vector3(0, 0, 2), rotation=random_rotation())
+#    pose = Pose(position=Vector3(0, 0, 0))
 
     # if brain genotype is given, combine body and brain:
     if genotype_yaml:

@@ -1,3 +1,4 @@
+import sys
 import math
 import trollius
 from trollius import From, Return, Future
@@ -21,7 +22,8 @@ from .convert import NeuralNetworkParser
 class RobotLearner:
 
     def __init__(self, world, robot, body_spec, brain_spec, mutator,
-                 population_size, tournament_size, num_children, evaluation_time,
+                 population_size, tournament_size, num_children,
+                 evaluation_time, warmup_time,
                  evaluation_time_sigma,
                  weight_mutation_probability, weight_mutation_sigma,
                  param_mutation_probability, param_mutation_sigma,
@@ -29,14 +31,14 @@ class RobotLearner:
                  speciation_threshold):
         self.robot = robot
         self.active_brain = None
-        self.fitness = 0
-        if self.robot is None:
-            self.last_position = Vector3(0,0,0)
-        else:
-            self.last_position = self.robot.last_position
 
-        self.initial_position = self.last_position
+        self.fitness = 0
         self.traveled_distance = 0
+
+        self.initial_position = None
+        self.last_position = None
+
+        self.reset_fitness()
 
         self.brain_spec = brain_spec
         self.body_spec = body_spec
@@ -44,7 +46,7 @@ class RobotLearner:
         self.nn_parser = NeuralNetworkParser(brain_spec)
         self.mutator = mutator
 
-        self.timers = Timers(['evaluate'], 0)
+        self.timers = Timers(['evaluate', 'warmup'], world.get_world_time())
         self.evaluation_queue = deque()
         self.brain_fitness = {}
         self.brain_velocity = {}
@@ -67,6 +69,7 @@ class RobotLearner:
         self.num_children = num_children
 
         self.evaluation_time = evaluation_time
+        self.warmup_time = warmup_time
         self.evaluation_time_sigma = evaluation_time_sigma
         self.evaluation_time_actual = evaluation_time
 
@@ -158,9 +161,13 @@ class RobotLearner:
 
 
     def reset_fitness(self):
+        self.fitness = 0
+        if self.robot is None:
+            self.initial_position = Vector3(0,0,0)
+        else:
+            self.initial_position = self.robot.last_position
         self.last_position = self.initial_position
         self.traveled_distance = 0
-        self.fitness = 0
 
 
     def update_fitness(self):
@@ -187,13 +194,6 @@ class RobotLearner:
         return self.fitness
 
 
-    def get_world_time(self, world):
-        if world.last_time is None:
-            return 0.0
-        else:
-            return world.last_time
-
-
     @trollius.coroutine
     def update(self, world, logging_callback = None):
         """
@@ -205,19 +205,21 @@ class RobotLearner:
 
         # # FOR DEBUG
         # ################################################
-        # print "world time: " + str(self.get_world_time(world))
-        # print "timer time: " + str(self.timers.get_last_time('evaluate'))
+        # sys.stderr.write('warmup: {0}  evaluate: {1}  init_pos: [{2}, {3}], fitness = {4}\n'.format(
+        #     '-' if self.timers.is_it_time('warmup', self.warmup_time, world.get_world_time()) else '+',
+        #     '-' if self.timers.is_it_time('evaluate', self.evaluation_time_actual, world.get_world_time()) else '+',
+        #     self.initial_position[0], self.initial_position[1],
+        #     self.get_fitness()
+        # ))
         # ################################################
 
-
-
         # when evaluation is over:
-        if self.timers.is_it_time('evaluate', self.evaluation_time_actual, self.get_world_time(world)):
+        if self.timers.is_it_time('evaluate', self.evaluation_time_actual, world.get_world_time()):
 
 
             # # FOR DEBUG
             # ################################################
-            # print "world time: " + str(self.get_world_time(world))
+            # print "world time: " + str(world.get_world_time())
             # print "timer time: " + str(self.timers.get_last_time('evaluate'))
             # ################################################
 
@@ -229,7 +231,7 @@ class RobotLearner:
             print "queue length = {0}".format(len(self.evaluation_queue))
             print "fitness (distance covered): {0}".format(self.fitness )
             print "evaluation time was {0}s".format(self.evaluation_time_actual)
-            print "simulation time: {0}\n\n%%%%%%%%%%%%%%%%%%".format(self.get_world_time(world))
+            print "simulation time: {0}\n\n%%%%%%%%%%%%%%%%%%".format(world.get_world_time())
 
             self.brain_fitness[self.active_brain] = self.get_fitness() / self.evaluation_time_actual
             self.brain_velocity[self.active_brain] =  self.get_fitness() / self.evaluation_time_actual
@@ -259,7 +261,8 @@ class RobotLearner:
             self.total_brains_evaluated += 1
             self.evaluation_queue.popleft()
 
-            self.timers.reset('evaluate', self.get_world_time(world))
+            self.timers.reset('evaluate', world.get_world_time())
+            self.timers.reset('warmup', world.get_world_time())
 
             self.reset_fitness()
             # randomize evaluation time:
@@ -269,9 +272,15 @@ class RobotLearner:
             if self.evaluation_time_actual < 0:
                 self.evaluation_time_actual = 0.5
 
+        # if warmup is over, evaluate fitness:
+        if self.timers.is_it_time('warmup', self.warmup_time, world.get_world_time()):
+            self.update_fitness()
 
-        # continue evaluation:
-        self.update_fitness()
+        # if it is still warming up, ignore displacement by resetting starting position to current:
+        else:
+            self.timers.reset('evaluate', world.get_world_time())
+            self.reset_fitness()
+
 
         # if termination criteria are met, return True:
         if self.generation_number >= self.max_generations:

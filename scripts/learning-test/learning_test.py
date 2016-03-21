@@ -79,6 +79,14 @@ parser.add_argument(
     help="time of individual evaluation in simulation seconds"
 )
 
+
+# parser.add_argument(
+#     '--warmup-time',
+#     default=5,
+#     type=float,
+#     help="time for a robot to settle down before evaluation starts"
+# )
+
 parser.add_argument(
     '--test-bot',
     type=str,
@@ -160,6 +168,13 @@ class LearningManager(World):
                                              'vel', 'dvel', 'fitness'])
 
 
+    def get_world_time(self):
+        if self.last_time:
+            return self.last_time
+        else:
+            return 0.0
+
+
     @classmethod
     @trollius.coroutine
     def create(cls, conf):
@@ -237,6 +252,7 @@ class LearningManager(World):
         pop_size = conf.population_size
         tournament_size = conf.tournament_size
         evaluation_time = conf.eval_time  # in simulation seconds
+        warmup_time = conf.warmup_time # in simulation seconds
         num_children = conf.num_children
         speciation_threshold = conf.speciation_threshold # similarity threshold for fitness sharing
 
@@ -270,6 +286,7 @@ class LearningManager(World):
             print "tournament size      set to {0}".format(tournament_size)
             print "number of children   set to {0}".format(num_children)
             print "evaluation time      set to {0}".format(evaluation_time)
+            print "warmup  time         set to {0}".format(warmup_time)
             print "speciation threshold set to {0}".format(speciation_threshold)
             print "\nmax number of generations set to {0}".format(max_generations)
 
@@ -281,7 +298,8 @@ class LearningManager(World):
                                        population_size=pop_size,
                                        tournament_size=tournament_size,
                                        num_children=num_children,
-                                       evaluation_time=evaluation_time, # simulation seconds
+                                       evaluation_time=evaluation_time, # in simulation seconds
+                                       warmup_time=warmup_time, # in simulation seconds
                                        evaluation_time_sigma=2,         # for eval. time randomization
                                        weight_mutation_probability=0.8,
                                        weight_mutation_sigma=5,
@@ -341,6 +359,7 @@ class LearningManager(World):
             learner.population_size = pop_size
             learner.tournament_size = tournament_size
             learner.evaluation_time = evaluation_time
+            learner.warmup_time = warmup_time
             learner.num_children = num_children
             learner.speciation_threshold = speciation_threshold
             learner.max_generations = max_generations
@@ -352,6 +371,7 @@ class LearningManager(World):
             print "tournament size      set to {0}".format(learner.tournament_size)
             print "number of children   set to {0}".format(learner.num_children)
             print "evaluation time      set to {0}".format(learner.evaluation_time)
+            print "warmup  time         set to {0}".format(warmup_time)
             print "speciation threshold set to {0}".format(learner.speciation_threshold)
             print "\nmax number of generations set to {0}".format(learner.max_generations)
 
@@ -387,7 +407,7 @@ def run():
     conf.initial_age_mu = 99999
     conf.initial_age_sigma = 1
     conf.age_cutoff = 99999
-    conf.pose_update_frequency = 5
+    conf.pose_update_frequency = 5 # in simulation Hz
 
     world = yield From(LearningManager.create(conf))
 
