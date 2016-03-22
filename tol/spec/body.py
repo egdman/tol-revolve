@@ -25,6 +25,12 @@ def get_body_spec(conf):
             inputs=6,
             params=color_params
         ),
+        "CoreWithMics": PartSpec(
+            body_part=CoreComponentWithMics,
+            arity=4,
+            inputs=10,
+            params=color_params
+        ),
         "FixedBrick": PartSpec(
             body_part=FixedBrick,
             arity=4,

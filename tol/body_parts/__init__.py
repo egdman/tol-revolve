@@ -2,6 +2,7 @@ __author__ = 'Elte Hupkes'
 
 from .active_hinge import ActiveHinge
 from .core_component import CoreComponent
+from .core_component_with_mics import CoreComponentWithMics
 from .hinge import Hinge
 from .light_sensor import LightSensor
 from .touch_sensor import TouchSensor
