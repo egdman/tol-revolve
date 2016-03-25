@@ -23,6 +23,10 @@ from sdfbuilder import Pose, Model, Link, SDF
 from revolve.util import multi_future, wait_for
 from revolve.convert.yaml import yaml_to_robot
 from revolve.angle import Tree
+from revolve.build.util import in_grams, in_mm
+
+from sdfbuilder import Link, Model, SDF
+from sdfbuilder.math import Vector3, Quaternion
 
 #ToL
 from tol.config import parser
@@ -32,7 +36,7 @@ from tol.spec import get_body_spec, get_brain_spec
 from tol.triangle_of_life import RobotLearner
 from tol.triangle_of_life.encoding import Mutator, Crossover
 from tol.triangle_of_life.convert import NeuralNetworkParser, yaml_to_genotype
-from tol.triangle_of_life.util import random_rotation
+from tol.triangle_of_life.util import random_rotation, rotate_vertical
 
 
 # Log output to console
@@ -86,8 +90,8 @@ def run():
     world = yield From(World.create(conf))
     yield From(world.pause(True))
 
-    pose = Pose(position=Vector3(0, 0, 2), rotation=random_rotation())
-#    pose = Pose(position=Vector3(0, 0, 0))
+#    pose = Pose(position=Vector3(0, 0, 0.5), rotation=random_rotation())
+    pose = Pose(position=Vector3(0, 0, 0.5), rotation=rotate_vertical(3.1415/4.0))
 
     # if brain genotype is given, combine body and brain:
     if genotype_yaml:
@@ -113,6 +117,23 @@ def run():
 
     print "INSERTING ROBOT!!!!!!!!!!!!!!!!!!!!!!"
     robot = yield From(wait_for(world.insert_robot(tree, pose)))
+
+#     print "INSERTING SOUND OBJECTS!!!!!!!!"
+#     sound_src_link = Link("sound_src_1_link")
+# #    sound_src_link.make_cylinder(mass=in_grams(100), radius=in_mm(50), length=in_mm(20))
+#     sound_src_link.make_box(in_grams(100), in_mm(50), in_mm(50), in_mm(50))
+#
+#     sound_src_model = Model("sound_src_1")
+#     sound_src_model.add_element(sound_src_link)
+#
+#     sound_src_sdf = SDF()
+#     sound_src_sdf.add_element(sound_src_model)
+#
+#     model_name = yield From(wait_for(world.insert_model_callback(sound_src_sdf)))
+#
+#     yield From(world.set_sound_update_frequency(update_frequency=0.5))
+#     yield From(world.attach_sound_source(name=model_name, frequency=500))
+
     yield From(world.pause(False))
 
     while (True):

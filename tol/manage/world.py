@@ -20,10 +20,12 @@ from sdfbuilder.math import Vector3
 from sdfbuilder import SDF, Model, Pose, Link
 
 # Local
+from revolve.util import multi_future
+from revolve.spec.msgs import ModelInserted
+
 from ..config import constants, parser, str_to_address
 from ..build import get_builder, get_simulation_robot
 from ..spec import get_tree_generator, make_planar
-from revolve.util import multi_future
 from .robot import Robot
 from ..scenery import Wall
 from ..logging import logger
@@ -237,6 +239,61 @@ class World(WorldManager):
 
         logger.debug("Viable child created.")
         raise Return(child, ret[1])
+
+
+    @trollius.coroutine
+    def insert_model_callback(self, sdf):
+        """
+
+        :param sdf:
+        :type sdf: SDF
+        :return:
+        """
+        return_future = Future()
+        insert_future = yield From(self.insert_model(sdf))
+
+        def _model_inserted_callback(msg, return_future):
+            inserted = ModelInserted()
+            inserted.ParseFromString(msg.serialized_data)
+            model_name = inserted.model.name
+            return_future.set_result(model_name)
+
+        insert_future.add_done_callback(lambda fut:
+            _model_inserted_callback(fut.result(), return_future))
+
+        raise Return(return_future)
+
+
+    @trollius.coroutine
+    def set_sound_update_frequency(self, update_frequency):
+        """
+        Set how often the sound plugin should update
+        :param self:
+        :param update_frequency: sound plugin update frequency in simulation Hz
+        :type update_frequency: int
+        :return:
+        """
+        future = yield From(self.request_handler.do_gazebo_request("set_sound_source_update_frequency",
+                            data=str(update_frequency)))
+        raise Return(future)
+
+
+    @trollius.coroutine
+    def attach_sound_source(self, name, frequency):
+        """
+        Attach a sound source to an existing object in the world
+
+        :param name: name of the object to attach sound source to
+        :type name: str
+        :param frequency: frequency of the sound source
+        :type frequency: float
+        :param intensity: intensity of the sound source
+        :type intensity: float
+        :return:
+        """
+        future = yield From(self.request_handler.do_gazebo_request("add_sound_source", data=name, dbl_data=frequency))
+        raise Return(future)
+
 
 
 class Highlight(Model):

@@ -1,10 +1,6 @@
 import os
 import sys
-import atexit
-import fnmatch
-import csv
 import logging
-import shutil
 
 from pygazebo.pygazebo import DisconnectError
 from trollius.py33_exceptions import ConnectionResetError, ConnectionRefusedError
@@ -17,23 +13,10 @@ import trollius
 from trollius import From, Return, Future
 from pygazebo.msg.request_pb2 import Request
 
-# sdfbuilder
-from sdfbuilder.math import Vector3
-from sdfbuilder import Pose, Model, Link, SDF
-
-# Revolve
-from revolve.util import multi_future, wait_for
-from revolve.convert.yaml import yaml_to_robot
-from revolve.angle import Tree
-
 #ToL
 from tol.config import parser
-from tol.manage import World
 from tol.logging import logger, output_console
-from tol.spec import get_body_spec, get_brain_spec
-from tol.triangle_of_life import RobotLearner
-from tol.triangle_of_life.encoding import Mutator, Crossover
-from tol.triangle_of_life.convert import yaml_to_genotype
+from tol.learning import LearningManager
 
 
 # Log output to console
@@ -79,14 +62,6 @@ parser.add_argument(
     help="time of individual evaluation in simulation seconds"
 )
 
-
-# parser.add_argument(
-#     '--warmup-time',
-#     default=5,
-#     type=float,
-#     help="time for a robot to settle down before evaluation starts"
-# )
-
 parser.add_argument(
     '--test-bot',
     type=str,
@@ -112,292 +87,6 @@ parser.add_argument(
 
 
 @trollius.coroutine
-def sleep_sim_time(world, seconds, state_break=[False]):
-    """
-    Sleeps for a certain number of simulation seconds,
-    note that this is always approximate as it relies
-    on real world sleeping.
-    :param world:
-    :param seconds:
-    :param state_break: List containing one boolean, the
-                        wait will be terminated if this
-                        is set to True (basically a hack
-                        to break out of automatic mode early).
-    :return:
-    """
-    start = world.last_time if world.last_time else Time()
-    remain = seconds
-
-    while remain > 0 and not state_break[0]:
-        yield From(trollius.sleep(0.1))
-        now = world.last_time if world.last_time else Time()
-        remain = seconds - float(now - start)
-
-
-
-class LearningManager(World):
-    def __init__(self, conf, _private):
-        super(LearningManager, self).__init__(conf, _private)
-
-        self.fitness_filename = None
-        self.fitness_file = None
-        self.write_fitness = None
-        self.learner_list = []
-        self.path_to_log_dir = conf.output_directory + "/" + conf.log_directory + "/"
-
-        try:
-            os.mkdir(self.path_to_log_dir)
-        except OSError:
-            print "Directory " + self.path_to_log_dir + " already exists."
-
-        self.body_spec = get_body_spec(conf)
-        self.brain_spec = get_brain_spec(conf)
-        self.mutator = Mutator(self.brain_spec)
-
-        if self.output_directory:
-            self.fitness_filename = os.path.join(self.output_directory, 'fitness.csv')
-
-            if self.do_restore:
-                shutil.copy(self.fitness_filename + '.snapshot', self.fitness_filename)
-                self.fitness_file = open(self.fitness_filename, 'ab', buffering=1)
-                self.write_fitness = csv.writer(self.fitness_file, delimiter=',')
-            else:
-                self.fitness_file = open(self.fitness_filename, 'wb', buffering=1)
-                self.write_fitness = csv.writer(self.fitness_file, delimiter=',')
-                self.write_fitness.writerow(['t_sim', 'robot_id', 'age', 'displacement',
-                                             'vel', 'dvel', 'fitness'])
-
-
-    def get_world_time(self):
-        if self.last_time:
-            return self.last_time
-        else:
-            return 0.0
-
-
-    @classmethod
-    @trollius.coroutine
-    def create(cls, conf):
-        """
-        Coroutine to instantiate a Revolve.Angle WorldManager
-        :param conf:
-        :return:
-        """
-        self = cls(_private=cls._PRIVATE, conf=conf)
-        yield From(self._init())
-        raise Return(self)
-
-
-    @trollius.coroutine
-    def create_snapshot(self):
-        """
-        Copy the fitness file in the snapshot
-        :return:
-        """
-        ret = yield From(super(LearningManager, self).create_snapshot())
-        if not ret:
-            raise Return(ret)
-
-        self.fitness_file.flush()
-        shutil.copy(self.fitness_filename, self.fitness_filename + '.snapshot')
-
-
-    @trollius.coroutine
-    def get_snapshot_data(self):
-        data = yield From(super(LearningManager, self).get_snapshot_data())
-        data['learners'] = self.learner_list
-        data['innovation_number'] = self.mutator.innovation_number
-        raise Return(data)
-
-
-    def restore_snapshot(self, data):
-        yield From(super(LearningManager, self).restore_snapshot(data))
-        self.learner_list = data['learners']
-        self.mutator.innovation_number = data['innovation_number']
-
-
-    def add_learner(self, learner):
-        self.learner_list.append(learner)
-
-
-    def log_info(self, log_data):
-        if self.output_directory:
-            for filename, data in log_data.items():
-                genotype_log_filename = os.path.join(self.path_to_log_dir, filename)
-                genotype_log_file = open(genotype_log_filename, "a")
-                genotype_log_file.write(data)
-                genotype_log_file.close()
-
-
-
-    @trollius.coroutine
-    def delete_robot(self, robot):
-        yield From(super(LearningManager, self).delete_robot(robot))
-        # delete .sdf and .pb files when deleting a robot:
-        try:
-            os.remove(os.path.join(self.output_directory, 'robot_{0}.sdf'.format(robot.robot.id)))
-        except OSError:
-            pass
-
-        try:
-            os.remove(os.path.join(self.output_directory, 'robot_{0}.pb'.format(robot.robot.id)))
-        except OSError:
-            pass
-
-
-    @trollius.coroutine
-    def run(self, conf):
-
-        # brain population size:
-        pop_size = conf.population_size
-        tournament_size = conf.tournament_size
-        evaluation_time = conf.eval_time  # in simulation seconds
-        warmup_time = conf.warmup_time # in simulation seconds
-        num_children = conf.num_children
-        speciation_threshold = conf.speciation_threshold # similarity threshold for fitness sharing
-
-        # after how many generations we stop the experiment:
-        max_generations = conf.max_generations
-
-
-        # # FOR DEBUG
-        # ###############################################
-        # # brain population size:
-        # pop_size = 4
-        # tournament_size = 2
-        # evaluation_time = 2  # in simulation seconds
-        # ###############################################
-
-        yield From(wait_for(self.pause(True)))
-        print "### time now is {0}".format(self.last_time)
-
-        if not self.do_restore:
-
-            with open(conf.test_bot,'r') as yamlfile:
-                bot_yaml = yamlfile.read()
-
-            pose = Pose(position=Vector3(0, 0, 0))
-            bot = yaml_to_robot(self.body_spec, self.brain_spec, bot_yaml)
-            tree = Tree.from_body_brain(bot.body, bot.brain, self.body_spec)
-
-            robot = yield From(wait_for(self.insert_robot(tree, pose)))
-
-            print "population size      set to {0}".format(pop_size)
-            print "tournament size      set to {0}".format(tournament_size)
-            print "number of children   set to {0}".format(num_children)
-            print "evaluation time      set to {0}".format(evaluation_time)
-            print "warmup  time         set to {0}".format(warmup_time)
-            print "speciation threshold set to {0}".format(speciation_threshold)
-            print "\nmax number of generations set to {0}".format(max_generations)
-
-            learner = RobotLearner(world=self,
-                                       robot=robot,
-                                       body_spec=self.body_spec,
-                                       brain_spec=self.brain_spec,
-                                       mutator=self.mutator,
-                                       population_size=pop_size,
-                                       tournament_size=tournament_size,
-                                       num_children=num_children,
-                                       evaluation_time=evaluation_time, # in simulation seconds
-                                       warmup_time=warmup_time, # in simulation seconds
-                                       evaluation_time_sigma=2,         # for eval. time randomization
-                                       weight_mutation_probability=0.8,
-                                       weight_mutation_sigma=5,
-                                       param_mutation_probability=0.8,
-                                       param_mutation_sigma=5,
-                                       structural_mutation_probability=0.8,
-                                       max_num_generations=max_generations,
-                                       speciation_threshold=speciation_threshold)
-
-
-            gen_files = []
-
-            for file_name in os.listdir(self.path_to_log_dir):
-                if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
-                    gen_files.append(file_name)
-
-
-            # if we are reading an initial population from a file:
-            if len(gen_files) > 0:
-
-                gen_files = sorted(gen_files, key=lambda item: int(item.split('_')[1]))
-                last_gen_file = gen_files[-1]
-
-                num_generations = int(last_gen_file.split('_')[1]) + 1
-
-                num_brains_evaluated = pop_size*num_generations
-                learner.total_brains_evaluated = num_brains_evaluated
-                learner.generation_number = num_generations
-                # sort genotype files alphanumerically:
-
-
-
-                print "last generation file = {0}".format(last_gen_file)
-
-                init_brain_list, min_mark, max_mark = \
-                    get_brains_from_file(self.path_to_log_dir + last_gen_file, self.brain_spec)
-
-                print "Max historical mark = {0}".format(max_mark)
-
-                # set mutator's innovation number according to the max historical mark:
-                self.mutator.innovation_number = max_mark + 1
-
-                # initialize learner:
-                yield From(learner.initialize(world=self, init_genotypes=init_brain_list))
-
-            # if we don't have a file with an initial population, we generate it ourselves:
-            else:
-                # initialize learner:
-                yield From(learner.initialize(world=self))
-
-            self.add_learner(learner)
-
-        # if the state is being restored:
-        else:
-            # set new experiment parameters:
-            learner = self.learner_list[0]
-            learner.population_size = pop_size
-            learner.tournament_size = tournament_size
-            learner.evaluation_time = evaluation_time
-            learner.warmup_time = warmup_time
-            learner.num_children = num_children
-            learner.speciation_threshold = speciation_threshold
-            learner.max_generations = max_generations
-
-            print "WORLD RESTORED FROM {0}".format(self.world_snapshot_filename)
-            print "STATE RESTORED FROM {0}".format(self.snapshot_filename)
-
-            print "population size      set to {0}".format(learner.population_size)
-            print "tournament size      set to {0}".format(learner.tournament_size)
-            print "number of children   set to {0}".format(learner.num_children)
-            print "evaluation time      set to {0}".format(learner.evaluation_time)
-            print "warmup  time         set to {0}".format(warmup_time)
-            print "speciation threshold set to {0}".format(learner.speciation_threshold)
-            print "\nmax number of generations set to {0}".format(learner.max_generations)
-
-        # Request callback for the subscriber
-        def callback(data):
-            req = Request()
-            req.ParseFromString(data)
-
-        subscriber = self.manager.subscribe(
-            '/gazebo/default/request', 'gazebo.msgs.Request', callback)
-        yield From(subscriber.wait_for_connection())
-
-        # # sleep for 60 seconds:
-        # yield From(self.pause(False))
-        # yield From(sleep_sim_time(self, 60))
-        # yield From(self.pause(True))
-
-        # run loop:
-        while True:
-            for learner in self.learner_list:
-                result = yield From(learner.update(self, self.log_info))
-            if result:
-                break
-
-
-@trollius.coroutine
 def run():
     conf = parser.parse_args()
     conf.min_parts = 1
@@ -413,38 +102,6 @@ def run():
 
     print "WORLD CREATED"
     yield From(world.run(conf))
-
-
-def get_brains_from_file(brain_file_path, brain_spec):
-        '''
-        generate a population of brains by reading them from file
-        :param brain_file:
-        :return:
-        '''
-        brain_list = []
-        with open(brain_file_path, 'r') as brain_file:
-            yaml_string = ''
-            for line in brain_file:
-                if 'velocity' in line:
-                    if yaml_string != '':
-                        brain_list.append(yaml_to_genotype(yaml_string, brain_spec, keep_historical_marks=True))
-                        yaml_string = ''
-                    continue
-                yaml_string += line
-            brain_list.append(yaml_to_genotype(yaml_string, brain_spec, keep_historical_marks=True))
-
-        # find min and max historical marks:
-        min_mark, max_mark = brain_list[0].min_max_hist_mark()
-        for br in brain_list:
-            loc_min, loc_max = br.min_max_hist_mark()
-            if loc_min < min_mark:
-                min_mark = loc_min
-
-            if loc_max > max_mark:
-                max_mark = loc_max
-
-        return brain_list, min_mark, max_mark
-
 
 
 

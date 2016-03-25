@@ -32,9 +32,10 @@ class CoreComponentWithMics(CoreComponent):
         half_width = WIDTH / 2.0
         right_angle = 3.14159265/2.0
 
+        # rotates clockwise around axis by angle:
         mic_pose_1 = Pose(
             position=Vector3(0, half_width, 0),
-            rotation=Quaternion.from_angle_axis(angle=right_angle, axis=Vector3(1,0,0))
+            rotation=Quaternion.from_angle_axis(angle=right_angle, axis=Vector3(-1,0,0))
         )
 
         mic_pose_2 = Pose(
@@ -44,7 +45,7 @@ class CoreComponentWithMics(CoreComponent):
 
         mic_pose_3 = Pose(
             position=Vector3(0, -half_width, 0),
-            rotation=Quaternion.from_angle_axis(angle=right_angle, axis=Vector3(-1,0,0))
+            rotation=Quaternion.from_angle_axis(angle=right_angle, axis=Vector3(1,0,0))
         )
 
         mic_pose_4 = Pose(

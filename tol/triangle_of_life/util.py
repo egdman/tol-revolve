@@ -3,6 +3,10 @@ import math
 from sdfbuilder.math import Vector3, Quaternion
 
 
+def rotate_vertical(angle_radian):
+    return Quaternion.from_angle_axis(axis=Vector3(0,0,1), angle=angle_radian)
+
+
 def random_rotation():
     """
     :return:
