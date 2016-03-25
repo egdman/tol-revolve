@@ -14,7 +14,7 @@ from revolve.util import multi_future, wait_for
 from revolve.angle import Tree
 
 # ToL
-from ..util import Timers
+from ..util import Timers, StateSwitch
 from .encoding import Crossover, GeneticEncoding, validate_genotype
 from .convert import NeuralNetworkParser
 
@@ -28,7 +28,8 @@ class RobotLearner:
                  weight_mutation_probability, weight_mutation_sigma,
                  param_mutation_probability, param_mutation_sigma,
                  structural_mutation_probability, max_num_generations,
-                 speciation_threshold):
+                 speciation_threshold,
+                 repeat_evaluations=1):
         self.robot = robot
         self.active_brain = None
 
@@ -46,14 +47,13 @@ class RobotLearner:
         self.nn_parser = NeuralNetworkParser(brain_spec)
         self.mutator = mutator
 
-        self.timers = Timers(['evaluate', 'warmup'], world.get_world_time())
+#        self.timers = Timers(['evaluate', 'warmup'], world.get_world_time())
         self.evaluation_queue = deque()
         self.brain_fitness = {}
         self.brain_velocity = {}
         self.generation_number = 0
 
         self.total_brains_evaluated = 0
-
 
         # experiment parameters:
         self.pop_size = population_size
@@ -81,6 +81,14 @@ class RobotLearner:
         self.max_generations = max_num_generations
 
         self.speciation_threshold = speciation_threshold
+
+        self.repeat_evaluations = repeat_evaluations
+
+
+        self.state_switch = StateSwitch(['warmup', 'evaluate', 'next_brain'], world.get_world_time())
+
+        self.state_switch.set_duration('warmup', self.warmup_time)
+        self.state_switch.set_duration('evaluate', self.evaluation_time_actual)
 
 
     @trollius.coroutine
@@ -195,34 +203,20 @@ class RobotLearner:
 
 
     @trollius.coroutine
-    def update(self, world, logging_callback = None):
-        """
-        this method should be called from the main loop
-        it returns True if learning is over
+    def update(self, world, logging_callback=None):
+        old_state = self.state_switch.get_current_state()
+        state = self.state_switch.update(world.get_world_time())
 
-        :return: bool
-        """
+        # if old_state != state:
+        #     print 'state: {0}, time = {1}, fitness = {2}'.format(state, world.get_world_time(), self.get_fitness())
 
-        # # FOR DEBUG
-        # ################################################
-        # sys.stderr.write('warmup: {0}  evaluate: {1}  init_pos: [{2}, {3}], fitness = {4}\n'.format(
-        #     '-' if self.timers.is_it_time('warmup', self.warmup_time, world.get_world_time()) else '+',
-        #     '-' if self.timers.is_it_time('evaluate', self.evaluation_time_actual, world.get_world_time()) else '+',
-        #     self.initial_position[0], self.initial_position[1],
-        #     self.get_fitness()
-        # ))
-        # ################################################
+        if state == 'warmup':
+            self.reset_fitness()
 
-        # when evaluation is over:
-        if self.timers.is_it_time('evaluate', self.evaluation_time_actual, world.get_world_time()):
+        elif state == 'evaluate':
+            self.update_fitness()
 
-
-            # # FOR DEBUG
-            # ################################################
-            # print "world time: " + str(world.get_world_time())
-            # print "timer time: " + str(self.timers.get_last_time('evaluate'))
-            # ################################################
-
+        elif state == 'next_brain':
 
             print "Evaluation over"
 
@@ -261,9 +255,6 @@ class RobotLearner:
             self.total_brains_evaluated += 1
             self.evaluation_queue.popleft()
 
-            self.timers.reset('evaluate', world.get_world_time())
-            self.timers.reset('warmup', world.get_world_time())
-
             self.reset_fitness()
             # randomize evaluation time:
             self.evaluation_time_actual = self.evaluation_time + \
@@ -272,14 +263,11 @@ class RobotLearner:
             if self.evaluation_time_actual < 0:
                 self.evaluation_time_actual = 0.5
 
-        # if warmup is over, evaluate fitness:
-        if self.timers.is_it_time('warmup', self.warmup_time, world.get_world_time()):
-            self.update_fitness()
+            # set new evaluation time
+            self.state_switch.set_duration('evaluate', self.evaluation_time_actual)
 
-        # if it is still warming up, ignore displacement by resetting starting position to current:
-        else:
-            self.timers.reset('evaluate', world.get_world_time())
-            self.reset_fitness()
+            # switch state to 'warmup'
+            self.state_switch.switch_to_state('warmup')
 
 
         # if termination criteria are met, return True:
