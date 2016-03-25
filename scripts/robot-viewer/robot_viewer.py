@@ -33,10 +33,9 @@ from tol.config import parser
 from tol.manage import World
 from tol.logging import logger, output_console
 from tol.spec import get_body_spec, get_brain_spec
-from tol.triangle_of_life import RobotLearner
-from tol.triangle_of_life.encoding import Mutator, Crossover
-from tol.triangle_of_life.convert import NeuralNetworkParser, yaml_to_genotype
-from tol.triangle_of_life.util import random_rotation, rotate_vertical
+
+from tol.learning.convert import NeuralNetworkParser, yaml_to_genotype
+from tol.util import random_rotation, rotate_vertical
 
 
 # Log output to console

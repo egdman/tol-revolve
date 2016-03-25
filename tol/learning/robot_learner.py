@@ -14,7 +14,7 @@ from revolve.util import multi_future, wait_for
 from revolve.angle import Tree
 
 # ToL
-from . import Timers
+from ..util import Timers
 from .encoding import Crossover, GeneticEncoding, validate_genotype
 from .convert import NeuralNetworkParser
 
@@ -255,7 +255,7 @@ class RobotLearner:
             yield From(self.activate_brain(world, next_brain))
 
             # -----------------------------------------------------------------------------------
-            # if we are past this line, the sumulator did not crash while deleting a robot
+            # if we are past this line, the simulator did not crash while deleting a robot
             # -----------------------------------------------------------------------------------
 
             self.total_brains_evaluated += 1

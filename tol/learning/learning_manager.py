@@ -23,9 +23,10 @@ from ..config import parser
 from ..manage import World
 from ..logging import logger, output_console
 from ..spec import get_body_spec, get_brain_spec
-from ..triangle_of_life import RobotLearner
-from ..triangle_of_life.encoding import Mutator
-from ..triangle_of_life.convert import yaml_to_genotype
+
+from .robot_learner import RobotLearner
+from .encoding import Mutator
+from .convert import yaml_to_genotype
 
 
 
