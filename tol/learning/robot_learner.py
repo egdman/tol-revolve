@@ -227,12 +227,13 @@ class RobotLearner:
             print "last evaluated: {0}".format(self.active_brain)
             print "queue length = {0}".format(len(self.evaluation_queue))
             print "fitness (distance covered): {0}".format(self.fitness )
-            print "evaluation time was {0}s".format(self.evaluation_time_actual)
-  #          print "simulation time: {0}\n\n%%%%%%%%%%%%%%%%%%".format(world.get_world_time())
+            print "evaluation time was {0}s\n\n%%%%%%%%%%%%%%%%%%".format(self.evaluation_time_actual)
+  #          print "simulation time: {0}".format(world.get_world_time())
+
+            self.fitness_buffer.append(self.get_fitness() / self.evaluation_time_actual)
 
             # if repeated brain evaluation is not over
             if len(self.fitness_buffer) < self.repeat_evaluations:
-                self.fitness_buffer.append(self.get_fitness() / self.evaluation_time_actual)
 
                 # continue evaluating the same brain:
                 next_brain = self.active_brain
