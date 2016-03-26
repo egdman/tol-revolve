@@ -37,7 +37,8 @@ class LearningManager(World):
         self.fitness_filename = None
         self.fitness_file = None
         self.write_fitness = None
-        self.learner_list = []
+
+        self.learner = None
         self.path_to_log_dir = conf.output_directory + "/" + conf.log_directory + "/"
 
         try:
@@ -100,19 +101,15 @@ class LearningManager(World):
     @trollius.coroutine
     def get_snapshot_data(self):
         data = yield From(super(LearningManager, self).get_snapshot_data())
-        data['learners'] = self.learner_list
+        data['learner'] = self.learner
         data['innovation_number'] = self.mutator.innovation_number
         raise Return(data)
 
 
     def restore_snapshot(self, data):
         yield From(super(LearningManager, self).restore_snapshot(data))
-        self.learner_list = data['learners']
+        self.learner = data['learner']
         self.mutator.innovation_number = data['innovation_number']
-
-
-    def add_learner(self, learner):
-        self.learner_list.append(learner)
 
 
     def log_info(self, log_data):
@@ -164,26 +161,18 @@ class LearningManager(World):
         # ###############################################
 
         yield From(wait_for(self.pause(True)))
-        print "### time now is {0}".format(self.last_time)
 
         if not self.do_restore:
 
             with open(conf.test_bot,'r') as yamlfile:
                 bot_yaml = yamlfile.read()
 
-            pose = Pose(position=Vector3(0, 0, 0))
+
+            pose = Pose(position=Vector3(0, 0, 0.2))
             bot = yaml_to_robot(self.body_spec, self.brain_spec, bot_yaml)
             tree = Tree.from_body_brain(bot.body, bot.brain, self.body_spec)
 
             robot = yield From(wait_for(self.insert_robot(tree, pose)))
-
-            print "population size      set to {0}".format(pop_size)
-            print "tournament size      set to {0}".format(tournament_size)
-            print "number of children   set to {0}".format(num_children)
-            print "evaluation time      set to {0}".format(evaluation_time)
-            print "warmup  time         set to {0}".format(warmup_time)
-            print "speciation threshold set to {0}".format(speciation_threshold)
-            print "\nmax number of generations set to {0}".format(max_generations)
 
             learner = RobotLearner(world=self,
                                        robot=robot,
@@ -204,13 +193,10 @@ class LearningManager(World):
                                        max_num_generations=max_generations,
                                        speciation_threshold=speciation_threshold)
 
-
             gen_files = []
-
             for file_name in os.listdir(self.path_to_log_dir):
                 if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
                     gen_files.append(file_name)
-
 
             # if we are reading an initial population from a file:
             if len(gen_files) > 0:
@@ -219,16 +205,11 @@ class LearningManager(World):
                 last_gen_file = gen_files[-1]
 
                 num_generations = int(last_gen_file.split('_')[1]) + 1
-
                 num_brains_evaluated = pop_size*num_generations
-                learner.total_brains_evaluated = num_brains_evaluated
-                learner.generation_number = num_generations
-                # sort genotype files alphanumerically:
-
-
 
                 print "last generation file = {0}".format(last_gen_file)
 
+                # get list of brains from the last generation log file:
                 init_brain_list, min_mark, max_mark = \
                     get_brains_from_file(self.path_to_log_dir + last_gen_file, self.brain_spec)
 
@@ -237,20 +218,25 @@ class LearningManager(World):
                 # set mutator's innovation number according to the max historical mark:
                 self.mutator.innovation_number = max_mark + 1
 
-                # initialize learner:
+                learner.total_brains_evaluated = num_brains_evaluated
+                learner.generation_number = num_generations
+
+                # initialize learner with initial list of brains:
                 yield From(learner.initialize(world=self, init_genotypes=init_brain_list))
 
-            # if we don't have a file with an initial population, we generate it ourselves:
+            # if we are not reading initial population from file, we generate it:
             else:
-                # initialize learner:
+                # initialize learner without initial list of brains:
                 yield From(learner.initialize(world=self))
 
-            self.add_learner(learner)
+            learner.print_parameters()
+            self.learner = learner
 
         # if the state is being restored:
         else:
             # set new experiment parameters:
-            learner = self.learner_list[0]
+            learner = self.learner
+
             learner.population_size = pop_size
             learner.tournament_size = tournament_size
             learner.evaluation_time = evaluation_time
@@ -259,16 +245,10 @@ class LearningManager(World):
             learner.speciation_threshold = speciation_threshold
             learner.max_generations = max_generations
 
+            learner.print_parameters()
+
             print "WORLD RESTORED FROM {0}".format(self.world_snapshot_filename)
             print "STATE RESTORED FROM {0}".format(self.snapshot_filename)
-
-            print "population size      set to {0}".format(learner.population_size)
-            print "tournament size      set to {0}".format(learner.tournament_size)
-            print "number of children   set to {0}".format(learner.num_children)
-            print "evaluation time      set to {0}".format(learner.evaluation_time)
-            print "warmup  time         set to {0}".format(warmup_time)
-            print "speciation threshold set to {0}".format(learner.speciation_threshold)
-            print "\nmax number of generations set to {0}".format(learner.max_generations)
 
         # Request callback for the subscriber
         def callback(data):
@@ -284,10 +264,11 @@ class LearningManager(World):
         # yield From(sleep_sim_time(self, 60))
         # yield From(self.pause(True))
 
+        delete_learners = []
+
         # run loop:
         while True:
-            for learner in self.learner_list:
-                result = yield From(learner.update(self, self.log_info))
+            result = yield From(self.learner.update(self, self.log_info))
             if result:
                 break
 

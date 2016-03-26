@@ -435,3 +435,13 @@ class RobotLearner:
     def robot_to_genotype(self, robot):
         pb_robot = robot.tree.to_robot()
         return self.nn_parser.brain_to_genotype(pb_robot.brain, self.mutator)
+
+
+    def print_parameters(self):
+        print "population size      set to {0}".format(self.pop_size)
+        print "tournament size      set to {0}".format(self.tournament_size)
+        print "number of children   set to {0}".format(self.num_children)
+        print "evaluation time      set to {0}".format(self.evaluation_time)
+        print "warmup  time         set to {0}".format(self.warmup_time)
+        print "speciation threshold set to {0}".format(self.speciation_threshold)
+        print "max number of generations set to {0}".format(self.max_generations)
