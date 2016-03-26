@@ -10,7 +10,7 @@
       <max_step_size>0.005</max_step_size>
     
       <!-- Set to 0.0 to run as fast as possible -->
-      <real_time_update_rate>200.0</real_time_update_rate>
+      <real_time_update_rate>0.0</real_time_update_rate>
 
       <ode>
         <constraints>
@@ -39,5 +39,6 @@
     </include>
 
     <plugin name="tol-control" filename="libtolworldcontrol.so" />
+    <plugin name="sound-plugin" filename="libtolsoundplugin.so" />
   </world>
 </sdf>

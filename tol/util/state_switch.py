@@ -5,7 +5,7 @@ class State:
     def __init__(self, name, next_name):
         self.name = name
         self.next_name = next_name
-        self.duration = 1.0
+        self.duration = 9999.0
 
     def set_duration(self, duration):
         self.duration = duration

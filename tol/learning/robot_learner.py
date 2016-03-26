@@ -21,15 +21,7 @@ from .convert import NeuralNetworkParser
 
 class RobotLearner:
 
-    def __init__(self, world, robot, body_spec, brain_spec, mutator,
-                 population_size, tournament_size, num_children,
-                 evaluation_time, warmup_time,
-                 evaluation_time_sigma,
-                 weight_mutation_probability, weight_mutation_sigma,
-                 param_mutation_probability, param_mutation_sigma,
-                 structural_mutation_probability, max_num_generations,
-                 speciation_threshold,
-                 repeat_evaluations=1):
+    def __init__(self, world, robot, body_spec, brain_spec, mutator, conf):
         self.robot = robot
         self.active_brain = None
 
@@ -55,43 +47,51 @@ class RobotLearner:
 
         self.total_brains_evaluated = 0
 
-        # experiment parameters:
-        self.pop_size = population_size
+        # set experiment parameters:
+        self.set_parameters(conf)
+
+        # list of fitnesses for repeated evaluations:
+        self.fitness_buffer = []
+
+        # actual eval. time that is a gaussian random variable centered around the self.evaluation_time:
+        self.evaluation_time_actual = self.evaluation_time
+
+        # set durations of warmup and evaluation states:
+        self.state_switch = StateSwitch(['warmup', 'evaluate', 'next_brain'], world.get_world_time())
+        self.state_switch.set_duration('warmup', self.warmup_time)
+        self.state_switch.set_duration('evaluate', self.evaluation_time_actual)
+
+    def set_parameters(self, conf):
+        """
+        convenience function to set learning parameters from the config object
+        :param conf:
+        :return:
+        """
+        self.pop_size = conf.population_size
         if self.pop_size < 2:
             self.pop_size = 2
 
-        self.tournament_size = tournament_size
+        self.tournament_size = conf.tournament_size
         if self.tournament_size > self.pop_size:
             self.tournament_size = self.pop_size
         if self.tournament_size < 2:
             self.tournament_size = 2
 
-        self.num_children = num_children
+        self.num_children = conf.num_children
 
-        self.evaluation_time = evaluation_time
-        self.warmup_time = warmup_time
-        self.evaluation_time_sigma = evaluation_time_sigma
-        self.evaluation_time_actual = evaluation_time
+        self.evaluation_time = conf.evaluation_time
+        self.warmup_time = conf.warmup_time
+        self.evaluation_time_sigma = conf.evaluation_time_sigma
 
-        self.weight_mutation_probability = weight_mutation_probability
-        self.weight_mutation_sigma = weight_mutation_sigma
-        self.param_mutation_probability = param_mutation_probability
-        self.param_mutation_sigma = param_mutation_sigma
-        self.structural_mutation_probability = structural_mutation_probability
-        self.max_generations = max_num_generations
+        self.weight_mutation_probability = conf.weight_mutation_probability
+        self.weight_mutation_sigma = conf.weight_mutation_sigma
+        self.param_mutation_probability = conf.param_mutation_probability
+        self.param_mutation_sigma = conf.param_mutation_sigma
+        self.structural_mutation_probability = conf.structural_mutation_probability
+        self.max_generations = conf.max_generations
+        self.speciation_threshold = conf.speciation_threshold
+        self.repeat_evaluations = conf.repeat_evaluations
 
-        self.speciation_threshold = speciation_threshold
-
-        self.repeat_evaluations = repeat_evaluations
-
-        # list of fitnesses for repeated evaluations:
-        self.fitness_buffer = []
-
-        # set durations of warmup and evaluation states:
-        self.state_switch = StateSwitch(['warmup', 'evaluate', 'next_brain'], world.get_world_time())
-
-        self.state_switch.set_duration('warmup', self.warmup_time)
-        self.state_switch.set_duration('evaluate', self.evaluation_time_actual)
 
 
     @trollius.coroutine
@@ -465,3 +465,9 @@ class RobotLearner:
         print "speciation threshold set to {0}".format(self.speciation_threshold)
         print "evaluation repeats   set to {0}".format(self.repeat_evaluations)
         print "max number of generations set to {0}".format(self.max_generations)
+
+
+
+
+# class RobotLearnerSoundGait(RobotLearner):
+#     def __init__(self):

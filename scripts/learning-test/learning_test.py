@@ -55,12 +55,12 @@ parser.add_argument(
     "the new generation will consist of this many children and the rest will be filled with the best of parents"
 )
 
-parser.add_argument(
-    '--eval-time',
-    default=15,
-    type=float,
-    help="time of individual evaluation in simulation seconds"
-)
+# parser.add_argument(
+#     '--evaluation-time',
+#     default=15,
+#     type=float,
+#     help="time of individual evaluation in simulation seconds"
+# )
 
 parser.add_argument(
     '--test-bot',
@@ -71,7 +71,7 @@ parser.add_argument(
 parser.add_argument(
     '--speciation-threshold',
     type=float,
-    default=0.5,
+    default=0.0,
     help="similarity threshold for separating genotypes into different species;"
     "must be between 0 and 1; the smaller it is, the more similar genotypes have to be"
     "to be considered the same species"

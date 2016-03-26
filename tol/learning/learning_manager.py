@@ -140,29 +140,16 @@ class LearningManager(World):
     @trollius.coroutine
     def run(self, conf):
 
-        # brain population size:
-        pop_size = conf.population_size
-        tournament_size = conf.tournament_size
-        evaluation_time = conf.eval_time  # in simulation seconds
-        warmup_time = conf.warmup_time # in simulation seconds
-        num_children = conf.num_children
-        speciation_threshold = conf.speciation_threshold # similarity threshold for fitness sharing
-        repeat_evaluations = conf.repeat_evaluations
-
-        # after how many generations we stop the experiment:
-        max_generations = conf.max_generations
-
-
-        # # FOR DEBUG
-        # ###############################################
-        # # brain population size:
-        # pop_size = 4
-        # tournament_size = 2
-        # evaluation_time = 2  # in simulation seconds
-        # ###############################################
+        conf.evaluation_time_sigma = 2.0
+        conf.weight_mutation_probability = 0.8
+        conf.weight_mutation_sigma = 5.0
+        conf.param_mutation_probability = 0.8
+        conf.param_mutation_sigma = 5.0
+        conf.structural_mutation_probability = 0.8
 
         yield From(wait_for(self.pause(True)))
 
+        # if we are starting a new experiment (not restoring from a snapshot)
         if not self.do_restore:
 
             with open(conf.test_bot,'r') as yamlfile:
@@ -180,20 +167,7 @@ class LearningManager(World):
                                        body_spec=self.body_spec,
                                        brain_spec=self.brain_spec,
                                        mutator=self.mutator,
-                                       population_size=pop_size,
-                                       tournament_size=tournament_size,
-                                       num_children=num_children,
-                                       evaluation_time=evaluation_time, # in simulation seconds
-                                       warmup_time=warmup_time, # in simulation seconds
-                                       evaluation_time_sigma=2,         # for eval. time randomization
-                                       weight_mutation_probability=0.8,
-                                       weight_mutation_sigma=5,
-                                       param_mutation_probability=0.8,
-                                       param_mutation_sigma=5,
-                                       structural_mutation_probability=0.8,
-                                       max_num_generations=max_generations,
-                                       speciation_threshold=speciation_threshold,
-                                       repeat_evaluations=repeat_evaluations)
+                                       conf=conf)
 
             gen_files = []
             for file_name in os.listdir(self.path_to_log_dir):
@@ -207,7 +181,7 @@ class LearningManager(World):
                 last_gen_file = gen_files[-1]
 
                 num_generations = int(last_gen_file.split('_')[1]) + 1
-                num_brains_evaluated = pop_size*num_generations
+                num_brains_evaluated = conf.population_size*num_generations
 
                 print "last generation file = {0}".format(last_gen_file)
 
@@ -231,23 +205,15 @@ class LearningManager(World):
                 # initialize learner without initial list of brains:
                 yield From(learner.initialize(world=self))
 
+
             learner.print_parameters()
             self.learner = learner
 
-        # if the state is being restored:
+        # if we are restoring the state from a snapshot
         else:
             # set new experiment parameters:
             learner = self.learner
-
-            learner.population_size = pop_size
-            learner.tournament_size = tournament_size
-            learner.evaluation_time = evaluation_time
-            learner.warmup_time = warmup_time
-            learner.num_children = num_children
-            learner.speciation_threshold = speciation_threshold
-            learner.max_generations = max_generations
-            learner.repeat_evaluations = repeat_evaluations
-
+            learner.set_parameters(conf)
             learner.print_parameters()
 
             print "WORLD RESTORED FROM {0}".format(self.world_snapshot_filename)
