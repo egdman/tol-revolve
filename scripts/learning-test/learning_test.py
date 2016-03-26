@@ -13,7 +13,10 @@ import trollius
 from trollius import From, Return, Future
 from pygazebo.msg.request_pb2 import Request
 
-#ToL
+# Revolve
+from revolve.build.util import in_grams, in_mm
+
+# ToL
 from tol.config import parser
 from tol.logging import logger, output_console
 from tol.learning import LearningManager
@@ -106,6 +109,16 @@ def run():
     conf.pose_update_frequency = 5 # in simulation Hz
 
     world = yield From(LearningManager.create(conf))
+
+    # # insert sound dummy:
+    # model_name = yield From(insert_dummy(position=Vector3(20, 0, in_mm(25))))
+    #
+    # # register dummy as a sound source:
+    # yield From(world.attach_sound_source(name=model_name, frequency=frequency))
+    #
+    # # set sound plugin update frequency:
+    # yield From(world.set_sound_update_frequency(update_frequency=2.0))
+
 
     print "WORLD CREATED"
     yield From(world.run(conf))

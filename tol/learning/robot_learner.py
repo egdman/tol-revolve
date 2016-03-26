@@ -12,6 +12,7 @@ from sdfbuilder import Pose, Model, Link, SDF
 # Revolve
 from revolve.util import multi_future, wait_for
 from revolve.angle import Tree
+from revolve.build.util import in_grams, in_mm
 
 # ToL
 from ..util import Timers, StateSwitch, rotate_vertical
@@ -104,9 +105,8 @@ class RobotLearner:
             self.evaluation_queue.append(br)
 
         first_brain = self.evaluation_queue.popleft()
-
-        self.reset_fitness()
         yield From(self.activate_brain(world, first_brain))
+        self.reset_fitness()
 
 
     def get_init_brains(self):
@@ -479,9 +479,6 @@ class SoundGaitLearner(RobotLearner):
         RobotLearner.__init__(self, world, robot, body_spec, brain_spec, mutator, conf)
 
 
-    def set_sound_source_pos(self, position):
-        self.sound_source_pos = position
-
     def reset_fitness(self):
         RobotLearner.reset_fitness(self)
         self.init_distance = math.sqrt(pow(self.sound_source_pos[0] - self.initial_position[0], 2) + \
@@ -493,4 +490,25 @@ class SoundGaitLearner(RobotLearner):
                                  pow(current_position[1] - self.sound_source_pos[1], 2))
         self.fitness = self.init_distance - current_distance
 
+
+    @trollius.coroutine
+    def insert_dummy(self, world, position):
+        self.sound_source_pos = position
+        sound_pose = Pose(position=position)
+
+        sound_src_link = Link("sound_src_1_link")
+    #    sound_src_link.make_cylinder(mass=in_grams(100), radius=in_mm(50), length=in_mm(20))
+        sound_src_link.make_box(in_grams(100), in_mm(50), in_mm(50), in_mm(50))
+
+        sound_src_model = Model("sound_src_1")
+        sound_src_model.add_element(sound_src_link)
+
+        sound_src_sdf = SDF()
+        sound_src_sdf.add_element(sound_src_model)
+        sound_src_sdf.elements[0].set_pose(sound_pose)
+        model_name = yield From(wait_for(world.insert_model_callback(sound_src_sdf)))
+
+        print 'Dummy inserted at [{0}, {1}, {2}]'.format(position.x, position.y, position.z)
+
+        raise Return(model_name)
 

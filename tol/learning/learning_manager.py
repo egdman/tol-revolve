@@ -17,6 +17,7 @@ from sdfbuilder import Pose
 from revolve.util import wait_for
 from revolve.convert.yaml import yaml_to_robot
 from revolve.angle import Tree
+from revolve.build.util import in_grams, in_mm
 
 #ToL
 from ..config import parser
@@ -24,7 +25,7 @@ from ..manage import World
 from ..logging import logger, output_console
 from ..spec import get_body_spec, get_brain_spec
 
-from .robot_learner import RobotLearner
+from .robot_learner import RobotLearner, SoundGaitLearner
 from .encoding import Mutator
 from .convert import yaml_to_genotype
 
@@ -38,6 +39,7 @@ class LearningManager(World):
         self.fitness_file = None
         self.write_fitness = None
 
+        self.dummy_name = "none"
         self.learner = None
         self.path_to_log_dir = conf.output_directory + "/" + conf.log_directory + "/"
 
@@ -103,6 +105,7 @@ class LearningManager(World):
         data = yield From(super(LearningManager, self).get_snapshot_data())
         data['learner'] = self.learner
         data['innovation_number'] = self.mutator.innovation_number
+        data['dummy_name'] = self.dummy_name
         raise Return(data)
 
 
@@ -110,6 +113,7 @@ class LearningManager(World):
         yield From(super(LearningManager, self).restore_snapshot(data))
         self.learner = data['learner']
         self.mutator.innovation_number = data['innovation_number']
+        self.dummy_name = data['dummy_name']
 
 
     def log_info(self, log_data):
@@ -162,12 +166,15 @@ class LearningManager(World):
 
             robot = yield From(wait_for(self.insert_robot(tree, pose)))
 
-            learner = RobotLearner(world=self,
+            learner = SoundGaitLearner(world=self,
                                        robot=robot,
                                        body_spec=self.body_spec,
                                        brain_spec=self.brain_spec,
                                        mutator=self.mutator,
                                        conf=conf)
+
+            # insert sound source dummy:
+            self.dummy_name = yield From(learner.insert_dummy(self, Vector3(20, 0, in_mm(26))))
 
             gen_files = []
             for file_name in os.listdir(self.path_to_log_dir):
@@ -219,6 +226,7 @@ class LearningManager(World):
             print "WORLD RESTORED FROM {0}".format(self.world_snapshot_filename)
             print "STATE RESTORED FROM {0}".format(self.snapshot_filename)
 
+
         # Request callback for the subscriber
         def callback(data):
             req = Request()
@@ -228,12 +236,8 @@ class LearningManager(World):
             '/gazebo/default/request', 'gazebo.msgs.Request', callback)
         yield From(subscriber.wait_for_connection())
 
-        # # sleep for 60 seconds:
-        # yield From(self.pause(False))
-        # yield From(sleep_sim_time(self, 60))
-        # yield From(self.pause(True))
-
-        delete_learners = []
+        yield From(self.set_sound_update_frequency(update_frequency=2.0))
+        yield From(self.attach_sound_source(name=self.dummy_name, frequency=500))
 
         # run loop:
         while True:

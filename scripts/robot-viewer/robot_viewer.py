@@ -117,21 +117,23 @@ def run():
     print "INSERTING ROBOT!!!!!!!!!!!!!!!!!!!!!!"
     robot = yield From(wait_for(world.insert_robot(tree, pose)))
 
-#     print "INSERTING SOUND OBJECTS!!!!!!!!"
-#     sound_src_link = Link("sound_src_1_link")
-# #    sound_src_link.make_cylinder(mass=in_grams(100), radius=in_mm(50), length=in_mm(20))
-#     sound_src_link.make_box(in_grams(100), in_mm(50), in_mm(50), in_mm(50))
-#
-#     sound_src_model = Model("sound_src_1")
-#     sound_src_model.add_element(sound_src_link)
-#
-#     sound_src_sdf = SDF()
-#     sound_src_sdf.add_element(sound_src_model)
-#
-#     model_name = yield From(wait_for(world.insert_model_callback(sound_src_sdf)))
-#
-#     yield From(world.set_sound_update_frequency(update_frequency=0.5))
-#     yield From(world.attach_sound_source(name=model_name, frequency=500))
+    print "INSERTING SOUND OBJECTS!!!!!!!!"
+    sound_pose = Pose(position=Vector3(-2, -2, 0.5))
+
+    sound_src_link = Link("sound_src_1_link")
+#    sound_src_link.make_cylinder(mass=in_grams(100), radius=in_mm(50), length=in_mm(20))
+    sound_src_link.make_box(in_grams(100), in_mm(50), in_mm(50), in_mm(50))
+
+    sound_src_model = Model("sound_src_1")
+    sound_src_model.add_element(sound_src_link)
+
+    sound_src_sdf = SDF()
+    sound_src_sdf.add_element(sound_src_model)
+    sound_src_sdf.elements[0].set_pose(sound_pose)
+    model_name = yield From(wait_for(world.insert_model_callback(sound_src_sdf)))
+
+    yield From(world.set_sound_update_frequency(update_frequency=0.5))
+    yield From(world.attach_sound_source(name=model_name, frequency=500))
 
     yield From(world.pause(False))
 
