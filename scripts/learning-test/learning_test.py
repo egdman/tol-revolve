@@ -85,6 +85,13 @@ parser.add_argument(
          'the experiment stops when it reaches this number of generations'
 )
 
+parser.add_argument(
+    '--repeat-evaluations',
+    type=int,
+    default=1,
+    help='number of evaluations per brain'
+)
+
 
 @trollius.coroutine
 def run():

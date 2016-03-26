@@ -14,7 +14,7 @@ from revolve.util import multi_future, wait_for
 from revolve.angle import Tree
 
 # ToL
-from ..util import Timers, StateSwitch
+from ..util import Timers, StateSwitch, rotate_vertical
 from .encoding import Crossover, GeneticEncoding, validate_genotype
 from .convert import NeuralNetworkParser
 
@@ -84,7 +84,10 @@ class RobotLearner:
 
         self.repeat_evaluations = repeat_evaluations
 
+        # list of fitnesses for repeated evaluations:
+        self.fitness_buffer = []
 
+        # set durations of warmup and evaluation states:
         self.state_switch = StateSwitch(['warmup', 'evaluate', 'next_brain'], world.get_world_time())
 
         self.state_switch.set_duration('warmup', self.warmup_time)
@@ -164,7 +167,10 @@ class RobotLearner:
 
         # create and insert robot with new brain:
         tree = Tree.from_body_brain(pb_body, pb_brain, self.body_spec)
-        pose = Pose(position=Vector3(0, 0, 0))
+
+        pose = Pose(position=Vector3(0, 0, 0.2),
+                    rotation=rotate_vertical(random.random()*3.1415*2.0))
+
         self.robot = yield From(wait_for(world.insert_robot(tree, pose)))
 
 
@@ -191,9 +197,6 @@ class RobotLearner:
         # displacement from the starting position:
         displacement = math.sqrt(pow(current_position[0] - self.initial_position[0], 2) + \
                                  pow(current_position[1] - self.initial_position[1], 2))
-
-        # # fitness is a combination of displacement and traveled distance:
-        # self.fitness = 5*displacement + self.traveled_distance
 
         self.fitness = displacement
 
@@ -225,35 +228,50 @@ class RobotLearner:
             print "queue length = {0}".format(len(self.evaluation_queue))
             print "fitness (distance covered): {0}".format(self.fitness )
             print "evaluation time was {0}s".format(self.evaluation_time_actual)
-            print "simulation time: {0}\n\n%%%%%%%%%%%%%%%%%%".format(world.get_world_time())
+  #          print "simulation time: {0}\n\n%%%%%%%%%%%%%%%%%%".format(world.get_world_time())
 
-            self.brain_fitness[self.active_brain] = self.get_fitness() / self.evaluation_time_actual
-            self.brain_velocity[self.active_brain] =  self.get_fitness() / self.evaluation_time_actual
+            # if repeated brain evaluation is not over
+            if len(self.fitness_buffer) < self.repeat_evaluations:
+                self.fitness_buffer.append(self.get_fitness() / self.evaluation_time_actual)
+
+                # continue evaluating the same brain:
+                next_brain = self.active_brain
+
+            # if repeated brain evaluation is over
+            else:
+                aver_fitness = sum(self.fitness_buffer) / float(len(self.fitness_buffer))
+
+                self.brain_fitness[self.active_brain] = aver_fitness
+                self.brain_velocity[self.active_brain] = aver_fitness
+                print "Brain evaluations are over, average result = {0} ".format(aver_fitness)
+
+                # if all brains are evaluated, produce new generation:
+                if len(self.evaluation_queue) == 0:
+
+                    # distribute fitness based on similarity:
+                    self.share_fitness()
+
+                    # this method fills the evaluation queue with new brains:
+                    self.produce_new_generation(logging_callback)
+                    self.generation_number += 1
+
+                # continue evaluating brains from the queue:
+                next_brain = self.evaluation_queue[0]
 
             # make snapshot:
             yield From(world.create_snapshot())
 
-
-            # if all brains are evaluated, produce new generation:
-            if len(self.evaluation_queue) == 0:
-
-                # distribute fitness based on similarity:
-                self.share_fitness()
-
-                # this method fills the evaluation queue with new brains:
-                self.produce_new_generation(logging_callback)
-                self.generation_number += 1
-
-            # continue evaluating brains from the queue:
-            next_brain = self.evaluation_queue[0]
+            # insert the next brain:
             yield From(self.activate_brain(world, next_brain))
 
             # -----------------------------------------------------------------------------------
-            # if we are past this line, the simulator did not crash while deleting a robot
+            # if we are past this line, the simulator did not crash while inserting a new brain
             # -----------------------------------------------------------------------------------
 
-            self.total_brains_evaluated += 1
-            self.evaluation_queue.popleft()
+            if len(self.fitness_buffer) >= self.repeat_evaluations:
+                del self.fitness_buffer[:]
+                self.total_brains_evaluated += 1
+                self.evaluation_queue.popleft()
 
             self.reset_fitness()
             # randomize evaluation time:
@@ -444,4 +462,5 @@ class RobotLearner:
         print "evaluation time      set to {0}".format(self.evaluation_time)
         print "warmup  time         set to {0}".format(self.warmup_time)
         print "speciation threshold set to {0}".format(self.speciation_threshold)
+        print "evaluation repeats   set to {0}".format(self.repeat_evaluations)
         print "max number of generations set to {0}".format(self.max_generations)

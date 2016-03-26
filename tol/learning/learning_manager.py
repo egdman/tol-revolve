@@ -147,6 +147,7 @@ class LearningManager(World):
         warmup_time = conf.warmup_time # in simulation seconds
         num_children = conf.num_children
         speciation_threshold = conf.speciation_threshold # similarity threshold for fitness sharing
+        repeat_evaluations = conf.repeat_evaluations
 
         # after how many generations we stop the experiment:
         max_generations = conf.max_generations
@@ -191,7 +192,8 @@ class LearningManager(World):
                                        param_mutation_sigma=5,
                                        structural_mutation_probability=0.8,
                                        max_num_generations=max_generations,
-                                       speciation_threshold=speciation_threshold)
+                                       speciation_threshold=speciation_threshold,
+                                       repeat_evaluations=repeat_evaluations)
 
             gen_files = []
             for file_name in os.listdir(self.path_to_log_dir):
@@ -244,6 +246,7 @@ class LearningManager(World):
             learner.num_children = num_children
             learner.speciation_threshold = speciation_threshold
             learner.max_generations = max_generations
+            learner.repeat_evaluations = repeat_evaluations
 
             learner.print_parameters()
 

@@ -1,5 +1,5 @@
 #!/bin/bash
 # Start learning test with one robot with supervisor.
 
-python start.py --output-directory output --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --eval-time 30 --warmup-time 3 --speciation-threshold 0.025 --test-bot "../testBots/proper_snake" --max-generations 10000
+python start.py --output-directory output --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --eval-time 30 --warmup-time 3 --speciation-threshold 0.025 --test-bot "../testBots/proper_snake" --max-generations 10000 --repeat-evaluations 4
 
