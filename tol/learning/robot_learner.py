@@ -31,8 +31,6 @@ class RobotLearner:
         self.initial_position = None
         self.last_position = None
 
-        self.reset_fitness()
-
         self.brain_spec = brain_spec
         self.body_spec = body_spec
 
@@ -107,6 +105,7 @@ class RobotLearner:
 
         first_brain = self.evaluation_queue.popleft()
 
+        self.reset_fitness()
         yield From(self.activate_brain(world, first_brain))
 
 
@@ -469,5 +468,29 @@ class RobotLearner:
 
 
 
-# class RobotLearnerSoundGait(RobotLearner):
-#     def __init__(self):
+class SoundGaitLearner(RobotLearner):
+    def __init__(self, world, robot, body_spec, brain_spec, mutator, conf):
+        # coordinates of the sound source:
+        self.sound_source_pos = Vector3(0,0,0)
+
+        # initial distance from robot to source:
+        self.init_distance = 0
+
+        RobotLearner.__init__(self, world, robot, body_spec, brain_spec, mutator, conf)
+
+
+    def set_sound_source_pos(self, position):
+        self.sound_source_pos = position
+
+    def reset_fitness(self):
+        RobotLearner.reset_fitness(self)
+        self.init_distance = math.sqrt(pow(self.sound_source_pos[0] - self.initial_position[0], 2) + \
+                                 pow(self.sound_source_pos[1] - self.initial_position[1], 2))
+
+    def update_fitness(self):
+        current_position = self.robot.last_position
+        current_distance = math.sqrt(pow(current_position[0] - self.sound_source_pos[0], 2) + \
+                                 pow(current_position[1] - self.sound_source_pos[1], 2))
+        self.fitness = self.init_distance - current_distance
+
+
