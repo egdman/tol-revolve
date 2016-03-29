@@ -168,7 +168,9 @@ class RobotLearner:
         tree = Tree.from_body_brain(pb_body, pb_brain, self.body_spec)
 
         pose = Pose(position=Vector3(0, 0, 0.2),
-                    rotation=rotate_vertical(random.random()*3.1415*2.0))
+         #           rotation=rotate_vertical(3.1415*2.0*len(self.fitness_buffer) / float(self.repeat_evaluations))
+                     rotation=rotate_vertical((2.0*random.random() - 1.0)*3.1415*0.25)
+                    )
 
         self.robot = yield From(wait_for(world.insert_robot(tree, pose)))
 
@@ -476,7 +478,10 @@ class SoundGaitLearner(RobotLearner):
         # initial distance from robot to source:
         self.init_distance = 0
 
+
         RobotLearner.__init__(self, world, robot, body_spec, brain_spec, mutator, conf)
+    def set_sound_src_pos(self, position):
+        self.sound_source_pos = position
 
 
     def reset_fitness(self):
@@ -489,26 +494,3 @@ class SoundGaitLearner(RobotLearner):
         current_distance = math.sqrt(pow(current_position[0] - self.sound_source_pos[0], 2) + \
                                  pow(current_position[1] - self.sound_source_pos[1], 2))
         self.fitness = self.init_distance - current_distance
-
-
-    @trollius.coroutine
-    def insert_dummy(self, world, position):
-        self.sound_source_pos = position
-        sound_pose = Pose(position=position)
-
-        sound_src_link = Link("sound_src_1_link")
-    #    sound_src_link.make_cylinder(mass=in_grams(100), radius=in_mm(50), length=in_mm(20))
-        sound_src_link.make_box(in_grams(100), in_mm(50), in_mm(50), in_mm(50))
-
-        sound_src_model = Model("sound_src_1")
-        sound_src_model.add_element(sound_src_link)
-
-        sound_src_sdf = SDF()
-        sound_src_sdf.add_element(sound_src_model)
-        sound_src_sdf.elements[0].set_pose(sound_pose)
-        model_name = yield From(wait_for(world.insert_model_callback(sound_src_sdf)))
-
-        print 'Dummy inserted at [{0}, {1}, {2}]'.format(position.x, position.y, position.z)
-
-        raise Return(model_name)
-

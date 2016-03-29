@@ -16,6 +16,8 @@ from pygazebo.msg import world_control_pb2, poses_stamped_pb2, world_stats_pb2
 
 # Revolve / sdfbuilder
 from revolve.angle import Tree, Crossover, Mutator, WorldManager
+from revolve.build.util import in_grams, in_mm
+
 from sdfbuilder.math import Vector3
 from sdfbuilder import SDF, Model, Pose, Link
 
@@ -81,6 +83,8 @@ class World(WorldManager):
         # to prevent another one from starting (which cannot happen now
         # but might in a more complicated yielding structure).
         self._reproducing = False
+
+        self.num_dummies = 0
 
         # Write settings to config file
         if self.output_directory:
@@ -294,6 +298,33 @@ class World(WorldManager):
         future = yield From(self.request_handler.do_gazebo_request("add_sound_source", data=name, dbl_data=frequency))
         raise Return(future)
 
+
+    @trollius.coroutine
+    def insert_dummy(self, position, length=0.1, width=0.1, height=0.1):
+
+        z_insert = height / 2.0 + 0.005
+
+        if position.z > z_insert:
+            z_insert = position.z
+
+        dummy_pose = Pose(position=Vector3(position.x, position.y, z_insert))
+        dummy_id = self.num_dummies
+
+        dummy_link = Link("dummy_{0}_link".format(dummy_id))
+        dummy_link.make_box(in_grams(100), length, width, height)
+
+        dummy_model = Model("dummy_{0}".format(dummy_id))
+        dummy_model.add_element(dummy_link)
+
+        dummy_sdf = SDF()
+        dummy_sdf.add_element(dummy_model)
+        dummy_sdf.elements[0].set_pose(dummy_pose)
+        model_name = yield From(self.insert_model_callback(dummy_sdf))
+        self.num_dummies += 1
+
+        print('Dummy inserted at [{0}, {1}, {2}]'.format(position.x, position.y, z_insert))
+
+        raise Return(model_name)
 
 
 class Highlight(Model):

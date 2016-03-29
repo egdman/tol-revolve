@@ -1,0 +1,141 @@
+---
+body:
+  id          : Core
+  type        : CoreWithMics
+  children    :
+    0:
+      id          : Wheel00
+      type        : ActiveWheel
+      orientation : 0
+      params      :
+        radius      : 30
+    1:
+      id          : Wheel01
+      type        : ActiveWheel
+      orientation : 0
+      params      :
+        radius      : 30
+    2:
+      id          : TailBlock00
+      type        : FixedBrick
+      orientation : 0
+    3:
+      id          : TailBlock01
+      type        : FixedBrick
+      orientation : 0
+    
+
+brain:
+#  # extra input neuron (bias)
+#  neurons:
+#    Core-hidden-0:
+#      id: Core-hidden-0
+#      layer: hidden
+#      part_id: Core
+#      type: Oscillator
+
+
+  connections:
+  - src: Core-in-0
+    dst: Wheel00-out-0
+    weight: 1
+
+  - src: Core-in-0
+    dst: Wheel01-out-0
+    weight: 1
+
+
+
+  - src: Core-in-1
+    dst: Wheel00-out-0
+    weight: 1
+
+  - src: Core-in-1
+    dst: Wheel01-out-0
+    weight: 1
+
+
+
+  - src: Core-in-2
+    dst: Wheel00-out-0
+    weight: 1
+
+  - src: Core-in-2
+    dst: Wheel01-out-0
+    weight: 1
+
+
+
+  - src: Core-in-3
+    dst: Wheel00-out-0
+    weight: 1
+
+  - src: Core-in-3
+    dst: Wheel01-out-0
+    weight: 1
+
+
+
+  - src: Core-in-4
+    dst: Wheel00-out-0
+    weight: 1
+
+  - src: Core-in-4
+    dst: Wheel01-out-0
+    weight: 1
+
+
+
+  - src: Core-in-5
+    dst: Wheel00-out-0
+    weight: 1
+
+  - src: Core-in-5
+    dst: Wheel01-out-0
+    weight: 1
+
+
+
+  - src: Core-in-6
+    dst: Wheel00-out-0
+    weight: 1
+
+  - src: Core-in-6
+    dst: Wheel01-out-0
+    weight: 1
+
+
+
+  - src: Core-in-7
+    dst: Wheel00-out-0
+    weight: 1
+
+  - src: Core-in-7
+    dst: Wheel01-out-0
+    weight: 1
+
+
+
+  - src: Core-in-8
+    dst: Wheel00-out-0
+    weight: 1
+
+  - src: Core-in-8
+    dst: Wheel01-out-0
+    weight: 1
+
+
+
+  - src: Core-in-9
+    dst: Wheel00-out-0
+    weight: 1
+
+  - src: Core-in-9
+    dst: Wheel01-out-0
+    weight: 1
+
+#  params:
+#    Core-hidden-0:
+#      period: 0.5
+#      phase_offset: 0
+#      amplitude: 1

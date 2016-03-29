@@ -77,14 +77,14 @@ def get_body_spec(conf):
         #         ParamSpec("radius", min_value=40, max_value=80, default=60, epsilon=conf.mutation_epsilon)
         #     ]
         # ),
-        # "ActiveWheel": PartSpec(
-        #     body_part=ActiveWheel,
-        #     arity=1,
-        #     outputs=1,
-        #     params=color_params + [
-        #         ParamSpec("radius", min_value=40, max_value=80, default=60, epsilon=conf.mutation_epsilon)
-        #     ]
-        # ),
+        "ActiveWheel": PartSpec(
+            body_part=ActiveWheel,
+            arity=1,
+            outputs=1,
+            params=color_params + [
+                ParamSpec("radius", min_value=40, max_value=80, default=60, epsilon=conf.mutation_epsilon)
+            ]
+        ),
         # "Cardan": PartSpec(
         #     body_part=Cardan,
         #     arity=2,
@@ -102,14 +102,14 @@ def get_body_spec(conf):
         #     outputs=1,
         #     params=color_params
         # ),
-        # "ActiveWheg": PartSpec(
-        #     body_part=ActiveWheg,
-        #     arity=2,
-        #     outputs=1,
-        #     params=color_params + [
-        #         ParamSpec("radius", min_value=40, max_value=80, default=60, epsilon=conf.body_mutation_epsilon)
-        #     ]
-        # )
+        "ActiveWheg": PartSpec(
+            body_part=ActiveWheg,
+            arity=2,
+            outputs=1,
+            params=color_params + [
+                ParamSpec("radius", min_value=40, max_value=80, default=60, epsilon=conf.body_mutation_epsilon)
+            ]
+        )
     }
 
     if conf.enable_touch_sensor:

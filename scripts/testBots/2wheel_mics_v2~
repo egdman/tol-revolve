@@ -1,0 +1,48 @@
+---
+body:
+  id          : Core
+  type        : CoreWithMics
+  children    :
+    0:
+      id          : Wheel00
+      type        : ActiveWheel
+      orientation : 0
+    1:
+      id          : Wheel01
+      type        : ActiveWheel
+      orientation : 0
+    2:
+      id          : TailBlock00
+      type        : FixedBrick
+      orientation : 0
+    3:
+      id          : TailBlock01
+      type        : FixedBrick
+      orientation : 0
+    
+
+brain:
+  # extra input neuron (bias)
+  neurons:
+    Core-hidden-0:
+      id: Core-hidden-0
+      layer: hidden
+      part_id: Core
+      type: Oscillator
+
+
+#  connections:
+#  - src: Core-hidden-0
+#    dst: Wheg00-out-0
+#    weight: 10
+
+#  - src: Core-hidden-0
+#    dst: Wheg01-out-0
+#    weight: -10
+
+
+  params:
+    Core-hidden-0:
+      period: 0.5
+      phase_offset: 0
+      amplitude: 1

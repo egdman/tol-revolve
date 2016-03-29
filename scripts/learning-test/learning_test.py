@@ -99,6 +99,24 @@ parser.add_argument(
 @trollius.coroutine
 def run():
     conf = parser.parse_args()
+
+
+    # conf.evaluation_time_sigma = 2.0
+    # conf.weight_mutation_probability = 0.8
+    # conf.weight_mutation_sigma = 5.0
+    # conf.param_mutation_probability = 0.8
+    # conf.param_mutation_sigma = 5.0
+    # conf.structural_mutation_probability = 0.8
+
+    conf.evaluation_time_sigma = 2.0
+    conf.weight_mutation_probability = 0.8
+    conf.weight_mutation_sigma = 5.0
+    conf.param_mutation_probability = 0.8
+    conf.param_mutation_sigma = 5.0
+    conf.structural_mutation_probability = 0.8
+
+
+    # these are all irrelevant parameters but without setting them it doesn't  work
     conf.min_parts = 1
     conf.max_parts = 3
     conf.arena_size = (3, 3)
@@ -106,7 +124,11 @@ def run():
     conf.initial_age_mu = 99999
     conf.initial_age_sigma = 1
     conf.age_cutoff = 99999
+    conf.mutation_epsilon = 0.1
+
+    # this is frequency of world state updates
     conf.pose_update_frequency = 5 # in simulation Hz
+
 
     world = yield From(LearningManager.create(conf))
 

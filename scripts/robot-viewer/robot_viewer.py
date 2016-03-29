@@ -3,6 +3,7 @@ import sys
 import csv
 import logging
 import shutil
+import random
 
 from pygazebo.pygazebo import DisconnectError
 from trollius.py33_exceptions import ConnectionResetError, ConnectionRefusedError
@@ -69,6 +70,7 @@ def run():
     conf.initial_age_sigma = 1
     conf.age_cutoff = 99999
     conf.pose_update_frequency = 20
+    conf.mutation_epsilon = 0.1
 
     body_spec = get_body_spec(conf)
     brain_spec = get_brain_spec(conf)
@@ -90,7 +92,9 @@ def run():
     yield From(world.pause(True))
 
 #    pose = Pose(position=Vector3(0, 0, 0.5), rotation=random_rotation())
-    pose = Pose(position=Vector3(0, 0, 0.5), rotation=rotate_vertical(3.1415/4.0))
+#    pose = Pose(position=Vector3(0, 0, 0.5), rotation=rotate_vertical(random.random()*3.1415*2.0))
+    pose = Pose(position=Vector3(0, 0, 0.5), rotation=rotate_vertical(3.1415*0.5 + (2.0*random.random() - 1.0)*3.1415*0.25))
+
 
     # if brain genotype is given, combine body and brain:
     if genotype_yaml:
@@ -118,22 +122,10 @@ def run():
     robot = yield From(wait_for(world.insert_robot(tree, pose)))
 
     print "INSERTING SOUND OBJECTS!!!!!!!!"
-    sound_pose = Pose(position=Vector3(-2, -2, 0.5))
-
-    sound_src_link = Link("sound_src_1_link")
-#    sound_src_link.make_cylinder(mass=in_grams(100), radius=in_mm(50), length=in_mm(20))
-    sound_src_link.make_box(in_grams(100), in_mm(50), in_mm(50), in_mm(50))
-
-    sound_src_model = Model("sound_src_1")
-    sound_src_model.add_element(sound_src_link)
-
-    sound_src_sdf = SDF()
-    sound_src_sdf.add_element(sound_src_model)
-    sound_src_sdf.elements[0].set_pose(sound_pose)
-    model_name = yield From(wait_for(world.insert_model_callback(sound_src_sdf)))
+    dummy_name = yield From(wait_for(world.insert_dummy(Vector3(10, 0, 0))))
 
     yield From(world.set_sound_update_frequency(update_frequency=0.5))
-    yield From(world.attach_sound_source(name=model_name, frequency=500))
+    yield From(world.attach_sound_source(name=dummy_name, frequency=500))
 
     yield From(world.pause(False))
 

@@ -144,12 +144,6 @@ class LearningManager(World):
     @trollius.coroutine
     def run(self, conf):
 
-        conf.evaluation_time_sigma = 2.0
-        conf.weight_mutation_probability = 0.8
-        conf.weight_mutation_sigma = 5.0
-        conf.param_mutation_probability = 0.8
-        conf.param_mutation_sigma = 5.0
-        conf.structural_mutation_probability = 0.8
 
         yield From(wait_for(self.pause(True)))
 
@@ -174,7 +168,10 @@ class LearningManager(World):
                                        conf=conf)
 
             # insert sound source dummy:
-            self.dummy_name = yield From(learner.insert_dummy(self, Vector3(20, 0, in_mm(26))))
+            self.dummy_name = yield From(wait_for(self.insert_dummy(Vector3(10, 0, 0))))
+
+            # this is required to calculate fitness correctly:
+            learner.set_sound_src_pos(Vector3(10, 0, 0))
 
             gen_files = []
             for file_name in os.listdir(self.path_to_log_dir):
