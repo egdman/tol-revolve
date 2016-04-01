@@ -1,7 +1,7 @@
 #!/bin/bash
 # Runs gazebo with the correct plugin path
 WORLD=tol_env.world
-CMD=gzserver
+CMD=gazebo
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 # get brain filenames from brain dir:
@@ -32,7 +32,7 @@ ANALYZER_PID=$!
 sleep 2
 ACTUAL_ANALYZER_PID=`ps -ef | awk '$3 == '${ANALYZER_PID}' { print $2 } '`
 sleep 3
-python $DIR/triangle.py --robot-file "$BODY_FILE" --brain-genotype-file "$BRAIN_FILE" --num-initial-bots 5 &
+python $DIR/triangle.py --robot-file "$BODY_FILE" --brain-genotype-file "$BRAIN_FILE" --num-initial-bots 4 &
 PY_PID=$!
 
 wait $GZ_PID
