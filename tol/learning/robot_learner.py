@@ -356,30 +356,7 @@ class RobotLearner:
 
         # log important information:
         if logging_callback:
-            log_data = {}
-            best_genotypes_string = ""
-            all_genotypes_string = ""
-
-            # Log best 3 genotypes in this generation:
-            best_genotypes_string += "generation #{0}\n".format(self.generation_number)
-            for i in range(3):
-                best_genotypes_string += "velocity : {0}\n".format(brain_velocity_list[i][1])
-                best_genotypes_string += brain_velocity_list[i][0].to_yaml()
-                best_genotypes_string += "\n"
-
-            # Log velocity values of all genotypes in this generation:
-            # Log all genotypes in the curent generation to a separate file:
-            velocities_string = "- generation: {0}\n  velocities:\n".format(self.generation_number)
-            for i in range(len(brain_velocity_list)):
-                velocities_string += "  - {0}\n".format(brain_velocity_list[i][1])
-                all_genotypes_string += "velocity : {0}\n".format(brain_velocity_list[i][1])
-                all_genotypes_string += brain_velocity_list[i][0].to_yaml()
-                all_genotypes_string += "\n"
-
-            log_data["velocities.log"] = velocities_string
-            log_data["genotypes.log"] = best_genotypes_string
-            log_data["gen_{0}_genotypes.log".format(self.generation_number)] = all_genotypes_string
-            logging_callback(log_data)
+            self.exec_logging_callback(logging_callback)
 
 
     def produce_child(self, parent1, parent2):
@@ -443,13 +420,31 @@ class RobotLearner:
         return selected
 
 
-    # this method should be called when the learning is over to get a robot with the best brain
-    def get_final_robot(self, world):
-        brain_fitness_list = [(br, fit) for br, fit in self.brain_fitness.iteritems()]
-        best_brain = sorted(brain_fitness_list, key = lambda elem: elem[1], reverse = True)[0]
+    def exec_logging_callback(self, logging_callback):
+        log_data = {}
+        best_genotypes_string = ""
+        all_genotypes_string = ""
 
-        self.activate_brain(world, best_brain)
-        return self.robot
+        # Log best 3 genotypes in this generation:
+        best_genotypes_string += "generation #{0}\n".format(self.generation_number)
+        for i in range(3):
+            best_genotypes_string += "velocity : {0}\n".format(brain_velocity_list[i][1])
+            best_genotypes_string += brain_velocity_list[i][0].to_yaml()
+            best_genotypes_string += "\n"
+
+        # Log velocity values of all genotypes in this generation:
+        # Log all genotypes in the curent generation to a separate file:
+        velocities_string = "- generation: {0}\n  velocities:\n".format(self.generation_number)
+        for i in range(len(brain_velocity_list)):
+            velocities_string += "  - {0}\n".format(brain_velocity_list[i][1])
+            all_genotypes_string += "velocity : {0}\n".format(brain_velocity_list[i][1])
+            all_genotypes_string += brain_velocity_list[i][0].to_yaml()
+            all_genotypes_string += "\n"
+
+        log_data["velocities.log"] = velocities_string
+        log_data["genotypes.log"] = best_genotypes_string
+        log_data["gen_{0}_genotypes.log".format(self.generation_number)] = all_genotypes_string
+        logging_callback(log_data)
 
 
     def robot_to_genotype(self, robot):

@@ -76,9 +76,10 @@ class Mutator:
     def mutate_structure(self, genotype, probability):
         """
         Mutates structure of the neural network. Adds new neurons and connections.
-        Chooses whether to apply a mutation with specified probability
+        Chooses whether to apply a mutation with specified probability.
         Chooses what kind of mutation to apply (new connection of new neuron)
         with probability=0.5
+        However, if there are no connections at all, always adds a connection.
 
         :type genotype: GeneticEncoding
         """
@@ -94,6 +95,20 @@ class Mutator:
 
 
     def add_connection_mutation(self, genotype, sigma):
+
+        """
+        Pick two neurons A and B at random. Make sure that connection AB does not exist.
+        Also make sure that A is not output and B is not input.
+        If those conditions are satisfied, add new connection whose weight is drawn from
+        normal distribution with mean=0 and sigma.
+
+        Otherwise pick two neurons again and repeat until suitable pair is found
+        or we run out of attempts.
+
+        :type genotype: GeneticEncoding
+        :type sigma: float
+        """
+
         neuron_from = random.choice(genotype.neuron_genes)
         neuron_to = random.choice(genotype.neuron_genes)
         mark_from = neuron_from.historical_mark
@@ -102,6 +117,7 @@ class Mutator:
         num_attempts = 1
 
         # disallow incoming connections to input neurons:
+        # also disallow connections starting from output neurons:
         while genotype.connection_exists(mark_from, mark_to) or \
                         neuron_to.neuron.layer == "input" or neuron_from.neuron.layer == "output":
             neuron_from = random.choice(genotype.neuron_genes)
@@ -119,6 +135,18 @@ class Mutator:
 
 
     def add_neuron_mutation(self, genotype):
+
+        """
+        Pick a connection at random from neuron A to neuron B.
+        And add a neuron C in between A and B.
+        Old connection AB becomes disabled.
+        Two new connections AC and CB are added.
+        Weight of AC = weight of AB.
+        Weight of CB = 1.0
+
+        :type genotype: GeneticEncoding
+        """
+
         connection_to_split = random.choice(genotype.connection_genes)
         old_weight = connection_to_split.weight
         connection_to_split.enabled = False

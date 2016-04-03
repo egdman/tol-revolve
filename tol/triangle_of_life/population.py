@@ -17,9 +17,9 @@ from revolve.util import multi_future
 from tol.spec import get_body_spec, get_brain_spec
 from ..config import parser
 from ..manage import World
-from util import Timers, random_rotation
+from ..util import Timers, random_rotation
 from ..logging import logger, output_console
-from .combine_body_brain import robot_brain_to_tree
+from ..learning import robot_brain_to_tree
 from . import Food_Grid
 
 #insertion height in meters:
@@ -124,22 +124,53 @@ class EvolutionManager(World):
 
 
     def find_mate_pairs(self):
-
+        # make a list of robots that are ready to mate:
         bots_ready = [r for r in self.organism_list if r.ready_to_mate()]
-        num_bots = len(bots_ready)
 
+        # make a list of pairs of robots that can mate:
         pairs = []
-        for i in range(num_bots):
-            robot_a = bots_ready[i]
-            a_pos = robot_a.my_position()
-            for j in range(i+1, num_bots):
-                robot_b = bots_ready[j]
-                b_pos = robot_b.my_position()
-                dist = dist2d(a_pos, b_pos)
-                if dist < self.mating_distance:
-                    pairs.append((robot_a, robot_b))
+
+        while len(bots_ready) != 0:
+            # choose a bot at random:
+            bot_a_num = random.choice(range(len(bots_ready)))
+            bot_a = bots_ready[bot_a_num]
+
+            # get its coordinates:
+            a_pos = bot_a.my_position()
+
+            # delete it from the list:
+            del bots_ready[bot_a_num]
+
+            # find all bots within mating distance from bot_a:
+            candidates = []
+            for cand_bot_num, cand_bot in enumerate(bots_ready):
+                cand_pos = cand_bot.my_position()
+                if dist2d(a_pos, cand_pos) < self.mating_distance:
+                    candidates.append(cand_bot_num)
+
+            # pick one of the bots within mating distance at random:
+            if len(candidates) != 0:
+                bot_b_num = random.choice(candidates)
+                bot_b = bots_ready[bot_b_num]
+
+                # delete it from the list
+                del bots_ready[bot_b_num]
+                pairs.append((bot_a, bot_b))
 
         return pairs
+
+        # num_bots = len(bots_ready)
+        # for i in range(num_bots):
+        #     robot_a = bots_ready[i]
+        #     a_pos = robot_a.my_position()
+        #     for j in range(i+1, num_bots):
+        #         robot_b = bots_ready[j]
+        #         b_pos = robot_b.my_position()
+        #         dist = dist2d(a_pos, b_pos)
+        #         if dist < self.mating_distance:
+        #             pairs.append((robot_a, robot_b))
+        #
+        # return pairs
 
 
 
