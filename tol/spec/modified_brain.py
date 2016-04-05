@@ -28,7 +28,20 @@ def get_modified_brain_spec(conf):
         ),
         "Simple": NeuronSpec(
             params=[
+                ParamSpec("bias", min_value=-1, max_value=1, epsilon=epsilon),
                 ParamSpec("gain", min_value=0, max_value=1, default=.5, epsilon=epsilon)
+            ],
+            layers=["output", "hidden"]
+        ),
+        "Gain": NeuronSpec(
+            params=[
+                ParamSpec("gain", min_value=0, max_value=1, default=.5, epsilon=epsilon)
+            ],
+            layers=["output", "hidden"]
+        ),
+        "Bias": NeuronSpec(
+            params=[
+                ParamSpec("bias", min_value=-1, max_value=1, epsilon=epsilon),
             ],
             layers=["output", "hidden"]
         ),
