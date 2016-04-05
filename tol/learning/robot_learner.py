@@ -354,7 +354,7 @@ class RobotLearner:
 
         # log important information:
         if logging_callback:
-            self.exec_logging_callback(logging_callback)
+            self.exec_logging_callback(logging_callback, brain_velocity_list)
 
 
     def produce_child(self, parent1, parent2):
@@ -418,7 +418,7 @@ class RobotLearner:
         return selected
 
 
-    def exec_logging_callback(self, logging_callback):
+    def exec_logging_callback(self, logging_callback, brain_velocity_list):
         log_data = {}
         best_genotypes_string = ""
         all_genotypes_string = ""
