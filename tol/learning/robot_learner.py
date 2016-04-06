@@ -474,16 +474,20 @@ class RobotLearnerHotSwap(RobotLearner):
         :return:
         '''
         # flush neural network of the robot:
-        yield From(world.request_handler.do_gazebo_request(
+        flush_future = yield From(world.request_handler.do_gazebo_request(
                 "flush_neural_network",
-                data = self.robot.name # we pass robot id as data so that the flush message
-                                           # is sent to the correct robot
+                data = self.robot.name # we pass robot name as data so that the flush message
+                                       # is sent to the correct robot
             )
         )
+        yield From(flush_future)
 
         # send a ModifyNeuralNetwork message that contains the new brain:
         msg = self.nn_parser.genotype_to_modify_msg(brain_genotype)
+
         yield From(world.modify_nn_publisher.publish(msg))
+
+
 
 
 

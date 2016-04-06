@@ -54,8 +54,6 @@ class NeuralNetworkParser:
         return msg
 
 
-
-
     def genotype_to_brain(self, genotype):
 
         brain = NeuralNetwork()
