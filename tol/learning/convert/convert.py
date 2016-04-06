@@ -45,8 +45,9 @@ class NeuralNetworkParser:
         pb_connections = brain.connection
 
         for pb_neuron in pb_neurons:
-            add_neuron = msg.add_hidden.add()
-            add_neuron.CopyFrom(pb_neuron)
+            if pb_neuron.layer == "hidden":
+                add_neuron = msg.add_hidden.add()
+                add_neuron.CopyFrom(pb_neuron)
         for pb_connection in pb_connections:
             add_connection = msg.set_weights.add()
             add_connection.CopyFrom(pb_connection)

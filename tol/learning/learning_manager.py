@@ -24,7 +24,7 @@ from ..manage import World
 from ..logging import logger, output_console
 from ..spec import get_body_spec, get_brain_spec
 
-from .robot_learner import RobotLearner
+from .robot_learner import RobotLearner, RobotLearnerHotSwap
 from .encoding import Mutator
 from .convert import yaml_to_genotype
 
@@ -171,10 +171,22 @@ class LearningManager(World):
 
             robot = yield From(wait_for(self.insert_robot(tree, pose)))
 
-            self.robot_name = robot.robot.id
+            self.robot_name = robot.name
             print "Robot name is: {0}".format(self.robot_name)
 
-            learner = RobotLearner(world=self,
+
+            # initialize publisher for ModifyNeuralNetwork messages:
+            self.modify_nn_publisher = yield From(
+                self.manager.advertise(
+                    '/gazebo/default/{0}/modify_neural_network'.format(self.robot_name),
+                    'gazebo.msgs.ModifyNeuralNetwork',
+                )
+            )
+            # Wait for connections
+            yield From(self.modify_nn_publisher.wait_for_listener())
+
+
+            learner = RobotLearnerHotSwap(world=self,
                                        robot=robot,
                                        body_spec=self.body_spec,
                                        brain_spec=self.brain_spec,
@@ -236,17 +248,15 @@ class LearningManager(World):
             req = Request()
             req.ParseFromString(data)
 
-
-
-        # initialize publisher for ModifyNeuralNetwork messages:
-        self.modify_nn_publisher = yield From(
-            self.manager.advertise(
-                '/gazebo/default/{0}/modify_neural_network'.format(self.robot_name),
-                'gazebo.msgs.ModifyNeuralNetwork',
-            )
-        )
-        # Wait for connections
-        yield From(self.modify_nn_publisher.wait_for_listener())
+        # # initialize publisher for ModifyNeuralNetwork messages:
+        # self.modify_nn_publisher = yield From(
+        #     self.manager.advertise(
+        #         '/gazebo/default/{0}/modify_neural_network'.format(self.robot_name),
+        #         'gazebo.msgs.ModifyNeuralNetwork',
+        #     )
+        # )
+        # # Wait for connections
+        # yield From(self.modify_nn_publisher.wait_for_listener())
 
 
         subscriber = self.manager.subscribe(
@@ -258,7 +268,7 @@ class LearningManager(World):
         # yield From(sleep_sim_time(self, 60))
         # yield From(self.pause(True))
 
-        delete_learners = []
+        # delete_learners = []
 
         # run loop:
         while True:

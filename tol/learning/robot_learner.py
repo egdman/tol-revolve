@@ -476,7 +476,7 @@ class RobotLearnerHotSwap(RobotLearner):
         # flush neural network of the robot:
         yield From(world.request_handler.do_gazebo_request(
                 "flush_neural_network",
-                data = self.robot.robot.id # we pass robot id as data so that the flush message
+                data = self.robot.name # we pass robot id as data so that the flush message
                                            # is sent to the correct robot
             )
         )
