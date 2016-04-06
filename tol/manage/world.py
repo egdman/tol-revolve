@@ -244,6 +244,7 @@ class World(WorldManager):
     @trollius.coroutine
     def insert_model_callback(self, sdf):
         """
+        Insert an sdf model and return its name
 
         :param sdf:
         :type sdf: SDF

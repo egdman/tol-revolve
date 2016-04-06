@@ -39,7 +39,14 @@ class LearningManager(World):
         self.write_fitness = None
 
         self.learner = None
+        self.robot_name = None
+
+        # path to the logging directory
         self.path_to_log_dir = conf.output_directory + "/" + conf.log_directory + "/"
+
+        # publisher that sends ModifyNeuralNetwork messages:
+        # It will be initialized after we insert the robot
+        self.modify_nn_publisher = None
 
         try:
             os.mkdir(self.path_to_log_dir)
@@ -103,6 +110,7 @@ class LearningManager(World):
         data = yield From(super(LearningManager, self).get_snapshot_data())
         data['learner'] = self.learner
         data['innovation_number'] = self.mutator.innovation_number
+        data['robot_name'] = self.robot_name
         raise Return(data)
 
 
@@ -110,6 +118,7 @@ class LearningManager(World):
         yield From(super(LearningManager, self).restore_snapshot(data))
         self.learner = data['learner']
         self.mutator.innovation_number = data['innovation_number']
+        self.robot_name = data['robot_name']
 
 
     def log_info(self, log_data):
@@ -161,6 +170,9 @@ class LearningManager(World):
             tree = Tree.from_body_brain(bot.body, bot.brain, self.body_spec)
 
             robot = yield From(wait_for(self.insert_robot(tree, pose)))
+
+            self.robot_name = robot.robot.id
+            print "Robot name is: {0}".format(self.robot_name)
 
             learner = RobotLearner(world=self,
                                        robot=robot,
@@ -223,6 +235,19 @@ class LearningManager(World):
         def callback(data):
             req = Request()
             req.ParseFromString(data)
+
+
+
+        # initialize publisher for ModifyNeuralNetwork messages:
+        self.modify_nn_publisher = yield From(
+            self.manager.advertise(
+                '/gazebo/default/{0}/modify_neural_network'.format(self.robot_name),
+                'gazebo.msgs.ModifyNeuralNetwork',
+            )
+        )
+        # Wait for connections
+        yield From(self.modify_nn_publisher.wait_for_listener())
+
 
         subscriber = self.manager.subscribe(
             '/gazebo/default/request', 'gazebo.msgs.Request', callback)

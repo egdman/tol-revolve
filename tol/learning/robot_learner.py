@@ -462,6 +462,32 @@ class RobotLearner:
 
 
 
+class RobotLearnerHotSwap(RobotLearner):
+
+    @trollius.coroutine
+    def insert_brain(self, world, brain_genotype):
+        '''
+        Send request to delete all connections and hidden neurons in the robot.
+        Then send a ModifyNeuralNetwork message that contains the new brain
+        :param world:
+        :param brain_genotype:
+        :return:
+        '''
+        # flush neural network of the robot:
+        yield From(world.request_handler.do_gazebo_request(
+                "flush_neural_network",
+                data = self.robot.robot.id # we pass robot id as data so that the flush message
+                                           # is sent to the correct robot
+            )
+        )
+
+        # send a ModifyNeuralNetwork message that contains the new brain:
+        msg = self.nn_parser.genotype_to_modify_msg(brain_genotype)
+        yield From(world.modify_nn_publisher.publish(msg))
+
+
+
+
 
 class SoundGaitLearner(RobotLearner):
     def __init__(self, world, robot, body_spec, brain_spec, mutator, conf):
