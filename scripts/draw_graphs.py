@@ -1,7 +1,9 @@
 import os
 import sys
 import yaml
-import pygraphviz as pgv
+#import pygraphviz as pgv
+import graphviz as gv
+
 
 from argparse import ArgumentParser
 
@@ -19,18 +21,35 @@ def draw_graph(in_file, out_file):
     node_count = data['node_count']
     edges = data['edges']
 
-    graph = pgv.AGraph(strict=True, directed=False)
+# # using pygraphviz:
+#     graph = pgv.AGraph(strict=True, directed=False)
+#     for num in range(node_count):
+#         graph.add_node(str(num))
+#
+#     for edge in edges:
+#         src = str(edge['src'])
+#         dst = str(edge['dst'])
+#         graph.add_edge(src, dst)
+#
+#     graph.write(out_file+".dot")
+#     graph.layout()
+#     graph.draw(out_file+".png")
+
+# using graphviz:
+    graph = gv.Graph(
+        format='png',
+        engine='neato',
+        node_attr={'fixedsize': 'true', 'height': '0.3', 'width': '0.3'}
+    )
+
     for num in range(node_count):
-        graph.add_node(str(num))
+        graph.node(name=str(num))
 
     for edge in edges:
         src = str(edge['src'])
         dst = str(edge['dst'])
-        graph.add_edge(src, dst)
-
-    graph.write(out_file+".dot")
-    graph.layout()
-    graph.draw(out_file+".png",)
+        graph.edge(src, dst)
+    graph.render(filename=out_file)
 
 
 
