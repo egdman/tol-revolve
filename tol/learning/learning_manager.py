@@ -24,10 +24,11 @@ from ..manage import World
 from ..logging import logger, output_console
 from ..spec import get_body_spec, get_brain_spec
 
+
 from .robot_learner import RobotLearner
 from .encoding import Mutator
 from .convert import yaml_to_genotype
-
+from .utils import get_brains_from_file
 
 
 class LearningManager(World):
@@ -240,36 +241,3 @@ class LearningManager(World):
             result = yield From(self.learner.update(self, self.log_info))
             if result:
                 break
-
-
-
-def get_brains_from_file(brain_file_path, brain_spec):
-        '''
-        generate a population of brains by reading them from a file
-        :param brain_file:
-        :return:
-        '''
-        brain_list = []
-        with open(brain_file_path, 'r') as brain_file:
-            yaml_string = ''
-            for line in brain_file:
-                if 'velocity' in line:
-                    if yaml_string != '':
-                        brain_list.append(yaml_to_genotype(yaml_string, brain_spec, keep_historical_marks=True))
-                        yaml_string = ''
-                    continue
-                yaml_string += line
-            brain_list.append(yaml_to_genotype(yaml_string, brain_spec, keep_historical_marks=True))
-
-        # find min and max historical marks:
-        min_mark, max_mark = brain_list[0].min_max_hist_mark()
-        for br in brain_list:
-            loc_min, loc_max = br.min_max_hist_mark()
-            if loc_min < min_mark:
-                min_mark = loc_min
-
-            if loc_max > max_mark:
-                max_mark = loc_max
-
-        return brain_list, min_mark, max_mark
-
