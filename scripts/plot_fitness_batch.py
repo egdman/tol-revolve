@@ -1,7 +1,9 @@
 import yaml
+import random
 import os
 from argparse import ArgumentParser
 from matplotlib import pyplot as plt
+import matplotlib.lines as mlines
 
 parser = ArgumentParser("plot_fitness.py")
 
@@ -36,6 +38,8 @@ def main():
     x_lists = []
     y_lists = []
 
+    color_map = {} # dictionary {label:color} because we want the same labels have the same color
+
     for filename in files:
         file_path = os .path.join(dir_path, filename)
         print "input :  {0}".format(file_path)
@@ -45,6 +49,11 @@ def main():
 
         label = filename.split('-')[-2]
         print 'label : {0}'.format(label)
+
+        color = get_random_color()
+        print "color : {0}".format(color)
+
+        color_map[label] = color
 
         data = yaml.load(yaml_data)
         data_items = [(data_item['generation'], data_item['velocities']) for data_item in data]
@@ -70,11 +79,11 @@ def main():
     plt.figure(figsize=(10,8))
     plt.tick_params(labelsize=20)
     for i in range(len(labels)):
-        plt.plot(x_lists[i], y_lists[i], linewidth=3, label=labels[i], ms=10, markevery=100)
-#
-#   set size of the legend like this: 'size':number
-    plt.legend(loc=0, prop={'size':20})
+        plt.plot(x_lists[i], y_lists[i], linewidth=3, label=labels[i], color=color_map[labels[i]], ms=10, markevery=100)
 
+    hnd, lab = get_handles_labels(color_map)
+
+    plt.legend(hnd, lab, loc=0, prop={'size': 20})
 
     plt.title(args.title, fontsize=26, y=1.02)
     plt.xlabel('evaluation #', fontsize=26)
@@ -83,8 +92,25 @@ def main():
 # #    plt.legend(loc=0)
 
     plt.grid()
-
     plt.savefig(out_file_path)
+
+
+def get_random_color():
+    rand = lambda: random.randint(0, 255)
+    return '#%02X%02X%02X' % (rand(), rand(), rand())
+
+
+def get_handles_labels(label_to_color_map):
+
+    legend_handles = []
+    legend_labels = []
+    for label in label_to_color_map:
+        color = label_to_color_map[label]
+        hnd = mlines.Line2D([],[], color=color, linewidth=5)
+        legend_handles.append(hnd)
+        legend_labels.append("population of {0}".format(label))
+    return legend_handles, legend_labels
+
 
 
 if __name__ == '__main__':
