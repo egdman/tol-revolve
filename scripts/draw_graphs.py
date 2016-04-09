@@ -38,7 +38,7 @@ def draw_graph(in_file, out_file):
 # using graphviz:
     graph = gv.Graph(
         format='png',
-        engine='neato',
+        engine='fdp',
         node_attr={'fixedsize': 'true', 'height': '0.3', 'width': '0.3'}
     )
 
