@@ -4,6 +4,9 @@ import os
 from argparse import ArgumentParser
 from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
+import matplotlib.colors as colors
+import matplotlib.cm as cmx
+
 
 parser = ArgumentParser("plot_fitness.py")
 
@@ -40,6 +43,8 @@ def main():
 
     color_map = {} # dictionary {label:color} because we want the same labels have the same color
 
+    # plt.register_cmap('inferno', cmap=colors.inferno)
+
     for filename in files:
         file_path = os .path.join(dir_path, filename)
         print "input :  {0}".format(file_path)
@@ -50,8 +55,8 @@ def main():
         label = filename.split('-')[-2]
         print 'label : {0}'.format(label)
 
-        color = get_random_color()
-        print "color : {0}".format(color)
+ #       color = get_random_color()
+        color = get_random_color_pretty()
 
         color_map[label] = color
 
@@ -100,6 +105,22 @@ def get_random_color():
     return '#%02X%02X%02X' % (rand(), rand(), rand())
 
 
+def get_random_color_pretty(brightness=0.7):
+    N = 30
+    cmap = get_colormap(N)
+    num = random.choice(range(N))
+    color = cmap(num)
+    # tone down a bit
+    coef = brightness
+    color2 = tuple([
+        coef*color[0],
+        coef*color[1],
+        coef*color[2],
+        color[3]
+    ])
+    return color2
+
+
 def get_handles_labels(label_to_color_map):
 
     legend_handles = []
@@ -111,6 +132,15 @@ def get_handles_labels(label_to_color_map):
         legend_labels.append("population of {0}".format(label))
     return legend_handles, legend_labels
 
+
+def get_colormap(N):
+    '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct
+    RGB color.'''
+    color_norm  = colors.Normalize(vmin=0, vmax=N-1)
+    scalar_map = cmx.ScalarMappable(norm=color_norm, cmap='hsv')
+    def map_index_to_rgb_color(index):
+        return scalar_map.to_rgba(index)
+    return map_index_to_rgb_color
 
 
 if __name__ == '__main__':
