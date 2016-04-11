@@ -141,13 +141,6 @@ class LearningManager(World):
     @trollius.coroutine
     def run(self, conf):
 
-        conf.evaluation_time_sigma = 2.0
-        conf.weight_mutation_probability = 0.8
-        conf.weight_mutation_sigma = 5.0
-        conf.param_mutation_probability = 0.8
-        conf.param_mutation_sigma = 5.0
-        conf.structural_mutation_probability = 0.8
-
         yield From(wait_for(self.pause(True)))
 
         # if we are starting a new experiment (not restoring from a snapshot)

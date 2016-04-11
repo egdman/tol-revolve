@@ -103,6 +103,14 @@ def run():
     conf.initial_age_mu = 99999
     conf.initial_age_sigma = 1
     conf.age_cutoff = 99999
+
+
+    conf.evaluation_time_sigma = 0.0
+    conf.weight_mutation_probability = 0.8
+    conf.weight_mutation_sigma = 5.0
+    conf.param_mutation_probability = 0.8
+    conf.param_mutation_sigma = 5.0
+    conf.structural_mutation_probability = 0.8
     conf.pose_update_frequency = 5 # in simulation Hz
 
     world = yield From(LearningManager.create(conf))
