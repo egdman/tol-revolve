@@ -7,13 +7,17 @@ echo "DIR="$DIR
 
 # get brain filenames from brain dir:
 BRAIN_FILES="$(ls -A $DIR/brain)"
+BRAIN_LIST=($BRAIN_FILES)
+BRAIN_FILE=${BRAIN_LIST[0]}
+
 
 # get body filenames from body dir:
 BODY_FILES="$(ls -A $DIR/body)"
+BODY_LIST=($BODY_FILES)
+BODY_FILE=${BODY_LIST[0]}
 
-BRAIN_FILE=${BRAIN_FILES[0]}
-BODY_FILE=${BODY_FILES[0]}
 
+# check if there is no brain file:
 if ! [ -z "$BRAIN_FILE" ]
 then
     BRAIN_FILE="$DIR/brain/"$BRAIN_FILE
@@ -42,7 +46,7 @@ ACTUAL_ANALYZER_PID=`ps -ef | awk '$3 == '${ANALYZER_PID}' { print $2 } '`
 
 sleep 3
 
-python $DIR/robot_viewer.py --robot-file "$BODY_FILE" --genotype-file "$BRAIN_FILE" &
+python $DIR/robot_viewer.py --body-file "$BODY_FILE" --brain-file "$BRAIN_FILE" --trajectory-file "traject.csv" &
 PY_PID=$!
 
 echo 'PY_PID='$PY_PID

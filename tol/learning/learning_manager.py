@@ -234,3 +234,5 @@ class LearningManager(World):
             result = yield From(self.learner.update(self, self.log_info))
             if result:
                 break
+
+            yield From(trollius.sleep(0.2))

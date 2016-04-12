@@ -44,16 +44,24 @@ logger.setLevel(logging.DEBUG)
 
 
 parser.add_argument(
-    '--robot-file',
+    '--body-file',
     type=str,
     help="path to YAML file containing robot morphology"
 )
 
 parser.add_argument(
-    '--genotype-file',
+    '--brain-file',
     type=str,
     default='',
     help="path to YAML file containing brain genotype"
+)
+
+parser.add_argument(
+    '--trajectory-file',
+    type=str,
+    default='',
+    help="path to a file for recording the robot's trajectory"
+
 )
 
 
@@ -74,15 +82,21 @@ def run():
     brain_spec = get_brain_spec(conf)
 
 
+    if conf.trajectory_file != '':
+        with open(conf.trajectory_file, 'w+') as out_file:
+            out_file.write("{0},{1},{2},{3}\n".format("time", "x", "y", "z"))
+
+
+
     print "OPENING FILES!!!!!!!!!!!!!!!!!!!"
-    with open(conf.robot_file,'r') as robot_file:
+    with open(conf.body_file,'r') as robot_file:
         bot_yaml = robot_file.read()
 
     genotype_yaml = None
 
     # if brain genotype file exists:
-    if conf.genotype_file != '':
-        with open (conf.genotype_file, 'r') as gen_file:
+    if conf.brain_file != '':
+        with open (conf.brain_file, 'r') as gen_file:
             genotype_yaml = gen_file.read()
 
     print "CREATING WORLD!!!!!!!!!!!!!!!!!!!"
@@ -90,7 +104,7 @@ def run():
     yield From(world.pause(True))
 
 #    pose = Pose(position=Vector3(0, 0, 0.5), rotation=random_rotation())
-    pose = Pose(position=Vector3(0, 0, 0.5), rotation=rotate_vertical(3.1415/4.0))
+    pose = Pose(position=Vector3(0, 0, 0.5), rotation=rotate_vertical(0))
 
     # if brain genotype is given, combine body and brain:
     if genotype_yaml:
@@ -136,8 +150,21 @@ def run():
     yield From(world.pause(False))
 
     while (True):
-        continue
+        if conf.trajectory_file != '':
+            position = robot.last_position
+            w_time = get_time(world)
+            with open(conf.trajectory_file, 'a') as out_file:
+                out_file.write("{0},{1},{2},{3}\n".format(w_time, position[0], position[1], position[2]))
 
+        yield From(trollius.sleep(0.1))
+
+
+
+def get_time(world):
+    if world.last_time:
+        return world.last_time
+    else:
+        return 0
 
 
 def main():
