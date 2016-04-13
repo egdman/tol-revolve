@@ -33,10 +33,10 @@ def main():
     plt.axes().set_aspect('equal', 'datalim')
 
     plt.tick_params(labelsize=20)
-    plt.plot(xs, ys, linewidth=3, label="trajectory", linestyle = "-",color = 'green', ms=10, markevery=100)
+    plt.plot(xs, ys, linewidth=3, linestyle = "-",color = 'green', ms=10, markevery=100)
 
 #   set size of the legend like this: 'size':number
-    plt.legend(loc=0, prop={'size':20})
+#    plt.legend(loc=0, prop={'size':20})
 
     #plt.plot(values1, values2)
     #plt.plot(values1, values2)nn

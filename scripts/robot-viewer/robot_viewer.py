@@ -64,6 +64,13 @@ parser.add_argument(
 
 )
 
+parser.add_argument(
+    '--trajectory-limit',
+    type=float,
+    default=0,
+    help="how long to record the robot's trajectory (in simulation seconds)"
+)
+
 
 
 @trollius.coroutine
@@ -76,7 +83,7 @@ def run():
     conf.initial_age_mu = 99999
     conf.initial_age_sigma = 1
     conf.age_cutoff = 99999
-    conf.pose_update_frequency = 20
+    conf.pose_update_frequency = 5
 
     body_spec = get_body_spec(conf)
     brain_spec = get_brain_spec(conf)
@@ -153,8 +160,9 @@ def run():
         if conf.trajectory_file != '':
             position = robot.last_position
             w_time = get_time(world)
-            with open(conf.trajectory_file, 'a') as out_file:
-                out_file.write("{0},{1},{2},{3}\n".format(w_time, position[0], position[1], position[2]))
+            if w_time < conf.trajectory_limit or conf.trajectory_limit == 0:
+                with open(conf.trajectory_file, 'a') as out_file:
+                    out_file.write("{0},{1},{2},{3}\n".format(w_time, position[0], position[1], position[2]))
 
         yield From(trollius.sleep(0.1))
 

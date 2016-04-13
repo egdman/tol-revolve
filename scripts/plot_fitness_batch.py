@@ -129,7 +129,7 @@ def get_handles_labels(label_to_color_map):
         color = label_to_color_map[label]
         hnd = mlines.Line2D([],[], color=color, linewidth=5)
         legend_handles.append(hnd)
-        legend_labels.append("population of {0}".format(label))
+        legend_labels.append(label)
     return legend_handles, legend_labels
 
 

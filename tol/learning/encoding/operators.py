@@ -2,11 +2,36 @@ import random
 
 from . import NeuronGene, ConnectionGene, GeneticEncoding, Neuron, GenotypeCopyError, validate_genotype
 
+def get_default_mutation_spec(brain_spec):
+    # parameters for each type of neuron that can be mutated and their specs:
+    mutable_params = {}
+
+    # types of neurons that can be added by structural mutation:
+    new_types = []
+
+    all_types = brain_spec.get_all_types()
+
+    for neuron_type in all_types:
+        neuron_spec = brain_spec.get(neuron_type)
+        neuron_params = neuron_spec.parameters
+        param_specs = {name: neuron_params[name][1] for name in neuron_params}
+        mutable_params[neuron_type] = param_specs
+        if "hidden" in neuron_spec.layers:
+            new_types.append(neuron_type)
+
+    return {"types" : new_types, "params" : mutable_params}
+
 
 
 class Mutator:
 
-    def __init__(self, brain_spec, new_connection_sigma = 1, innovation_number = 0, max_attempts = 100):
+    def __init__(self, brain_spec, new_connection_sigma = 1, innovation_number = 0,
+                 max_attempts = 100, mutation_spec = None):
+        if mutation_spec is None:
+            self.mutation_spec = get_default_mutation_spec(brain_spec)
+        else:
+            self.mutation_spec = mutation_spec
+
         self.innovation_number = innovation_number
         self.new_connection_sigma = new_connection_sigma
         self.max_attempts = max_attempts
@@ -27,6 +52,8 @@ class Mutator:
                 # print 'mutating gene :{0}'.format(neuron_gene.neuron.neuron_id)
                 # ##################################
 
+
+                ###################################################################################
                 neuron_spec = self.brain_spec.get(neuron_gene.neuron.neuron_type)
                 neuron_params = neuron_spec.parameters
 
@@ -49,6 +76,32 @@ class Mutator:
                             param_value = min_value
                         else:
                             param_value = min_value + param_spec.epsilon
+                ###################################################################################
+
+
+                # ###################################################################################
+                # neuron_params = self.mutation_spec['params'][neuron_gene.neuron.neuron_type]
+                # if len(neuron_params) > 0:
+                #     param_name, param_spec = random.choice(neuron_params.items())
+                #     param_value = neuron_gene.neuron.neuron_params[param_name]
+                #     max_value = param_spec.max
+                #     min_value = param_spec.min
+                #     param_value += random.gauss(0, sigma)
+                #
+                #     if param_value > max_value:
+                #         if param_spec.max_inclusive:
+                #             param_value = max_value
+                #         else:
+                #             param_value = max_value - param_spec.epsilon
+                #             param_value = max_value - param_spec.epsilon
+                #
+                #     if param_value < min_value:
+                #         if param_spec.min_inclusive:
+                #             param_value = min_value
+                #         else:
+                #             param_value = min_value + param_spec.epsilon
+                #     ###################################################################################
+
 
                     # # FOR DEBUG
                     # ##################################
@@ -161,6 +214,7 @@ class Mutator:
         body_part_id = random.choice([neuron_from.body_part_id, neuron_to.body_part_id])
 
         new_neuron_types = ["Simple", "Sigmoid", "Oscillator"]
+ #       new_neuron_types = self.mutation_spec["types"]
 
         new_neuron_type = random.choice(new_neuron_types)
 
