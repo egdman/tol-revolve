@@ -14,10 +14,9 @@ from revolve.util import multi_future, wait_for
 from revolve.angle import Tree
 
 # ToL
-from ..util import Timers, StateSwitch, rotate_vertical
 from .encoding import Crossover, GeneticEncoding, validate_genotype
 from .convert import NeuralNetworkParser
-
+from ..util import StateSwitch, rotate_vertical
 
 class RobotLearner:
 

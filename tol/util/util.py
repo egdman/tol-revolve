@@ -1,5 +1,7 @@
 import random
 import math
+import argparse
+
 from sdfbuilder.math import Vector3, Quaternion
 
 
@@ -23,6 +25,7 @@ def random_rotation():
 
     angle = random.random() * 2 * 3.14159
     return Quaternion.from_angle_axis(angle, Vector3(x, y, z))
+
 
 
 class Timers:
@@ -60,4 +63,8 @@ class Timers:
 
     def get_last_time(self, name):
         return self.timers[name]
+
+
+
+
 
