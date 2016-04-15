@@ -8,6 +8,7 @@ import shutil
 import trollius
 from trollius import From, Return, Future
 from pygazebo.msg.request_pb2 import Request
+from pygazebo.msg.response_pb2 import Response
 
 # sdfbuilder
 from sdfbuilder.math import Vector3
@@ -40,6 +41,7 @@ class LearningManager(World):
 
         self.learner = None
         self.robot_name = None
+        self.pending_requests = {}
 
         # path to the logging directory
         self.path_to_log_dir = conf.output_directory + "/" + conf.log_directory + "/"
@@ -47,6 +49,9 @@ class LearningManager(World):
         # publisher that sends ModifyNeuralNetwork messages:
         # It will be initialized after we insert the robot
         self.modify_nn_publisher = None
+
+        # subscriber that listens to responses about successful neural network modifications:
+        self.modify_nn_response_subscriber = None
 
         try:
             os.mkdir(self.path_to_log_dir)
@@ -119,6 +124,8 @@ class LearningManager(World):
         self.learner = data['learner']
         self.mutator.innovation_number = data['innovation_number']
         self.robot_name = data['robot_name']
+        if self.modify_nn_publisher is None:
+            yield From(self.create_nn_publisher(self.robot_name))
 
 
     def log_info(self, log_data):
@@ -147,6 +154,51 @@ class LearningManager(World):
 
 
     @trollius.coroutine
+    def create_nn_publisher(self, robot_name):
+        # initialize publisher for ModifyNeuralNetwork messages:
+        self.modify_nn_publisher = yield From(
+            self.manager.advertise(
+                '/gazebo/default/{0}/modify_neural_network'.format(robot_name),
+                'gazebo.msgs.ModifyNeuralNetwork'
+            )
+        )
+        # Wait for connections
+        yield From(self.modify_nn_publisher.wait_for_listener())
+
+        def request_done(data):
+            resp = Response()
+            resp.ParseFromString(data)
+            robot_name = resp.response
+            fut = self.pending_requests[robot_name]
+            fut.set_result(robot_name)
+
+            print "CALLBACK {0}".format(robot_name)
+            del self.pending_requests[robot_name]
+
+        self.modify_nn_response_subscriber = self.manager.subscribe(
+            '/gazebo/default/{0}/modify_neural_network_response'.format(robot_name), 'gazebo.msgs.Response',
+            request_done
+        )
+        yield From(self.modify_nn_response_subscriber.wait_for_connection())
+
+
+
+    @trollius.coroutine
+    def modify_brain(self, msg, robot_name):
+        fut = Future()
+        self.pending_requests[robot_name] = fut
+        yield From(self.modify_nn_publisher.publish(msg))
+        raise Return(fut)
+
+
+    def is_request_satisfied(self, robot_name):
+        if robot_name in self.pending_requests:
+            return False
+        else:
+            return True
+
+
+    @trollius.coroutine
     def run(self, conf):
 
         yield From(wait_for(self.pause(True)))
@@ -168,16 +220,8 @@ class LearningManager(World):
             print "Robot name is: {0}".format(self.robot_name)
 
 
-            # initialize publisher for ModifyNeuralNetwork messages:
-            self.modify_nn_publisher = yield From(
-                self.manager.advertise(
-                    '/gazebo/default/{0}/modify_neural_network'.format(self.robot_name),
-                    'gazebo.msgs.ModifyNeuralNetwork',
-                )
-            )
-            # Wait for connections
-            yield From(self.modify_nn_publisher.wait_for_listener())
-
+            # create a publisher that will send ModifyNeuralNetwork messages:
+            yield From(self.create_nn_publisher(self.robot_name))
 
             learner = RobotLearnerHotSwap(world=self,
                                        robot=robot,
@@ -235,33 +279,6 @@ class LearningManager(World):
 
             print "WORLD RESTORED FROM {0}".format(self.world_snapshot_filename)
             print "STATE RESTORED FROM {0}".format(self.snapshot_filename)
-
-        # Request callback for the subscriber
-        def callback(data):
-            req = Request()
-            req.ParseFromString(data)
-
-        # # initialize publisher for ModifyNeuralNetwork messages:
-        # self.modify_nn_publisher = yield From(
-        #     self.manager.advertise(
-        #         '/gazebo/default/{0}/modify_neural_network'.format(self.robot_name),
-        #         'gazebo.msgs.ModifyNeuralNetwork',
-        #     )
-        # )
-        # # Wait for connections
-        # yield From(self.modify_nn_publisher.wait_for_listener())
-
-
-        subscriber = self.manager.subscribe(
-            '/gazebo/default/request', 'gazebo.msgs.Request', callback)
-        yield From(subscriber.wait_for_connection())
-
-        # # sleep for 60 seconds:
-        # yield From(self.pause(False))
-        # yield From(sleep_sim_time(self, 60))
-        # yield From(self.pause(True))
-
-        # delete_learners = []
 
         # run loop:
         while True:
