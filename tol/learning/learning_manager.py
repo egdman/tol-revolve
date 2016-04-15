@@ -25,7 +25,7 @@ from ..manage import World
 from ..logging import logger, output_console
 from ..spec import get_body_spec, get_brain_spec
 
-from .robot_learner import RobotLearner, RobotLearnerHotSwap
+from .robot_learner import RobotLearner, RobotLearnerOnline
 from .encoding import Mutator
 from .convert import yaml_to_genotype
 from .utils import get_brains_from_file
@@ -223,7 +223,7 @@ class LearningManager(World):
             # create a publisher that will send ModifyNeuralNetwork messages:
             yield From(self.create_nn_publisher(self.robot_name))
 
-            learner = RobotLearnerHotSwap(world=self,
+            learner = RobotLearnerOnline(world=self,
                                        robot=robot,
                                        body_spec=self.body_spec,
                                        brain_spec=self.brain_spec,

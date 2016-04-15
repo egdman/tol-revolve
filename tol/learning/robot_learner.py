@@ -461,7 +461,7 @@ class RobotLearner:
 
 
 
-class RobotLearnerHotSwap(RobotLearner):
+class RobotLearnerOnline(RobotLearner):
 
     @trollius.coroutine
     def insert_brain(self, world, brain_genotype):
