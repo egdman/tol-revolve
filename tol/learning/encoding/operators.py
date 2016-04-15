@@ -53,36 +53,13 @@ class Mutator:
                 # ##################################
 
 
-                ###################################################################################
-                neuron_spec = self.brain_spec.get(neuron_gene.neuron.neuron_type)
-                neuron_params = neuron_spec.parameters
-
-                if neuron_params:
-                    param_name, param_tuple = random.choice(neuron_params.items())
-                    param_spec = param_tuple[1]
-                    param_value = neuron_gene.neuron.neuron_params[param_name]
-                    max_value = param_spec.max
-                    min_value = param_spec.min
-                    param_value += random.gauss(0, sigma)
-
-                    if param_value > max_value:
-                        if param_spec.max_inclusive:
-                            param_value = max_value
-                        else:
-                            param_value = max_value - param_spec.epsilon
-
-                    if param_value < min_value:
-                        if param_spec.min_inclusive:
-                            param_value = min_value
-                        else:
-                            param_value = min_value + param_spec.epsilon
-                ###################################################################################
-
-
                 # ###################################################################################
-                # neuron_params = self.mutation_spec['params'][neuron_gene.neuron.neuron_type]
-                # if len(neuron_params) > 0:
-                #     param_name, param_spec = random.choice(neuron_params.items())
+                # neuron_spec = self.brain_spec.get(neuron_gene.neuron.neuron_type)
+                # neuron_params = neuron_spec.parameters
+                #
+                # if neuron_params:
+                #     param_name, param_tuple = random.choice(neuron_params.items())
+                #     param_spec = param_tuple[1]
                 #     param_value = neuron_gene.neuron.neuron_params[param_name]
                 #     max_value = param_spec.max
                 #     min_value = param_spec.min
@@ -99,7 +76,30 @@ class Mutator:
                 #             param_value = min_value
                 #         else:
                 #             param_value = min_value + param_spec.epsilon
-                #     ###################################################################################
+                # ###################################################################################
+
+
+                ###################################################################################
+                neuron_params = self.mutation_spec['params'][neuron_gene.neuron.neuron_type]
+                if len(neuron_params) > 0:
+                    param_name, param_spec = random.choice(neuron_params.items())
+                    param_value = neuron_gene.neuron.neuron_params[param_name]
+                    max_value = param_spec.max
+                    min_value = param_spec.min
+                    param_value += random.gauss(0, sigma)
+
+                    if param_value > max_value:
+                        if param_spec.max_inclusive:
+                            param_value = max_value
+                        else:
+                            param_value = max_value - param_spec.epsilon
+
+                    if param_value < min_value:
+                        if param_spec.min_inclusive:
+                            param_value = min_value
+                        else:
+                            param_value = min_value + param_spec.epsilon
+                    ###################################################################################
 
 
                     # # FOR DEBUG
@@ -212,8 +212,7 @@ class Mutator:
         # TODO make so that new neuron can be added anywhere along the path
         body_part_id = random.choice([neuron_from.body_part_id, neuron_to.body_part_id])
 
-        new_neuron_types = ["Simple", "Sigmoid", "Oscillator"]
- #       new_neuron_types = self.mutation_spec["types"]
+        new_neuron_types = self.mutation_spec["types"]
 
         new_neuron_type = random.choice(new_neuron_types)
 
@@ -293,15 +292,6 @@ class Crossover:
             # inherit unpaired gene from the more fit parent:
             elif pair[0] is not None:
                 child_genes.append(pair[0])
-
-
-        # # FOR DEBUG
-        # ############################################
-        # print "CHILD GENES:"
-        # for gene in child_genes:
-        #     print str(gene)
-        # ############################################
-
 
         child_genotype = GeneticEncoding()
         for gene in child_genes:
