@@ -113,38 +113,30 @@ def run():
 #    pose = Pose(position=Vector3(0, 0, 0.5), rotation=random_rotation())
     pose = Pose(position=Vector3(0, 0, 0.5), rotation=rotate_vertical(0))
 
-    robot_pb = yaml_to_robot(body_spec, brain_spec, bot_yaml)
-    tree = Tree.from_body_brain(robot_pb.body, robot_pb.brain, body_spec)
+    # if brain genotype is given, combine body and brain:
+    if genotype_yaml:
+        # convert YAML stream to protobuf body:
+        robot_body_pb = yaml_to_robot(body_spec, brain_spec, bot_yaml).body
+
+        # convert YAML stream to genotype:
+        robot_brain_genotype = yaml_to_genotype(genotype_yaml, brain_spec)
+
+        # convert genotype to protobuf brain:
+        nn_parser = NeuralNetworkParser(brain_spec)
+        robot_brain_pb = nn_parser.genotype_to_brain(robot_brain_genotype)
+
+        tree = Tree.from_body_brain(robot_body_pb, robot_brain_pb, body_spec)
+
+
+    # if brain genotype is not given, just insert the body:
+    else:
+         # convert YAML stream to protobuf robot:
+        robot_pb = yaml_to_robot(body_spec, brain_spec, bot_yaml)
+        tree = Tree.from_body_brain(robot_pb.body, robot_pb.brain, body_spec)
 
 
     print "INSERTING ROBOT!!!!!!!!!!!!!!!!!!!!!!"
     robot = yield From(wait_for(world.insert_robot(tree, pose)))
-    robot_name = robot.name
-
-    modify_nn_publisher = yield From(
-        world.manager.advertise(
-            '/gazebo/default/{0}/modify_neural_network'.format(robot_name),
-            'gazebo.msgs.ModifyNeuralNetwork',
-        )
-    )
-    # Wait for connections
-    yield From(modify_nn_publisher.wait_for_listener())
-    if genotype_yaml:
-        # convert YAML stream to genotype:
-        robot_brain_genotype = yaml_to_genotype(genotype_yaml, brain_spec)
-        nn_parser = NeuralNetworkParser(brain_spec)
-        msg = nn_parser.genotype_to_modify_msg(robot_brain_genotype)
-
-        # flush neural network of the robot:
-        flush_future = yield From(world.request_handler.do_gazebo_request(
-            "flush_neural_network",
-            data=robot_name  # we pass robot name as data so that the flush message
-                             # is sent to the correct robot
-        ))
-
-        yield From(flush_future)
-
-        yield From(modify_nn_publisher.publish(msg))
 
 #     print "INSERTING SOUND OBJECTS!!!!!!!!"
 #     sound_src_link = Link("sound_src_1_link")
@@ -163,11 +155,6 @@ def run():
 #     yield From(world.attach_sound_source(name=model_name, frequency=500))
 
     yield From(world.pause(False))
-
-
-
-
-
 
     while (True):
         if conf.trajectory_file != '':

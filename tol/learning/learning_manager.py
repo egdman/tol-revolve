@@ -171,8 +171,6 @@ class LearningManager(World):
             robot_name = resp.response
             fut = self.pending_requests[robot_name]
             fut.set_result(robot_name)
-
-            print "CALLBACK {0}".format(robot_name)
             del self.pending_requests[robot_name]
 
         self.modify_nn_response_subscriber = self.manager.subscribe(
@@ -286,4 +284,4 @@ class LearningManager(World):
             if result:
                 break
 
-            yield From(trollius.sleep(0.2))
+            yield From(trollius.sleep(0.1))

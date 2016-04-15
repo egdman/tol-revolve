@@ -12,13 +12,16 @@ parser.add_argument('-o', '--output', type=str, default='', help='Output file na
 def main():
     args = parser.parse_args()
 
-    plt.figure(figsize=(10, 8))
-    plt.axes().set_aspect('equal', 'datalim')
-    plt.tick_params(labelsize=20)
-    plt.title(args.title, fontsize=26, y=1.02)
-    plt.xlabel('x, cm', fontsize=26)
-    plt.ylabel('y, cm', fontsize=26)
-    plt.grid()
+    fig = plt.figure(figsize=(10, 8))
+    axes = fig.add_subplot(111)
+ #   plt.axes().set_aspect('equal', 'datalim')
+    axes.set_aspect('equal', 'datalim')
+    axes.tick_params(labelsize=30)
+    axes.set_title(args.title, fontsize=40, y=1.02)
+    xartist = axes.set_xlabel('x, cm', fontsize=40)
+    yartist = axes.set_ylabel('y, cm', fontsize=40)
+
+    axes.grid()
 
 
 
@@ -46,13 +49,13 @@ def main():
                     pass
 
 
-        plt.plot(xs, ys, linewidth=3, linestyle = "-",color = 'green', ms=10, markevery=100)
+        axes.plot(xs, ys, linewidth=3, linestyle = "-",color = 'green', ms=10, markevery=100)
 
 
     if args.output == '':
-        plt.show()
+        fig.show()
     else:
-        plt.savefig(args.output)
+        fig.savefig(args.output, bbox_extra_artists=(xartist, yartist), bbox_inches='tight')
 
 
 if __name__ == '__main__':

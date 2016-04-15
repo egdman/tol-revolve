@@ -466,8 +466,7 @@ class RobotLearnerOnline(RobotLearner):
     @trollius.coroutine
     def insert_brain(self, world, brain_genotype):
         '''
-        Send request to delete all connections and hidden neurons in the robot.
-        Then send a ModifyNeuralNetwork message that contains the new brain
+        Send a ModifyNeuralNetwork message that contains the new brain
         :param world:
         :param brain_genotype:
         :return:
@@ -476,12 +475,7 @@ class RobotLearnerOnline(RobotLearner):
         # send a ModifyNeuralNetwork message that contains the new brain:
         msg = self.nn_parser.genotype_to_modify_msg(brain_genotype)
         fut = yield From(world.modify_brain(msg, self.robot.name))
-        result = yield From(fut)
-        print "brain modified for: {0}".format(result)
-
-
-
-
+        yield From(fut)
 
 
 
