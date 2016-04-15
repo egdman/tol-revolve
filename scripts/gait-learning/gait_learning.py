@@ -175,11 +175,13 @@ def run():
                                    conf=conf)
 
         gen_files = []
-        for file_name in os.listdir(path_to_log_dir):
-            if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
-                gen_files.append(file_name)
-
         init_brain_list = None
+
+        if (os.path.isdir(path_to_log_dir)):
+            for file_name in os.listdir(path_to_log_dir):
+                if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
+                    gen_files.append(file_name)
+
         # if we are reading an initial population from a file:
         if len(gen_files) > 0:
 
