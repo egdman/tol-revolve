@@ -20,8 +20,9 @@ from ..util import StateSwitch, rotate_vertical
 
 class RobotLearner:
 
-    def __init__(self, world, robot, body_spec, brain_spec, mutator, conf):
+    def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
         self.robot = robot
+        self.insert_pos = insert_position
         self.active_brain = None
 
         self.fitness = 0
@@ -166,7 +167,7 @@ class RobotLearner:
         # create and insert robot with new brain:
         tree = Tree.from_body_brain(pb_body, pb_brain, self.body_spec)
 
-        pose = Pose(position=Vector3(0, 0, 0.2),
+        pose = Pose(position=self.insert_pos,
                     rotation=rotate_vertical(random.random()*3.1415*2.0))
 
         self.robot = yield From(wait_for(world.insert_robot(tree, pose)))
@@ -175,7 +176,7 @@ class RobotLearner:
     def reset_fitness(self):
         self.fitness = 0
         if self.robot is None:
-            self.initial_position = Vector3(0,0,0)
+            self.initial_position = self.insert_pos
         else:
             self.initial_position = self.robot.last_position
         self.last_position = self.initial_position
@@ -434,7 +435,7 @@ class RobotLearner:
         velocities_string = "- generation: {0}\n  velocities:\n".format(self.generation_number)
         for i in range(len(brain_velocity_list)):
             velocities_string += "  - {0}\n".format(brain_velocity_list[i][1])
-            all_genotypes_string += "velocity : {0}\n".format(brain_velocity_list[i][1])
+            all_genotypes_string += "- velocity : {0}\n".format(brain_velocity_list[i][1])
             all_genotypes_string += brain_velocity_list[i][0].to_yaml()
             all_genotypes_string += "\n"
 

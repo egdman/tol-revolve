@@ -1,5 +1,4 @@
 import os
-import fnmatch
 import csv
 import logging
 import shutil
@@ -28,7 +27,7 @@ from ..spec import get_body_spec, get_brain_spec
 from .robot_learner import RobotLearner
 from .encoding import Mutator
 from .convert import yaml_to_genotype
-from .utils import get_brains_from_file
+
 
 
 class LearningManager(World):
@@ -39,17 +38,14 @@ class LearningManager(World):
         self.fitness_file = None
         self.write_fitness = None
 
-        self.learner = None
-        self.path_to_log_dir = conf.output_directory + "/" + conf.log_directory + "/"
+        self.learners = {}
+
+        self.path_to_log_dir = os.path.join(conf.output_directory, conf.log_directory)
 
         try:
             os.mkdir(self.path_to_log_dir)
         except OSError:
             print "Directory " + self.path_to_log_dir + " already exists."
-
-        self.body_spec = get_body_spec(conf)
-        self.brain_spec = get_brain_spec(conf)
-        self.mutator = Mutator(self.brain_spec)
 
         if self.output_directory:
             self.fitness_filename = os.path.join(self.output_directory, 'fitness.csv')
@@ -102,24 +98,22 @@ class LearningManager(World):
     @trollius.coroutine
     def get_snapshot_data(self):
         data = yield From(super(LearningManager, self).get_snapshot_data())
-        data['learner'] = self.learner
-        data['innovation_number'] = self.mutator.innovation_number
+        data['learners'] = self.learners
         raise Return(data)
 
 
     def restore_snapshot(self, data):
         yield From(super(LearningManager, self).restore_snapshot(data))
-        self.learner = data['learner']
-        self.mutator.innovation_number = data['innovation_number']
+        self.learners = data['learners']
 
 
-    def log_info(self, log_data):
+    def log_info(self, log_data, log_name):
         if self.output_directory:
             for filename, data in log_data.items():
-                genotype_log_filename = os.path.join(self.path_to_log_dir, filename)
-                genotype_log_file = open(genotype_log_filename, "a")
-                genotype_log_file.write(data)
-                genotype_log_file.close()
+                genotype_log_filename = os.path.join(self.path_to_log_dir, log_name, filename)
+                with open(genotype_log_filename, "a") as genotype_log_file:
+                    genotype_log_file.write(data)
+
 
 
 
@@ -138,101 +132,42 @@ class LearningManager(World):
             pass
 
 
+
+    @trollius.coroutine
+    def add_learner(self, learner, log_name=None, init_brain_list=None):
+        # create directory for this learner's logs:
+        if log_name is not None:
+            try:
+                os.mkdir(os.path.join(self.path_to_log_dir, log_name))
+            except OSError:
+                pass
+
+        # initialize learner with initial list of brains:
+        yield From(learner.initialize(world=self, init_genotypes=init_brain_list))
+        self.learners[learner] = log_name
+
+
     @trollius.coroutine
     def run(self, conf):
-
-        yield From(wait_for(self.pause(True)))
-
-        # if we are starting a new experiment (not restoring from a snapshot)
-        if not self.do_restore:
-
-            with open(conf.test_bot,'r') as yamlfile:
-                bot_yaml = yamlfile.read()
-
-
-            pose = Pose(position=Vector3(0, 0, 0.2))
-            bot = yaml_to_robot(self.body_spec, self.brain_spec, bot_yaml)
-            tree = Tree.from_body_brain(bot.body, bot.brain, self.body_spec)
-
-            robot = yield From(wait_for(self.insert_robot(tree, pose)))
-
-            learner = RobotLearner(world=self,
-                                       robot=robot,
-                                       body_spec=self.body_spec,
-                                       brain_spec=self.brain_spec,
-                                       mutator=self.mutator,
-                                       conf=conf)
-
-            gen_files = []
-            for file_name in os.listdir(self.path_to_log_dir):
-                if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
-                    gen_files.append(file_name)
-
-            # if we are reading an initial population from a file:
-            if len(gen_files) > 0:
-
-                gen_files = sorted(gen_files, key=lambda item: int(item.split('_')[1]))
-                last_gen_file = gen_files[-1]
-
-                num_generations = int(last_gen_file.split('_')[1]) + 1
-                num_brains_evaluated = conf.population_size*num_generations
-
-                print "last generation file = {0}".format(last_gen_file)
-
-                # get list of brains from the last generation log file:
-                init_brain_list, min_mark, max_mark = \
-                    get_brains_from_file(self.path_to_log_dir + last_gen_file, self.brain_spec)
-
-                print "Max historical mark = {0}".format(max_mark)
-
-                # set mutator's innovation number according to the max historical mark:
-                self.mutator.innovation_number = max_mark + 1
-
-                learner.total_brains_evaluated = num_brains_evaluated
-                learner.generation_number = num_generations
-
-                # initialize learner with initial list of brains:
-                yield From(learner.initialize(world=self, init_genotypes=init_brain_list))
-
-            # if we are not reading initial population from file, we generate it:
-            else:
-                # initialize learner without initial list of brains:
-                yield From(learner.initialize(world=self))
-
-
-            learner.print_parameters()
-            self.learner = learner
-
-        # if we are restoring the state from a snapshot
-        else:
-            # set new experiment parameters:
-            learner = self.learner
-            learner.set_parameters(conf)
-            learner.print_parameters()
-
-            print "WORLD RESTORED FROM {0}".format(self.world_snapshot_filename)
-            print "STATE RESTORED FROM {0}".format(self.snapshot_filename)
-
-        # Request callback for the subscriber
-        def callback(data):
-            req = Request()
-            req.ParseFromString(data)
-
-        subscriber = self.manager.subscribe(
-            '/gazebo/default/request', 'gazebo.msgs.Request', callback)
-        yield From(subscriber.wait_for_connection())
-
-        # # sleep for 60 seconds:
-        # yield From(self.pause(False))
-        # yield From(sleep_sim_time(self, 60))
-        # yield From(self.pause(True))
-
-        delete_learners = []
-
         # run loop:
         while True:
-            result = yield From(self.learner.update(self, self.log_info))
-            if result:
-                break
+
+            for learner, log_name in self.learners.items():
+                if log_name is not None:
+                    log_callback = lambda log_data: self.log_info(log_data, log_name)
+                else:
+                    log_callback = None
+
+                result = yield From(learner.update(self, log_callback))
+
+                # if learning is over:
+                if result:
+                    del self.learners[learner]
 
             yield From(trollius.sleep(0.1))
+
+            # if there are no learners left, stop the loop
+            if len(self.learners) == 0:
+                break
+
+

@@ -1,22 +1,34 @@
 import os
 import sys
 import logging
+import fnmatch
 
 from pygazebo.pygazebo import DisconnectError
 from trollius.py33_exceptions import ConnectionResetError, ConnectionRefusedError
-
-# Add "tol" directory to Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
 
 # Trollius / Pygazebo
 import trollius
 from trollius import From, Return, Future
 from pygazebo.msg.request_pb2 import Request
 
+
+from sdfbuilder.math import Vector3
+from sdfbuilder import Pose
+
+from revolve.util import wait_for
+from revolve.convert.yaml import yaml_to_robot
+from revolve.angle import Tree
+
+# Add "tol" directory to Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
+
 #ToL
 from tol.config import parser
 from tol.logging import logger, output_console
-from tol.learning import LearningManager
+from tol.learning import LearningManager, RobotLearner
+from tol.learning.encoding import Mutator
+from tol.learning import get_brains_from_file
+from tol.spec import get_body_spec, get_brain_spec
 
 
 # Log output to console
@@ -92,6 +104,12 @@ parser.add_argument(
     help='number of evaluations per brain'
 )
 
+parser.add_argument(
+    '--online',
+    action='store_true',
+    help='when this flag is set, the online gait learning mode is used instead of the offline mode'
+)
+
 
 @trollius.coroutine
 def run():
@@ -117,7 +135,81 @@ def run():
     conf.initial_age_sigma = 1
     conf.age_cutoff = 99999
 
+    # create the learning manager
     world = yield From(LearningManager.create(conf))
+
+    path_to_log_dir = os.path.join(world.path_to_log_dir, "learner1")
+    body_spec = get_body_spec(conf)
+    brain_spec = get_brain_spec(conf)
+    mutator = Mutator(brain_spec)
+
+
+
+    # if we are not restoring a saved state:
+    if not world.do_restore:
+
+        with open(conf.test_bot, 'r') as yamlfile:
+            bot_yaml = yamlfile.read()
+
+        pose = Pose(position=Vector3(0, 0, 0.2))
+        bot = yaml_to_robot(body_spec, brain_spec, bot_yaml)
+        tree = Tree.from_body_brain(bot.body, bot.brain, body_spec)
+
+        robot = yield From(wait_for(world.insert_robot(tree, pose)))
+
+        if conf.online:
+            learner = RobotLearnerOnline(world=world,
+                                   robot=robot,
+                                   insert_position=Vector3(0, 0, 0.2),
+                                   body_spec=body_spec,
+                                   brain_spec=brain_spec,
+                                   mutator=mutator,
+                                   conf=conf)
+        else:
+            learner = RobotLearner(world=world,
+                                   robot=robot,
+                                   insert_position=Vector3(0, 0, 0.2),
+                                   body_spec=body_spec,
+                                   brain_spec=brain_spec,
+                                   mutator=mutator,
+                                   conf=conf)
+
+        gen_files = []
+        for file_name in os.listdir(path_to_log_dir):
+            if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
+                gen_files.append(file_name)
+
+        init_brain_list = None
+        # if we are reading an initial population from a file:
+        if len(gen_files) > 0:
+
+            gen_files = sorted(gen_files, key=lambda item: int(item.split('_')[1]))
+            last_gen_file = gen_files[-1]
+
+            num_generations = int(last_gen_file.split('_')[1]) + 1
+            num_brains_evaluated = conf.population_size * num_generations
+
+            print "last generation file = {0}".format(last_gen_file)
+
+            # get list of brains from the last generation log file:
+            init_brain_list, min_mark, max_mark = \
+                get_brains_from_file(os.path.join(path_to_log_dir, last_gen_file), brain_spec)
+
+            print "Max historical mark = {0}".format(max_mark)
+
+            # set mutator's innovation number according to the max historical mark:
+            mutator.innovation_number = max_mark + 1
+
+            learner.total_brains_evaluated = num_brains_evaluated
+            learner.generation_number = num_generations
+
+        # initialize learner with initial list of brains:
+        yield From(world.add_learner(learner, "learner1", init_brain_list))
+
+    # if we are restoring a saved state:
+    else:
+        print "WORLD RESTORED FROM {0}".format(world.world_snapshot_filename)
+        print "STATE RESTORED FROM {0}".format(world.snapshot_filename)
 
     print "WORLD CREATED"
     yield From(world.run(conf))
