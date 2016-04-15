@@ -1,0 +1,4 @@
+#!/bin/bash
+# Runs gazebo with the correct plugin path
+
+python start.py --output-directory output --restore-directory restore

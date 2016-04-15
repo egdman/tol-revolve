@@ -212,7 +212,7 @@ def run():
         print "STATE RESTORED FROM {0}".format(world.snapshot_filename)
 
     print "WORLD CREATED"
-    yield From(world.run(conf))
+    yield From(world.run())
 
 
 

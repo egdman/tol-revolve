@@ -1,5 +1,5 @@
 # Revolve
-from revolve.spec.msgs import Body, BodyPart, NeuralNetwork
+from revolve.spec.msgs import Body, BodyPart, NeuralNetwork, ModifyNeuralNetwork
 from revolve.spec.exception import err
 
 # ToL
@@ -38,39 +38,30 @@ class NeuralNetworkParser:
         return genotype
 
 
+    def genotype_to_modify_msg(self, genotype):
+        brain = self.genotype_to_brain(genotype)
+        msg = ModifyNeuralNetwork()
+        pb_neurons = brain.neuron
+        pb_connections = brain.connection
+
+        for pb_neuron in pb_neurons:
+            if pb_neuron.layer == "hidden":
+                add_neuron = msg.add_hidden.add()
+                add_neuron.CopyFrom(pb_neuron)
+        for pb_connection in pb_connections:
+            add_connection = msg.set_weights.add()
+            add_connection.CopyFrom(pb_connection)
+        return msg
+
+
     def genotype_to_brain(self, genotype):
 
         brain = NeuralNetwork()
-
-#        neuron_map = self._parse_neuron_genes(genotype, brain)
-#        self._parse_connection_genes(genotype, brain, neuron_map)
 
         self._parse_neuron_genes(genotype, brain)
         self._parse_connection_genes(genotype, brain)
 
         return brain
-
-
-    # def _parse_neuron_genes(self, genotype, brain):
-    #     neuron_map = {}
-    #     for neuron_gene in genotype.neuron_genes:
-    #         if neuron_gene.enabled:
-    #             neuron_info = neuron_gene.neuron
-    #             neuron_map[neuron_info] = neuron_info.neuron_id
-    #
-    #             pb_neuron = brain.neuron.add()
-    #             pb_neuron.id = neuron_info.neuron_id
-    #             pb_neuron.layer = neuron_info.layer
-    #             pb_neuron.type = neuron_info.neuron_type
-    #             pb_neuron.partId = neuron_info.body_part_id
-    #
-    #             neuron_spec = self.spec.get(neuron_info.neuron_type)
-    #             serialized_params = neuron_spec.serialize_params(neuron_info.neuron_params)
-    #             for param_value in serialized_params:
-    #                 param = pb_neuron.param.add()
-    #                 param.value = param_value
-    #
-    #     return neuron_map
 
 
     def _parse_neuron_genes(self, genotype, brain):

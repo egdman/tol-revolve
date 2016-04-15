@@ -7,6 +7,7 @@ import shutil
 import trollius
 from trollius import From, Return, Future
 from pygazebo.msg.request_pb2 import Request
+from pygazebo.msg.response_pb2 import Response
 
 # sdfbuilder
 from sdfbuilder.math import Vector3
@@ -23,8 +24,7 @@ from ..manage import World
 from ..logging import logger, output_console
 from ..spec import get_body_spec, get_brain_spec
 
-
-from .robot_learner import RobotLearner
+from .robot_learner import RobotLearner, RobotLearnerOnline
 from .encoding import Mutator
 from .convert import yaml_to_genotype
 
@@ -40,7 +40,17 @@ class LearningManager(World):
 
         self.learners = {}
 
+        # path to the logging directory
         self.path_to_log_dir = os.path.join(conf.output_directory, conf.log_directory)
+
+        self.pending_requests = {}
+
+
+        # publishers that sends ModifyNeuralNetwork messages:
+        self.nn_publishers = {}
+
+        # subscribers that listens to responses about successful neural network modifications:
+        self.nn_subscribers = {}
 
         try:
             os.mkdir(self.path_to_log_dir)
@@ -106,6 +116,11 @@ class LearningManager(World):
         yield From(super(LearningManager, self).restore_snapshot(data))
         self.learners = data['learners']
 
+        for learner in self.learners:
+            if self.nn_publishers[learner.robot.name] is None or \
+                self.nn_subscribers[learner.robot.name] is None:
+                yield From(self.create_nn_publisher(learner.robot.name))
+
 
     def log_info(self, log_data, log_name):
         if self.output_directory:
@@ -132,6 +147,50 @@ class LearningManager(World):
             pass
 
 
+    def create_nn_publisher(self, robot_name):
+        # initialize publisher for ModifyNeuralNetwork messages:
+        modify_nn_publisher = yield From(
+            self.manager.advertise(
+                '/gazebo/default/{0}/modify_neural_network'.format(robot_name),
+                'gazebo.msgs.ModifyNeuralNetwork'
+            )
+        )
+        # Wait for connections
+        yield From(modify_nn_publisher.wait_for_listener())
+
+        def request_done(data):
+            resp = Response()
+            resp.ParseFromString(data)
+            robot_name = resp.response
+            fut = self.pending_requests[robot_name]
+            fut.set_result(robot_name)
+            del self.pending_requests[robot_name]
+
+        modify_nn_response_subscriber = self.manager.subscribe(
+            '/gazebo/default/{0}/modify_neural_network_response'.format(robot_name), 'gazebo.msgs.Response',
+            request_done
+        )
+        yield From(modify_nn_response_subscriber.wait_for_connection())
+        self.nn_publishers[robot_name] = modify_nn_publisher
+        self.nn_subscribers[robot_name] = modify_nn_response_subscriber
+
+
+
+    @trollius.coroutine
+    def modify_brain(self, msg, robot_name):
+        fut = Future()
+        self.pending_requests[robot_name] = fut
+        yield From(self.modify_nn_publisher.publish(msg))
+        raise Return(fut)
+
+
+    def is_request_satisfied(self, robot_name):
+        if robot_name in self.pending_requests:
+            return False
+        else:
+            return True
+
+
 
     @trollius.coroutine
     def add_learner(self, learner, log_name=None, init_brain_list=None):
@@ -145,10 +204,11 @@ class LearningManager(World):
         # initialize learner with initial list of brains:
         yield From(learner.initialize(world=self, init_genotypes=init_brain_list))
         self.learners[learner] = log_name
+        yield From(self.create_nn_publisher(learner.robot.name))
 
 
     @trollius.coroutine
-    def run(self, conf):
+    def run(self):
         # run loop:
         while True:
 
@@ -157,17 +217,16 @@ class LearningManager(World):
                     log_callback = lambda log_data: self.log_info(log_data, log_name)
                 else:
                     log_callback = None
-
                 result = yield From(learner.update(self, log_callback))
-
                 # if learning is over:
                 if result:
                     del self.learners[learner]
 
-            yield From(trollius.sleep(0.1))
-
             # if there are no learners left, stop the loop
             if len(self.learners) == 0:
                 break
+
+            # this line is important!
+            yield From(trollius.sleep(0.1))
 
 

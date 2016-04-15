@@ -70,7 +70,7 @@ target/
 *.*~
 
 # learning-test snapshots directory
-scripts/learning-test/output/*
+scripts/gait-learning/output/*
 
 # emacs backup files
 \#*

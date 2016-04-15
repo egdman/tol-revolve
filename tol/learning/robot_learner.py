@@ -462,6 +462,24 @@ class RobotLearner:
 
 
 
+class RobotLearnerOnline(RobotLearner):
+
+    @trollius.coroutine
+    def insert_brain(self, world, brain_genotype):
+        '''
+        Send a ModifyNeuralNetwork message that contains the new brain
+        :param world:
+        :param brain_genotype:
+        :return:
+        '''
+
+        # send a ModifyNeuralNetwork message that contains the new brain:
+        msg = self.nn_parser.genotype_to_modify_msg(brain_genotype)
+        fut = yield From(world.modify_brain(msg, self.robot.name))
+        yield From(fut)
+
+
+
 class SoundGaitLearner(RobotLearner):
     def __init__(self, world, robot, body_spec, brain_spec, mutator, conf):
         # coordinates of the sound source:
