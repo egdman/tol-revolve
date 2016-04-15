@@ -461,6 +461,8 @@ class RobotLearner:
 
 
 
+        Send a ModifyNeuralNetwork message that contains the new brain
+        yield From(fut)
 
 class SoundGaitLearner(RobotLearner):
     def __init__(self, world, robot, body_spec, brain_spec, mutator, conf):

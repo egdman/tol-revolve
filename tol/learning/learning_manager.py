@@ -235,4 +235,4 @@ class LearningManager(World):
             if result:
                 break
 
-            yield From(trollius.sleep(0.2))
+            yield From(trollius.sleep(0.1))
