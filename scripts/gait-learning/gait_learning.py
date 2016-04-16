@@ -25,7 +25,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
 #ToL
 from tol.config import parser
 from tol.logging import logger, output_console
-from tol.learning import LearningManager, RobotLearner
+from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline
 from tol.learning.encoding import Mutator
 from tol.learning import get_brains_from_file
 from tol.spec import get_body_spec, get_brain_spec
@@ -207,6 +207,7 @@ def run():
 
         # initialize learner with initial list of brains:
         yield From(world.add_learner(learner, "learner1", init_brain_list))
+        learner.print_parameters()
 
     # if we are restoring a saved state:
     else:

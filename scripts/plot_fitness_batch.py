@@ -12,7 +12,7 @@ parser = ArgumentParser("plot_fitness.py")
 
 parser.add_argument('dir_path', metavar='DIR', type=str, help="Path to a fitness log file")
 parser.add_argument('-t', '--title', type=str, default='plot title', help='Title of the plot')
-parser.add_argument('-o', '--output', type=str, default='plot.png', help='Output file name')
+parser.add_argument('-o', '--output', type=str, default='plot', help='Output file name')
 
 def mean(values_list):
     return float(sum(values_list)) / float(len(values_list)) if len(values_list) > 0 else float('nan')
@@ -37,13 +37,10 @@ def main():
     files_and_dirs = os.listdir(dir_path)
     files = [f for f in files_and_dirs if os.path.isfile(os.path.join(dir_path, f))]
 
-    labels = []
-    x_lists = []
-    y_lists = []
+    map_data_to_labels = {}
 
     color_map = {} # dictionary {label:color} because we want the same labels have the same color
 
-    # plt.register_cmap('inferno', cmap=colors.inferno)
 
     for filename in files:
         file_path = os .path.join(dir_path, filename)
@@ -55,10 +52,6 @@ def main():
         label = filename.split('-')[-2]
         print 'label : {0}'.format(label)
 
- #       color = get_random_color()
-        color = get_random_color_pretty()
-
-        color_map[label] = color
 
         data = yaml.load(yaml_data)
         data_items = [(data_item['generation'], data_item['velocities']) for data_item in data]
@@ -76,28 +69,71 @@ def main():
             evaluation_num.append((gen+1) * len(velocities))
             max_val.append(max(velocities))
 
-        x_lists.append(evaluation_num)
-        y_lists.append(max_val)
-        labels.append(label)
 
 
-    plt.figure(figsize=(10,8))
-    plt.tick_params(labelsize=20)
-    for i in range(len(labels)):
-        plt.plot(x_lists[i], y_lists[i], linewidth=3, label=labels[i], color=color_map[labels[i]], ms=10, markevery=100)
+        if label not in color_map:
+            color = get_random_color_pretty()
+            color_map[label] = color
 
+        if label not in map_data_to_labels:
+            map_data_to_labels[label] = []
+
+        map_data_to_labels[label].append({'x': evaluation_num, 'y': max_val})
+        # x_lists.append(evaluation_num)
+        # y_lists.append(max_val)
+        # labels.append(label)
+
+
+
+    # plot raw data:
+    fig = plt.figure(figsize=(10,8))
+    ax = fig.add_subplot(111)
+    ax.tick_params(labelsize=20)
+    for label, graphs in map_data_to_labels.items():
+        for graph in graphs:
+            ax.plot(graph['x'], graph['y'], linewidth=3,
+                    label=label, color=color_map[label],
+                    ms=10,
+                    markevery=100)
     hnd, lab = get_handles_labels(color_map)
-
     plt.legend(hnd, lab, loc=0, prop={'size': 20})
+    ax.set_title(args.title, fontsize=26, y=1.02)
+    ax.set_xlabel('evaluation #', fontsize=26)
+    ax.set_ylabel('fitness', fontsize=26)
+    ax.grid()
+    fig.savefig(out_file_path+".png")
 
-    plt.title(args.title, fontsize=26, y=1.02)
-    plt.xlabel('evaluation #', fontsize=26)
-    plt.ylabel('fitness', fontsize=26)
-# #    plt.xlim(100, None)
-# #    plt.legend(loc=0)
 
-    plt.grid()
-    plt.savefig(out_file_path)
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111)
+    ax.tick_params(labelsize=20)
+    for label, graphs in map_data_to_labels.items():
+        mean_y = []
+        num_graphs = len(graphs)
+        num_points = len(graphs[0]['x'])
+
+        print "for label '{0}'".format(label)
+        print "{0} graphs\n{1} points".format(num_graphs, num_points)
+
+        for i in range(num_points):
+            sum = 0
+            for graph in graphs:
+                sum += graph['y'][i]
+            mean = sum / float(num_graphs)
+            mean_y.append(mean)
+
+        ax.plot(graphs[0]['x'], mean_y, linewidth=3,
+                label=label, color=color_map[label],
+                ms=10,
+                markevery=100)
+    hnd, lab = get_handles_labels(color_map)
+    plt.legend(hnd, lab, loc=0, prop={'size': 20})
+    ax.set_title(args.title, fontsize=26, y=1.02)
+    ax.set_xlabel('evaluation #', fontsize=26)
+    ax.set_ylabel('mean fitness', fontsize=26)
+    ax.grid()
+    fig.savefig(out_file_path+"_mean.png")
+
 
 
 def get_random_color():
