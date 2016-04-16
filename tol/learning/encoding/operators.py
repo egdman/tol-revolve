@@ -1,6 +1,6 @@
 import random
 
-from . import NeuronGene, ConnectionGene, GeneticEncoding, Neuron, GenotypeCopyError, validate_genotype
+from .genes import NeuronGene, ConnectionGene, MutationRateGene, GeneticEncoding, Neuron, GenotypeCopyError, validate_genotype
 
 def get_default_mutation_spec(brain_spec):
     # parameters for each type of neuron that can be mutated and their specs:
@@ -36,7 +36,7 @@ class Mutator:
         self.new_connection_sigma = new_connection_sigma
         self.max_attempts = max_attempts
         self.brain_spec = brain_spec
-
+    def add_
 
     def mutate_neuron_params(self, genotype, probability, sigma):
         """
@@ -252,6 +252,19 @@ class Mutator:
         genotype.add_connection_gene(new_conn_gene)
         return new_conn_gene.historical_mark
 
+
+    def add_mutation_rate(self, name, rate, genotype):
+        new_rate_gene = MutationRateGene(
+                                name=name,
+                                rate=rate,
+                                innovation_number=self.innovation_number,
+                                enabled=True)
+        self.innovation_number += 1
+        genotype.add_mutation_rate_gene(new_rate_gene)
+        return new_rate_gene.historical_mark
+
+
+#    def add_rate_genes(self, genotype):
 
 class Crossover:
 
