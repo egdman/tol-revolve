@@ -108,9 +108,10 @@ def main():
     ax = fig.add_subplot(111)
     ax.tick_params(labelsize=20)
     for label, graphs in map_data_to_labels.items():
+        graph_lengths = [len(graph['x']) for graph in graphs]
         mean_y = []
         num_graphs = len(graphs)
-        num_points = len(graphs[0]['x'])
+        num_points = min(graph_lengths)
 
         print "for label '{0}'".format(label)
         print "{0} graphs\n{1} points".format(num_graphs, num_points)
@@ -122,7 +123,7 @@ def main():
             mean = sum / float(num_graphs)
             mean_y.append(mean)
 
-        ax.plot(graphs[0]['x'], mean_y, linewidth=3,
+        ax.plot(graphs[0]['x'][:num_points], mean_y, linewidth=3,
                 label=label, color=color_map[label],
                 ms=10,
                 markevery=100)

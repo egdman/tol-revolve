@@ -117,8 +117,8 @@ class LearningManager(World):
         self.learners = data['learners']
 
         for learner in self.learners:
-            if self.nn_publishers[learner.robot.name] is None or \
-                self.nn_subscribers[learner.robot.name] is None:
+            if learner.robot.name not in self.nn_publishers or \
+                learner.robot.name not in self.nn_subscribers:
                 yield From(self.create_nn_publisher(learner.robot.name))
 
 
