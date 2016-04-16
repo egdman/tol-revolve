@@ -99,6 +99,17 @@ class ConnectionGene(Gene):
 
 
 
+class MutationRateGene(Gene):
+    def __init__(self, rate, innovation_number=0, enabled=True):
+        Gene.__init__(self, innovation_number=innovation_number,
+                      enabled=enabled)
+        self.rate = rate
+
+    def __str__(self):
+        return "NEAT Mutation rate gene at " + hex(id(self)) + ",mark " + str(self.historical_mark) + \
+               " (rate=" + str(self.rate) + ")"
+
+
 
 class GeneticEncoding:
     def __init__(self):
