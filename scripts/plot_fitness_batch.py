@@ -99,30 +99,35 @@ def main():
 
 
     # plot raw data:
-    fig = plt.figure(figsize=(10,8))
+    fig = plt.figure(figsize=(10, 12))
     ax = fig.add_subplot(111)
     for label, graphs in map_data_to_labels.items():
         for graph in graphs:
-            ax.plot(graph['x'], graph['y'], linewidth=3,
+            ax.plot(graph['x'], graph['y'], linewidth=2,
                     label=label, color=color_map[label],
                     markevery=100)
     hnd, lab = get_handles_labels(color_map)
-    plt.legend(hnd, lab, loc=0, prop={'size': legend_size})
+    ax.legend(hnd, lab, loc=0, prop={'size': legend_size})
 
     ax.tick_params(axis='both', which='major', labelsize=tick_size)
     ax.set_title(args.title, fontsize=title_size, y=1.02)
     xartist = ax.set_xlabel('evaluation #', fontsize=label_size)
     yartist = ax.set_ylabel('fitness', fontsize=label_size)
     ax.grid()
-    fig.savefig(out_file_path+".png", bbox_extra_artists=(xartist,yartist), bbox_inches='tight')
+    fig.savefig(out_file_path + ".png", bbox_extra_artists=(xartist, yartist), bbox_inches='tight')
+    # ##################################################################################################
+
+    # mean fitness value for the entire label for all generations and all runs:
+    overall_means = {}
 
 
     # plot averaged data:
-    fig = plt.figure(figsize=(10, 8))
+    fig = plt.figure(figsize=(10, 12))
     ax = fig.add_subplot(111)
     for label, graphs in map_data_to_labels.items():
         graph_lengths = [len(graph['x']) for graph in graphs]
         mean_y = []
+
         num_graphs = len(graphs)
         num_points = min(graph_lengths)
 
@@ -133,22 +138,40 @@ def main():
             sum = 0
             for graph in graphs:
                 sum += graph['y'][i]
-            mean = sum / float(num_graphs)
-            mean_y.append(mean)
+            sum = sum / float(num_graphs)
+            mean_y.append(sum)
+
+
+        overall_means[float(label)] = mean(mean_y[(num_points/2):])
 
         ax.plot(graphs[0]['x'][:num_points], mean_y, linewidth=3,
                 label=label, color=color_map[label],
                 markevery=100)
     hnd, lab = get_handles_labels(color_map)
-    plt.legend(hnd, lab, loc=0, prop={'size': legend_size})
+    ax.legend(hnd, lab, loc=0, prop={'size': legend_size})
 
     ax.tick_params(axis='both', which='major', labelsize=tick_size)
     ax.set_title(args.title, fontsize=title_size, y=1.02)
     xartist = ax.set_xlabel('evaluation #', fontsize=label_size)
     yartist = ax.set_ylabel('mean fitness', fontsize=label_size)
     ax.grid()
-    fig.savefig(out_file_path+"_mean.png", bbox_extra_artists=(xartist,yartist), bbox_inches='tight')
+    fig.savefig(out_file_path + "_mean.png", bbox_extra_artists=(xartist, yartist), bbox_inches='tight')
+    # ##################################################################################################
 
+
+    # plot overall means for each label:
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(111)
+    label_values = [float(label) for label in map_data_to_labels]
+    label_values = sorted(label_values)
+    label_means = [overall_means[label] for label in overall_means]
+    ax.scatter(label_values, label_means, label='overall means')
+    ax.set_title("overall means", fontsize=title_size, y=1.02)
+    xartist = ax.set_xlabel('speciation threshold', fontsize=label_size)
+    yartist = ax.set_ylabel('overall mean fitness', fontsize=label_size)
+    ax.grid()
+    fig.savefig(out_file_path + "_overall_mean.png", bbox_extra_artists=(xartist, yartist), bbox_inches='tight')
+    # ##################################################################################################
 
 
 def get_random_color():

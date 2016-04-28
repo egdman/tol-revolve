@@ -147,6 +147,7 @@ class LearningManager(World):
             pass
 
 
+    @trollius.coroutine
     def create_nn_publisher(self, robot_name):
         # initialize publisher for ModifyNeuralNetwork messages:
         modify_nn_publisher = yield From(
@@ -176,11 +177,13 @@ class LearningManager(World):
 
 
 
+
     @trollius.coroutine
     def modify_brain(self, msg, robot_name):
         fut = Future()
         self.pending_requests[robot_name] = fut
-        yield From(self.modify_nn_publisher.publish(msg))
+        pub = self.nn_publishers[robot_name]
+        yield From(pub.publish(msg))
         raise Return(fut)
 
 
@@ -201,10 +204,11 @@ class LearningManager(World):
             except OSError:
                 pass
 
+        yield From(self.create_nn_publisher(learner.robot.name))
         # initialize learner with initial list of brains:
         yield From(learner.initialize(world=self, init_genotypes=init_brain_list))
         self.learners[learner] = log_name
-        yield From(self.create_nn_publisher(learner.robot.name))
+
 
 
     @trollius.coroutine
