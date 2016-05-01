@@ -26,7 +26,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
 from tol.config import parser
 from tol.logging import logger, output_console
 from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline
-from tol.learning.encoding import Mutator
+from tol.learning.encoding import Mutator, get_default_mutation_spec
 from tol.learning import get_brains_from_file
 from tol.spec import get_body_spec, get_brain_spec
 
@@ -119,8 +119,8 @@ def run():
     conf.weight_mutation_probability = 0.8
     conf.weight_mutation_sigma = 5.0
     conf.param_mutation_probability = 0.8
-    conf.param_mutation_sigma = 5.0
-    conf.structural_mutation_probability = 0.8
+    conf.param_mutation_sigma = 0.25
+    conf.structural_mutation_probability = 0.0
 
     # this is the world state update frequency in simulation Hz
     conf.pose_update_frequency = 5 # in simulation Hz
@@ -141,7 +141,16 @@ def run():
     path_to_log_dir = os.path.join(world.path_to_log_dir, "learner1")
     body_spec = get_body_spec(conf)
     brain_spec = get_brain_spec(conf)
-    mutator = Mutator(brain_spec)
+
+    mut_spec = get_default_mutation_spec(brain_spec)
+
+    # disallow to add oscillators:
+    types_of_new_neurons = filter(lambda item: item != "Oscillator", mut_spec['types'])
+    mut_spec['types'] = types_of_new_neurons
+
+    print "New types: {0}".format(mut_spec['types'])
+
+    mutator = Mutator(brain_spec, mutation_spec=mut_spec)
 
 
 

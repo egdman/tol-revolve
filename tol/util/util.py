@@ -63,8 +63,3 @@ class Timers:
 
     def get_last_time(self, name):
         return self.timers[name]
-
-
-
-
-

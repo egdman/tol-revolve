@@ -239,6 +239,7 @@ class RobotLearner:
 
             # if repeated brain evaluation is over
             else:
+                yield From(wait_for(world.pause(True)))
                 aver_fitness = sum(self.fitness_buffer) / float(len(self.fitness_buffer))
 
                 self.brain_fitness[self.active_brain] = aver_fitness
@@ -285,7 +286,7 @@ class RobotLearner:
             self.state_switch.set_duration('evaluate', self.evaluation_time_actual)
 
             # switch state to 'warmup'
-            self.state_switch.switch_to_state('warmup')
+            self.state_switch.switch_to_state('warmup', world.get_world_time())
 
 
         # if termination criteria are met, return True:

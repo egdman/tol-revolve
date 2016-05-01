@@ -86,6 +86,10 @@ class Mutator:
                     param_value = neuron_gene.neuron.neuron_params[param_name]
                     max_value = param_spec.max
                     min_value = param_spec.min
+
+                    range_of_values = max_value - min_value
+                    sigma = sigma*range_of_values
+
                     param_value += random.gauss(0, sigma)
 
                     if param_value > max_value:
@@ -171,7 +175,7 @@ class Mutator:
         # disallow incoming connections to input neurons:
         # also disallow connections starting from output neurons:
         while genotype.connection_exists(mark_from, mark_to) or \
-                        neuron_to.neuron.layer == "input" or neuron_from.neuron.layer == "output":
+                        neuron_to.neuron.layer == "input":
             neuron_from = random.choice(genotype.neuron_genes)
             neuron_to = random.choice(genotype.neuron_genes)
             mark_from = neuron_from.historical_mark

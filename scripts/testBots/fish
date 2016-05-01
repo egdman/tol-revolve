@@ -20,31 +20,3 @@ body:
                 1:
                   id          : Leg01
                   type        : FixedBrick
-    
-
-brain:
-  # extra input neuron (bias)
-  neurons:
-    Core-hidden-0:
-      id: Core-hidden-0
-      layer: hidden
-      part_id: Core
-      type: Oscillator
-
-  # Here you specify the connections between neurons, as
-  # {"src": "src-id", "dst": "dst-id", "weight": float}
-  connections:
-  - src: Core-hidden-0
-    dst: Leg00Joint-out-0
-    weight: 10
-
-  - src: Core-hidden-0
-    dst: Leg01Joint-out-0
-    weight: 10
-
-
-  params:
-    Core-hidden-0:
-      period: 0.5
-      phase_offset: 0
-      amplitude: 1
