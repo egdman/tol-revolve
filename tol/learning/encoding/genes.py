@@ -293,6 +293,14 @@ class GeneticEncoding:
         self.connection_genes.append(connection_gene)
 
 
+    def remove_connection_gene(self, index):
+        del self.connection_genes[index]
+
+
+    def remove_neuron_gene(self, index):
+        del self.neuron_genes[index]
+
+
     def to_lists(self):
         neuron_list = []
         for neuron_gene in self.neuron_genes:

@@ -86,6 +86,7 @@ class RobotLearner:
         self.param_mutation_probability = conf.param_mutation_probability
         self.param_mutation_sigma = conf.param_mutation_sigma
         self.structural_mutation_probability = conf.structural_mutation_probability
+        self.removal_mutation_probability = conf.removal_mutation_probability
         self.max_generations = conf.max_generations
         self.speciation_threshold = conf.speciation_threshold
         self.repeat_evaluations = conf.repeat_evaluations
@@ -410,6 +411,17 @@ class RobotLearner:
                     self.mutator.add_neuron_mutation(child_genotype)
                     validate_genotype(child_genotype, "inserting new NEURON created invalid genotype")
  #                   print "inserting new NEURON successful"
+
+        # apply removal mutation:
+        if random.random() < self.removal_mutation_probability:
+            if random.random() < 0.5:
+                self.mutator.remove_connection_mutation(child_genotype)
+                validate_genotype(child_genotype, "removing a CONNECTION created invalid genotype")
+            else:
+                self.mutator.remove_neuron_mutation(child_genotype)
+                validate_genotype(child_genotype, "removing a NEURON created invalid genotype")
+
+
         return child_genotype
 
 
