@@ -237,22 +237,31 @@ class Mutator:
 
 
     def remove_connection_mutation(self, genotype):
+        if len(genotype.connection_genes) == 0:
+            return
         gene_id = random.choice(range(len(genotype.connection_genes)))
         genotype.remove_connection_gene(gene_id)
 
 
     def remove_neuron_mutation(self, genotype):
-        hidden_neurons = [gene for gene in genotype.neuron_genes if gene.neuron.layer == 'hidden']
-        gene_id = random.choice(range(len(hidden_neurons)))
+        hidden_neuron_ids = [gene_id for gene_id, gene in
+                             enumerate(genotype.neuron_genes) if gene.neuron.layer == 'hidden']
+
+        if len(hidden_neuron_ids) == 0:
+            return
+        gene_id = random.choice(hidden_neuron_ids)
 
         neuron_gene = genotype.neuron_genes[gene_id]
         neuron_mark = neuron_gene.historical_mark
 
-        # remove attached connection genes:
-        bad_connections = [gene_id for gene, gene_id in enumerate(genotype.connection_genes) if
+        # find indices of attached connection genes:
+        bad_connections = [g_id for g_id, gene in enumerate(genotype.connection_genes) if
                            gene.mark_from == neuron_mark or gene.mark_to == neuron_mark]
-        for id in bad_connections:
-            genotype.remove_connection_gene(id)
+
+
+        # remove attached connection genes:
+        for g_id in reversed(bad_connections):
+            genotype.remove_connection_gene(g_id)
 
         # remove the neuron gene:
         genotype.remove_neuron_gene(gene_id)

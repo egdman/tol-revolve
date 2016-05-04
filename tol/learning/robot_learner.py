@@ -164,9 +164,12 @@ class RobotLearner:
 
         # delete robot with old brain:
         yield From(world.delete_robot(self.robot))
-
-        # create and insert robot with new brain:
-        tree = Tree.from_body_brain(pb_body, pb_brain, self.body_spec)
+        try:
+            # create and insert robot with new brain:
+            tree = Tree.from_body_brain(pb_body, pb_brain, self.body_spec)
+        except Exception as ex:
+            print brain_genotype.debug_string(True)
+            raise ex
 
         pose = Pose(position=self.insert_pos,
                     rotation=rotate_vertical(random.random()*3.1415*2.0))
@@ -463,15 +466,17 @@ class RobotLearner:
         return self.nn_parser.brain_to_genotype(pb_robot.brain, self.mutator)
 
 
-    def print_parameters(self):
-        print "population size      set to {0}".format(self.pop_size)
-        print "tournament size      set to {0}".format(self.tournament_size)
-        print "number of children   set to {0}".format(self.num_children)
-        print "evaluation time      set to {0}".format(self.evaluation_time)
-        print "warmup  time         set to {0}".format(self.warmup_time)
-        print "speciation threshold set to {0}".format(self.speciation_threshold)
-        print "evaluation repeats   set to {0}".format(self.repeat_evaluations)
-        print "max number of generations set to {0}".format(self.max_generations)
+    def parameter_string(self):
+        out = ""
+        out += "population size      set to {0}\n".format(self.pop_size)
+        out += "tournament size      set to {0}\n".format(self.tournament_size)
+        out += "number of children   set to {0}\n".format(self.num_children)
+        out += "evaluation time      set to {0}\n".format(self.evaluation_time)
+        out += "warmup  time         set to {0}\n".format(self.warmup_time)
+        out += "speciation threshold set to {0}\n".format(self.speciation_threshold)
+        out += "evaluation repeats   set to {0}\n".format(self.repeat_evaluations)
+        out += "max number of generations set to {0}\n".format(self.max_generations)
+        return out
 
 
 

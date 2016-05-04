@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import fnmatch
+import shutil
 
 from pygazebo.pygazebo import DisconnectError
 from trollius.py33_exceptions import ConnectionResetError, ConnectionRefusedError
@@ -121,7 +122,7 @@ def run():
     conf.param_mutation_probability = 0.8
     conf.param_mutation_sigma = 0.25
     conf.structural_mutation_probability = 0.8
-    conf.removal_mutation_probability = 0.8
+    conf.removal_mutation_probability = 0.0
 
     # this is the world state update frequency in simulation Hz
     conf.pose_update_frequency = 5 # in simulation Hz
@@ -217,7 +218,12 @@ def run():
 
         # initialize learner with initial list of brains:
         yield From(world.add_learner(learner, "learner1", init_brain_list))
-        learner.print_parameters()
+        print learner.parameter_string()
+
+        # log experiment parameter values:
+        create_param_log_file(conf, learner.generation_number, os.path.join(path_to_log_dir, "parameters.log"))
+        # copy the robot body file:
+        shutil.copy(conf.test_bot, path_to_log_dir)
 
     # if we are restoring a saved state:
     else:
@@ -226,6 +232,12 @@ def run():
 
     print "WORLD CREATED"
     yield From(world.run())
+
+
+def create_param_log_file(conf, cur_generation, filename):
+    with open(filename, 'a') as log_file:
+        log_file.write('generation: {0}\n'.format(cur_generation))
+        log_file.write("{0}\n".format(str(conf)))
 
 
 

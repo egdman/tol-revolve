@@ -35,7 +35,7 @@ class Neuron:
         return copy_neuron
 
     def __str__(self):
-        return "Neuron info at " + hex(id(self))
+        return "id={0}, layer={1}, type={2}, part={3}".format(self.neuron_id, self.layer, self.neuron_type, self.body_part_id)
 
 
 
@@ -64,7 +64,7 @@ class NeuronGene(Gene):
 
 
     def __str__(self):
-        return "NEAT Neuron gene at " + hex(id(self)) + ",mark " + str(self.historical_mark)
+        return "NEAT Neuron gene, " + str(self.neuron) + ", mark " + str(self.historical_mark)
 
 
 class ConnectionGene(Gene):
