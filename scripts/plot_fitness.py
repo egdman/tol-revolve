@@ -85,7 +85,7 @@ def main():
 
 
         #print(values2)
-    fig = plt.figure(figsize=(10,8))
+    fig = plt.figure(figsize=(12,12))
     ax = fig.add_subplot(111)
     ax.plot(evaluation_num, max_val, linewidth=3, label="max", linestyle='--', color = 'red', ms=10, markevery=100)
     ax.plot(evaluation_num, mean_val, linewidth=3, label="mean", linestyle = "-",color = 'green', ms=10, markevery=100)

@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser("draw_nn.py")
 
-parser.add_argument('-i', '--input_path', metavar='INPUT', type=str, help="Path to a genotype YAML file")
+parser.add_argument('input_path', metavar='INPUT', type=str, help="Path to a genotype YAML file")
 parser.add_argument('-o', '--output_path', metavar='OUTPUT', type=str, help="Path to a graph drawing")
 
 
