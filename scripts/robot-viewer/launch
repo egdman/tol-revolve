@@ -46,7 +46,7 @@ ACTUAL_ANALYZER_PID=`ps -ef | awk '$3 == '${ANALYZER_PID}' { print $2 } '`
 
 sleep 3
 
-python $DIR/robot_viewer.py --body-file "$BODY_FILE" --brain-file "$BRAIN_FILE" --trajectory-file "traj/traject.csv" --trajectory-limit 30 &
+python $DIR/robot_viewer.py --body-file "$BODY_FILE" --brain-file "$BRAIN_FILE" --trajectory-file "traj/traject.csv" --trajectory-limit 600 &
 PY_PID=$!
 
 echo 'PY_PID='$PY_PID
