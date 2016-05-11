@@ -1,5 +1,6 @@
 import os
 import sys
+import fnmatch
 #import pygraphviz as pgv
 
 from argparse import ArgumentParser
@@ -12,6 +13,8 @@ parser = ArgumentParser("create_graphs.py")
 
 parser.add_argument('dir_path', metavar='PATH', type=str, help="Path to a genotype log folder")
 parser.add_argument('--threshold', type=float, default=0.5, help='speciation threshold')
+parser.add_argument('-o', '--output', type=str, default="graphs", help='name of the output directory')
+parser.add_argument('-p', '--pattern', type=str, default="gen_*_genotypes.log", help='input filename pattern')
 
 # parser.add_argument('-t', '--title', type=str, default='plot title', help='Title of the plot')
 
@@ -20,7 +23,7 @@ def main():
 
     dir_path = args.dir_path
     spec_thr = args.threshold
-    out_dir_path = os.path.join(dir_path, "graphs")
+    out_dir_path = os.path.join(dir_path, args.output)
 
     try:
         os.mkdir(out_dir_path)
@@ -29,7 +32,8 @@ def main():
 
 
     files_and_dirs = os.listdir(dir_path)
-    files = [f for f in files_and_dirs if os.path.isfile(os.path.join(dir_path, f))]
+    files = [f for f in files_and_dirs if os.path.isfile(os.path.join(dir_path, f)) and
+             fnmatch.fnmatch(f, args.pattern)]
 
     for gen_file in files:
         in_file = os.path.join(dir_path, gen_file)
