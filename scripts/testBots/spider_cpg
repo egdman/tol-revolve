@@ -242,12 +242,6 @@ brain:
   - dst: Leg11Joint-cpg-6
     src: Leg10Joint-cpg-4
     weight: 1.0
-  - dst: Leg00Joint-cpg-0
-    src: Leg10Joint-cpg-4
-    weight: 1.0
-  - dst: Leg10Joint-cpg-4
-    src: Leg00Joint-cpg-0
-    weight: 1.0
   - dst: Leg20Joint-cpg-9
     src: Leg20Joint-cpg-8
     weight: 1.0
@@ -277,12 +271,6 @@ brain:
     weight: 1.0
   - dst: Leg21Joint-cpg-10
     src: Leg20Joint-cpg-8
-    weight: 1.0
-  - dst: Leg00Joint-cpg-0
-    src: Leg20Joint-cpg-8
-    weight: 1.0
-  - dst: Leg20Joint-cpg-8
-    src: Leg00Joint-cpg-0
     weight: 1.0
   - dst: Leg30Joint-cpg-13
     src: Leg30Joint-cpg-12
@@ -315,10 +303,112 @@ brain:
     src: Leg30Joint-cpg-12
     weight: 1.0
   - dst: Leg00Joint-cpg-0
-    src: Leg30Joint-cpg-12
+    src: Core-in-5
+    weight: 1.0
+  - dst: Leg00Joint-cpg-0
+    src: Core-in-4
+    weight: 1.0
+  - dst: Leg00Joint-cpg-0
+    src: Core-in-0
+    weight: 1.0
+  - dst: Leg00Joint-cpg-0
+    src: Core-in-3
+    weight: 1.0
+  - dst: Leg00Joint-cpg-0
+    src: Core-in-2
+    weight: 1.0
+  - dst: Leg00Joint-cpg-0
+    src: Core-in-1
+    weight: 1.0
+  - dst: Leg10Joint-cpg-4
+    src: Core-in-5
+    weight: 1.0
+  - dst: Leg10Joint-cpg-4
+    src: Core-in-4
+    weight: 1.0
+  - dst: Leg10Joint-cpg-4
+    src: Core-in-0
+    weight: 1.0
+  - dst: Leg10Joint-cpg-4
+    src: Core-in-3
+    weight: 1.0
+  - dst: Leg10Joint-cpg-4
+    src: Core-in-2
+    weight: 1.0
+  - dst: Leg10Joint-cpg-4
+    src: Core-in-1
+    weight: 1.0
+  - dst: Leg20Joint-cpg-8
+    src: Core-in-5
+    weight: 1.0
+  - dst: Leg20Joint-cpg-8
+    src: Core-in-4
+    weight: 1.0
+  - dst: Leg20Joint-cpg-8
+    src: Core-in-0
+    weight: 1.0
+  - dst: Leg20Joint-cpg-8
+    src: Core-in-3
+    weight: 1.0
+  - dst: Leg20Joint-cpg-8
+    src: Core-in-2
+    weight: 1.0
+  - dst: Leg20Joint-cpg-8
+    src: Core-in-1
+    weight: 1.0
+  - dst: Leg30Joint-cpg-12
+    src: Core-in-5
+    weight: 1.0
+  - dst: Leg30Joint-cpg-12
+    src: Core-in-4
+    weight: 1.0
+  - dst: Leg30Joint-cpg-12
+    src: Core-in-0
+    weight: 1.0
+  - dst: Leg30Joint-cpg-12
+    src: Core-in-3
+    weight: 1.0
+  - dst: Leg30Joint-cpg-12
+    src: Core-in-2
+    weight: 1.0
+  - dst: Leg30Joint-cpg-12
+    src: Core-in-1
+    weight: 1.0
+  - dst: Leg10Joint-cpg-4
+    src: Leg00Joint-cpg-0
+    weight: 1.0
+  - dst: Leg00Joint-cpg-0
+    src: Leg10Joint-cpg-4
+    weight: 1.0
+  - dst: Leg20Joint-cpg-8
+    src: Leg00Joint-cpg-0
+    weight: 1.0
+  - dst: Leg00Joint-cpg-0
+    src: Leg20Joint-cpg-8
     weight: 1.0
   - dst: Leg30Joint-cpg-12
     src: Leg00Joint-cpg-0
+    weight: 1.0
+  - dst: Leg00Joint-cpg-0
+    src: Leg30Joint-cpg-12
+    weight: 1.0
+  - dst: Leg20Joint-cpg-8
+    src: Leg10Joint-cpg-4
+    weight: 1.0
+  - dst: Leg10Joint-cpg-4
+    src: Leg20Joint-cpg-8
+    weight: 1.0
+  - dst: Leg30Joint-cpg-12
+    src: Leg10Joint-cpg-4
+    weight: 1.0
+  - dst: Leg10Joint-cpg-4
+    src: Leg30Joint-cpg-12
+    weight: 1.0
+  - dst: Leg30Joint-cpg-12
+    src: Leg20Joint-cpg-8
+    weight: 1.0
+  - dst: Leg20Joint-cpg-8
+    src: Leg30Joint-cpg-12
     weight: 1.0
   neurons:
     Core-in-0:

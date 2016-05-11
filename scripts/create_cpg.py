@@ -19,6 +19,7 @@ class CPG_Factory:
         self.num_neurons_added = 0
         self.body_spec = body_spec
         self.brain_spec = brain_spec
+        self.root_nodes = []
 
     def _add_cpg(self, pb_part, pb_brain, neuron_type):
         part_id = pb_part.id
@@ -46,10 +47,7 @@ class CPG_Factory:
             conn_data4 = {'src': out_id, 'dst': id_2, 'weight': 1.0}
             self._add_connection(conn_data3, pb_brain)
             self._add_connection(conn_data4, pb_brain)
-
         return id_1
-
-
 
 
 
@@ -82,6 +80,13 @@ class CPG_Factory:
         conn.weight = data['weight']
 
 
+    def _add_double_connection(self, id1, id2, weight, pb_brain):
+        conn_data1 = {'src': id1, 'dst': id2, 'weight': weight}
+        conn_data2 = {'src': id2, 'dst': id1, 'weight': weight}
+        self._add_connection(conn_data1, pb_brain)
+        self._add_connection(conn_data2, pb_brain)
+
+
     def _parse_part(self, pb_part, pb_brain, cpg_stack, neuron_type):
         part_type = pb_part.type
 
@@ -100,11 +105,11 @@ class CPG_Factory:
         while len(cpg_stack) > 1:
             id1 = cpg_stack[-1]
             id2 = cpg_stack[-2]
-            conn_data1 = {'src': id1, 'dst': id2, 'weight': 1.0}
-            conn_data2 = {'src': id2, 'dst': id1, 'weight': 1.0}
-            self._add_connection(conn_data1, pb_brain)
-            self._add_connection(conn_data2, pb_brain)
+            self._add_double_connection(id1, id2, 1.0, pb_brain)
             del cpg_stack[-1]
+        if len(cpg_stack) == 1:
+            self.root_nodes.append(cpg_stack[0])
+            del cpg_stack[0]
 
 
 
@@ -114,6 +119,26 @@ class CPG_Factory:
         cpg_stack = []
         self._parse_part(core, brain, cpg_stack, neuron_type)
 
+        # find all input neurons:
+        input_neurons = []
+        for n in brain.neuron:
+            if n.layer == 'input':
+                input_neurons.append(n)
+
+
+        if len(self.root_nodes) != 0:
+            # connect inputs to root neurons:
+            for rn in self.root_nodes:
+                for inp_n in input_neurons:
+                    conn_data = {'src': inp_n.id, 'dst': rn, 'weight': 1.0}
+                    self._add_connection(conn_data, brain)
+
+            # connect root nodes together:
+            for i in range(len(self.root_nodes) - 1):
+                rn1 = self.root_nodes[i]
+                for j in range(i+1, len(self.root_nodes)):
+                    rn2 = self.root_nodes[j]
+                    self._add_double_connection(rn1, rn2, weight=1.0, pb_brain=brain)
 
 
 
