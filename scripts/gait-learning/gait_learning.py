@@ -121,7 +121,7 @@ def run():
     conf.weight_mutation_sigma = 5.0
     conf.param_mutation_probability = 0.8
     conf.param_mutation_sigma = 0.25
-    conf.structural_mutation_probability = 0.0
+    conf.structural_mutation_probability = 0.75
     conf.removal_mutation_probability = 0.0
 
     # this is the world state update frequency in simulation Hz

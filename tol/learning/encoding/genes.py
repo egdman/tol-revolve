@@ -271,6 +271,108 @@ class GeneticEncoding:
         return gene_pairs
 
 
+    @staticmethod
+    def get_space_dimensionality(genotypes, brain_spec):
+        '''
+        this method returns the list of pairs (historical mark, number of parameters for that gene)
+        for those genes that are not present, the number of parameters is zero
+
+        :param genotypes:
+        :param brain_spec:
+        :return:
+        '''
+
+        sorted_gene_lists = []
+        for genotype in genotypes:
+            sorted_gene_list = genotype.get_sorted_genes()
+            sorted_gene_lists.append(sorted_gene_list)
+
+
+
+
+        glob_min_hm = sorted_gene_lists[0][0].historical_mark
+        glob_max_hm = sorted_gene_lists[0][-1].historical_mark
+
+        for gene_list in sorted_gene_lists:
+            min_hm = gene_list[0].historical_mark
+            max_hm = gene_list[-1].historical_mark
+
+            if min_hm < glob_min_hm:
+                glob_min_hm = min_hm
+
+            if max_hm > glob_max_hm:
+                glob_max_hm = max_hm
+
+
+        hm_param_numbers = []
+        for hm in range(0, glob_max_hm + 1):
+            this_gene = None
+            for gene_list in sorted_gene_lists:
+                for gene in gene_list:
+                    if gene.historical_mark == hm:
+                        this_gene = gene
+                        break
+                    elif gene.historical_mark > hm:
+                        break
+            if this_gene is None:
+                hm_param_numbers.append((hm, 0))
+            else:
+                if isinstance(this_gene, ConnectionGene):
+
+                    hm_param_numbers.append((hm, 1))
+                elif isinstance(this_gene, NeuronGene):
+                    neuron_type = this_gene.neuron.neuron_type
+                    neuron_spec = brain_spec.get(neuron_type)
+                    num_params = len(neuron_spec.parameters)
+                    hm_param_numbers.append((hm, num_params))
+
+        return hm_param_numbers
+
+
+    def to_vector(self, hm_param_numbers, brain_spec):
+        vector = []
+        sorted_genes = self.get_sorted_genes()
+
+        for (cur_hm, par_num) in hm_param_numbers:
+
+            if par_num == 0:
+                continue
+
+            this_gene = None
+
+            for gene in sorted_genes:
+                hm = gene.historical_mark
+
+                # if we have that gene
+                if hm == cur_hm:
+                    this_gene = gene
+
+                # if we don't have that gene
+                elif hm > cur_hm:
+                    break
+
+            # if we don't have this gene, fill in zeros:
+            if this_gene is None:
+                for j in range(par_num):
+                    vector.append(0)
+
+            # if we do have this gene, fill in parameter values:
+            elif isinstance(this_gene, ConnectionGene):
+                weight = this_gene.weight
+                vector.append(weight)
+            elif isinstance(this_gene, NeuronGene):
+                neuron_spec = brain_spec.get(this_gene.neuron.neuron_type)
+                ser_params = neuron_spec.serialize_params(this_gene.neuron.neuron_params)
+                for val in ser_params:
+                    vector.append(val)
+
+        return vector
+
+
+    def get_sorted_genes(self):
+        return sorted(self.neuron_genes + self.connection_genes,
+                        key = lambda gene: gene.historical_mark)
+
     def min_max_hist_mark(self):
         genes_sorted = sorted(self.neuron_genes + self.connection_genes,
                         key = lambda gene: gene.historical_mark)

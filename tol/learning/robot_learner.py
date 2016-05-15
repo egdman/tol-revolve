@@ -332,6 +332,10 @@ class RobotLearner:
         # sort parents from best to worst:
         brain_fitness_list = sorted(brain_fitness_list, key = lambda elem: elem[1], reverse=True)
         brain_velocity_list = sorted(brain_velocity_list, key = lambda elem: elem[1], reverse=True)
+        brain_list = [br for (br, velo) in brain_velocity_list]
+
+        hm_params = GeneticEncoding.get_space_dimensionality(brain_list, self.brain_spec)
+        vector_list = [br.to_vector(hm_params, self.brain_spec) for br in brain_list]
 
         parent_pairs = []
 
@@ -359,7 +363,7 @@ class RobotLearner:
 
         # log important information:
         if logging_callback:
-            self.exec_logging_callback(logging_callback, brain_velocity_list)
+            self.exec_logging_callback(logging_callback, brain_velocity_list, vector_list)
 
 
     def produce_child(self, parent1, parent2):
@@ -434,7 +438,7 @@ class RobotLearner:
         return selected
 
 
-    def exec_logging_callback(self, logging_callback, brain_velocity_list):
+    def exec_logging_callback(self, logging_callback, brain_velocity_list, vector_list):
         log_data = {}
         best_genotypes_string = ""
         all_genotypes_string = ""
@@ -455,9 +459,16 @@ class RobotLearner:
             all_genotypes_string += brain_velocity_list[i][0].to_yaml()
             all_genotypes_string += "\n"
 
+        vector_string = ""
+        for vector in vector_list:
+            for val in vector:
+                vector_string += "{0},".format(val)
+            vector_string += "\n"
+
         log_data["velocities.log"] = velocities_string
         log_data["genotypes.log"] = best_genotypes_string
         log_data["gen_{0}_genotypes.log".format(self.generation_number)] = all_genotypes_string
+        log_data["gen_{0}_vectors.log".format(self.generation_number)] = vector_string
         logging_callback(log_data)
 
 
@@ -523,4 +534,88 @@ class SoundGaitLearner(RobotLearner):
                                  pow(current_position[1] - self.sound_source_pos[1], 2))
         self.fitness = self.init_distance - current_distance
 
+
+# class PSOLearner(RobotLearner):
+#
+#     def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
+#         RobotLearner.__init__(world, robot, insert_position, body_spec, brain_spec, mutator, conf)
+#
+#         # pairs (brain, velocity):
+#         self.individual_bests = []
+#
+#         # list of current brain vectors:
+#         self.brains = []
+#
+#         # list of velocities in parameter space:
+#         self.param_space_velocities = []
+#
+#
+#
+#     @trollius.coroutine
+#     def initialize(self, world, init_genotypes=None):
+#         if init_genotypes is None:
+#             brain_population = self.get_init_brains()
+#         else:
+#             brain_population = init_genotypes
+#
+#         for br in brain_population:
+#             validate_genotype(br, "initial generation created invalid genotype")
+#             self.brains.append(br)
+#             self.evaluation_queue.append(br)
+#
+#         first_brain = self.evaluation_queue.popleft()
+#
+#         self.reset_fitness()
+#         yield From(self.activate_brain(world, first_brain))
+#
+#
+#     def produce_new_generation(self, logging_callback = None):
+#
+#         # find global best:
+#         global_best_brain = self.individual_bests[0][0]
+#         global_best_velo = self.individual_bests[0][1]
+#         for (br, velo) in self.individual_bests:
+#             if velo > global_best_velo:
+#                 global_best_velo = velo
+#                 global_best_brain = br
+#
+#
+#         for i, br in enumerate(self.brains):
+#             fitness = self.brain_fitness[br]
+#             velo = self.brain_velocity[br]
+#
+#             best_brain = self.individual_bests[i][0]
+#             best_velo = self.individual_bests[i][1]
+#
+#
+#             if velo > best_velo:
+#                 self.individual_bests[i][0] = br.copy()
+#                 self.individual_bests[i][1] = velo
+#
+#         current_positions = []
+#         for br in self.brains:
+#             current_positions.append(br.to_vector())
+#
+#         ind_best_positions = []
+#         for (br, velo) in self.individual_bests:
+#             ind_best_positions.append(br.to_vector())
+#
+#         # calculate new positions;
+#         new_positions = []
+#         for i in range(len(current_positions)):
+#             new_pos = PSOptimizer.step(
+#                 ind_best=ind_best_positions[i],
+#                 global_best=global_best_brain.to_vector(),
+#                 current_pos=current_positions[i],
+#                 velocity=self.param_space_velocities[i])
+#             new_positions.append[new_pos]
+#
+#         # update positions:
+#         for i in range(len(self.brains)):
+#             self.brains[i] = GeneticEncoding.from_vector(new_positions[i])
+#
+#
+#         # do not store information about old positions:
+#         self.brain_fitness.clear()
+#         self.brain_velocity.clear()
 
