@@ -391,6 +391,7 @@ class GeneticEncoding:
                 elif hm > cur_hm:
                     break
 
+            # if we have this gene:
             if this_gene is not None:
                 this_gene_params = []
                 for i in range(base_index, base_index + par_num):

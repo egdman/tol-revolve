@@ -322,7 +322,10 @@ class RobotLearner:
 
 
     def produce_new_generation(self, logging_callback = None):
+        # this is list with shared fitnesses:
         brain_fitness_list = [(br, fit) for br, fit in self.brain_fitness.items()]
+
+        # this is list with unshared fitnesses:
         brain_velocity_list = [(br, velo) for br, velo in self.brain_velocity.items()]
 
         # do not store information about old generations:
@@ -347,6 +350,7 @@ class RobotLearner:
         # create children:
         for _ in range(self.num_children):
 
+            # we select brains using their shared fitnesses:
             selected = self.select_for_tournament(brain_fitness_list)
 
             # select 2 best parents from the tournament:
@@ -400,41 +404,44 @@ class RobotLearner:
 
 
         # apply structural mutations:
+        self.apply_structural_mutation(child_genotype)
+        return child_genotype
+
+
+    def apply_structural_mutation(self, genotype):
         if random.random() < self.structural_mutation_probability:
-#            print "applying structural mutation..."
+            #            print "applying structural mutation..."
 
             # if no connections, add connection
-            if len(child_genotype.connection_genes) == 0:
-#                print "inserting new CONNECTION..."
-                self.mutator.add_connection_mutation(child_genotype, self.mutator.new_connection_sigma)
-                validate_genotype(child_genotype, "inserting new CONNECTION created invalid genotype")
-#                print "inserting new CONNECTION successful"
+            if len(genotype.connection_genes) == 0:
+                #                print "inserting new CONNECTION..."
+                self.mutator.add_connection_mutation(genotype, self.mutator.new_connection_sigma)
+                validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
+                #                print "inserting new CONNECTION successful"
 
             # otherwise add connection or neuron with equal probability
             else:
                 if random.random() < 0.5:
-#                    print "inserting new CONNECTION..."
-                    self.mutator.add_connection_mutation(child_genotype, self.mutator.new_connection_sigma)
-                    validate_genotype(child_genotype, "inserting new CONNECTION created invalid genotype")
-#                    print "inserting new CONNECTION successful"
+                    #                    print "inserting new CONNECTION..."
+                    self.mutator.add_connection_mutation(genotype, self.mutator.new_connection_sigma)
+                    validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
+                    #                    print "inserting new CONNECTION successful"
 
                 else:
- #                   print "inserting new NEURON..."
-                    self.mutator.add_neuron_mutation(child_genotype)
-                    validate_genotype(child_genotype, "inserting new NEURON created invalid genotype")
- #                   print "inserting new NEURON successful"
+                    #                   print "inserting new NEURON..."
+                    self.mutator.add_neuron_mutation(genotype)
+                    validate_genotype(genotype, "inserting new NEURON created invalid genotype")
+                    #                   print "inserting new NEURON successful"
 
-        # apply removal mutation:
+                    # apply removal mutation:
         if random.random() < self.removal_mutation_probability:
             if random.random() < 0.5:
-                self.mutator.remove_connection_mutation(child_genotype)
-                validate_genotype(child_genotype, "removing a CONNECTION created invalid genotype")
+                self.mutator.remove_connection_mutation(genotype)
+                validate_genotype(genotype, "removing a CONNECTION created invalid genotype")
             else:
-                self.mutator.remove_neuron_mutation(child_genotype)
-                validate_genotype(child_genotype, "removing a NEURON created invalid genotype")
+                self.mutator.remove_neuron_mutation(genotype)
+                validate_genotype(genotype, "removing a NEURON created invalid genotype")
 
-
-        return child_genotype
 
 
     def select_for_tournament(self, candidates):
@@ -546,87 +553,117 @@ class SoundGaitLearner(RobotLearner):
         self.fitness = self.init_distance - current_distance
 
 
-# class PSOLearner(RobotLearner):
-#
-#     def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
-#         RobotLearner.__init__(world, robot, insert_position, body_spec, brain_spec, mutator, conf)
-#
-#         # pairs (brain, velocity):
-#         self.individual_bests = []
-#
-#         # list of current brain vectors:
-#         self.brains = []
-#
-#         # list of velocities in parameter space:
-#         self.param_space_velocities = []
-#
-#
-#
-#     @trollius.coroutine
-#     def initialize(self, world, init_genotypes=None):
-#         if init_genotypes is None:
-#             brain_population = self.get_init_brains()
-#         else:
-#             brain_population = init_genotypes
-#
-#         for br in brain_population:
-#             validate_genotype(br, "initial generation created invalid genotype")
-#             self.brains.append(br)
-#             self.evaluation_queue.append(br)
-#
-#         first_brain = self.evaluation_queue.popleft()
-#
-#         self.reset_fitness()
-#         yield From(self.activate_brain(world, first_brain))
-#
-#
-#     def produce_new_generation(self, logging_callback = None):
-#
-#         # find global best:
-#         global_best_brain = self.individual_bests[0][0]
-#         global_best_velo = self.individual_bests[0][1]
-#         for (br, velo) in self.individual_bests:
-#             if velo > global_best_velo:
-#                 global_best_velo = velo
-#                 global_best_brain = br
-#
-#
-#         for i, br in enumerate(self.brains):
-#             fitness = self.brain_fitness[br]
-#             velo = self.brain_velocity[br]
-#
-#             best_brain = self.individual_bests[i][0]
-#             best_velo = self.individual_bests[i][1]
-#
-#
-#             if velo > best_velo:
-#                 self.individual_bests[i][0] = br.copy()
-#                 self.individual_bests[i][1] = velo
-#
-#         current_positions = []
-#         for br in self.brains:
-#             current_positions.append(br.to_vector())
-#
-#         ind_best_positions = []
-#         for (br, velo) in self.individual_bests:
-#             ind_best_positions.append(br.to_vector())
-#
-#         # calculate new positions;
-#         new_positions = []
-#         for i in range(len(current_positions)):
-#             new_pos = PSOptimizer.step(
-#                 ind_best=ind_best_positions[i],
-#                 global_best=global_best_brain.to_vector(),
-#                 current_pos=current_positions[i],
-#                 velocity=self.param_space_velocities[i])
-#             new_positions.append[new_pos]
-#
-#         # update positions:
-#         for i in range(len(self.brains)):
-#             self.brains[i] = GeneticEncoding.from_vector(new_positions[i])
-#
-#
-#         # do not store information about old positions:
-#         self.brain_fitness.clear()
-#         self.brain_velocity.clear()
+class PSOLearner(RobotLearner):
 
+    def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
+        RobotLearner.__init__(world, robot, insert_position, body_spec, brain_spec, mutator, conf)
+
+        # pairs (brain, velocity):
+        self.individual_bests = []
+
+        # list of current brain vectors:
+        self.brains = []
+
+        # list of velocities in parameter space:
+        self.param_space_velocities = []
+
+        # TODO put coefficients into spec
+        self.pso = PSOptimizer(0.5, 0.5)
+
+
+    @trollius.coroutine
+    def initialize(self, world, init_genotypes=None):
+        if init_genotypes is None:
+            brain_population = self.get_init_brains()
+        else:
+            brain_population = init_genotypes
+
+        for br in brain_population:
+            validate_genotype(br, "initial generation created invalid genotype")
+            self.brains.append(br)
+            self.evaluation_queue.append(br)
+
+        first_brain = self.evaluation_queue.popleft()
+
+        self.reset_fitness()
+        yield From(self.activate_brain(world, first_brain))
+
+
+    def produce_new_generation(self, logging_callback = None):
+        hm_params = GeneticEncoding.get_space_dimensionality(self.brains, self.brain_spec)
+
+        # find global best:
+        global_best_brain = self.individual_bests[0][0]
+        global_best_velo = self.individual_bests[0][1]
+        for (br, velo) in self.individual_bests:
+            if velo > global_best_velo:
+                global_best_velo = velo
+                global_best_brain = br
+
+
+        for i, br in enumerate(self.brains):
+            fitness = self.brain_fitness[br]
+            velo = self.brain_velocity[br]
+
+            best_brain = self.individual_bests[i][0]
+            best_velo = self.individual_bests[i][1]
+
+
+            if velo > best_velo:
+                self.individual_bests[i][0] = br.copy()
+                self.individual_bests[i][1] = velo
+
+        current_positions = []
+        for br in self.brains:
+            current_positions.append(br.to_vector(hm_params, self.brain_spec))
+
+        ind_best_positions = []
+        for (br, velo) in self.individual_bests:
+            ind_best_positions.append(br.to_vector(hm_params, self.brain_spec))
+
+        # calculate new positions;
+        new_positions = []
+        global_best_vector = global_best_brain.to_vector(hm_params, self.brain_spec)
+
+        for i in range(len(current_positions)):
+            new_pos = self.pso.step(
+                ind_best=ind_best_positions[i],
+                global_best=global_best_vector,
+                current_pos=current_positions[i],
+                velocity=self.param_space_velocities[i]) # this will change inside the method
+            new_positions.append[new_pos]
+
+
+        # update positions:
+        for i in range(len(self.brains)):
+            self.brains[i].from_vector(new_positions[i], hm_params, self.brain_spec)
+
+
+        for br in self.brains:
+            # apply structural mutation:
+            self.apply_structural_mutation(br)
+
+            # add the brain to the evaluation queue:
+            self.evaluation_queue.append(br)
+
+        # do not store information about old positions:
+        self.brain_fitness.clear()
+        self.brain_velocity.clear()
+
+
+class PSOptimizer:
+    def __init__(self, ind_coef, social_coef):
+        self.ind_coef = ind_coef
+        self.social_coef = social_coef
+
+    def step(self, ind_best, global_best, current_pos, velocity):
+        new_pos = [0 for _ in range(len(ind_best))]
+
+        for i in range(len(new_pos)):
+            accel = self.ind_coef * (ind_best[i] - current_pos[i]) + \
+                    self.social_coef * (global_best[i] - current_pos[i])
+
+            velocity[i] += accel
+
+        for i in range(len(new_pos)):
+            new_pos[i] = current_pos[i] + velocity[i]
