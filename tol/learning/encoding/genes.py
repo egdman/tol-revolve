@@ -369,6 +369,47 @@ class GeneticEncoding:
         return vector
 
 
+    def from_vector(self, vector, hm_param_numbers, brain_spec):
+        sorted_genes = self.get_sorted_genes()
+        base_index = 0
+        for (cur_hm, par_num) in hm_param_numbers:
+
+            if par_num == 0:
+                continue
+
+            this_gene = None
+
+            for gene in sorted_genes:
+
+                hm = gene.historical_mark
+
+                # if we have that gene
+                if hm == cur_hm:
+                    this_gene = gene
+
+                # if we don't have that gene
+                elif hm > cur_hm:
+                    break
+
+            if this_gene is not None:
+                this_gene_params = []
+                for i in range(base_index, base_index + par_num):
+                    this_gene_params.append(vector[i])
+                if isinstance(this_gene, ConnectionGene):
+                    this_gene.weight = this_gene_params[0]
+                elif isinstance(this_gene, NeuronGene):
+                    neuron_spec = brain_spec.get(this_gene.neuron.neuron_type)
+
+                    neuron_params = {}
+                    for par_name in neuron_spec.parameters:
+                        par_index = neuron_spec.parameters[par_name][0]
+                        neuron_params[par_name] = this_gene_params[par_index]
+
+                    this_gene.neuron.neuron_params = neuron_params
+
+            base_index += par_num
+
+
     def get_sorted_genes(self):
         return sorted(self.neuron_genes + self.connection_genes,
                         key = lambda gene: gene.historical_mark)

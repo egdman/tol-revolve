@@ -337,6 +337,11 @@ class RobotLearner:
         hm_params = GeneticEncoding.get_space_dimensionality(brain_list, self.brain_spec)
         vector_list = [br.to_vector(hm_params, self.brain_spec) for br in brain_list]
 
+        recycled_brains = [br.copy() for br in brain_list]
+        for brain, vector in zip(recycled_brains, vector_list):
+            brain.from_vector(vector, hm_params, self.brain_spec)
+
+
         parent_pairs = []
 
         # create children:
@@ -363,7 +368,7 @@ class RobotLearner:
 
         # log important information:
         if logging_callback:
-            self.exec_logging_callback(logging_callback, brain_velocity_list, vector_list)
+            self.exec_logging_callback(logging_callback, brain_velocity_list, vector_list, recycled_brains)
 
 
     def produce_child(self, parent1, parent2):
@@ -438,7 +443,7 @@ class RobotLearner:
         return selected
 
 
-    def exec_logging_callback(self, logging_callback, brain_velocity_list, vector_list):
+    def exec_logging_callback(self, logging_callback, brain_velocity_list, vector_list, brain_list):
         log_data = {}
         best_genotypes_string = ""
         all_genotypes_string = ""
@@ -465,10 +470,16 @@ class RobotLearner:
                 vector_string += "{0},".format(val)
             vector_string += "\n"
 
+        brain_string = ""
+        for br in brain_list:
+            brain_string += br.to_yaml()
+            brain_string += '\n'
+
         log_data["velocities.log"] = velocities_string
         log_data["genotypes.log"] = best_genotypes_string
         log_data["gen_{0}_genotypes.log".format(self.generation_number)] = all_genotypes_string
         log_data["gen_{0}_vectors.log".format(self.generation_number)] = vector_string
+        log_data["gen_{0}_recycled.log".format(self.generation_number)] = brain_string
         logging_callback(log_data)
 
 
