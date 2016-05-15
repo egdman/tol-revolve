@@ -557,7 +557,7 @@ class SoundGaitLearner(RobotLearner):
 class PSOLearner(RobotLearner):
 
     def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
-        RobotLearner.__init__(world, robot, insert_position, body_spec, brain_spec, mutator, conf)
+        RobotLearner.__init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf)
 
         # pairs (brain, velocity):
         self.individual_bests = []
@@ -582,6 +582,7 @@ class PSOLearner(RobotLearner):
         for br in brain_population:
             validate_genotype(br, "initial generation created invalid genotype")
             self.brains.append(br)
+            self.individual_bests.append((br.copy(), 0))
             self.evaluation_queue.append(br)
 
         first_brain = self.evaluation_queue.popleft()
@@ -593,6 +594,17 @@ class PSOLearner(RobotLearner):
     def produce_new_generation(self, logging_callback = None):
         hm_params = GeneticEncoding.get_space_dimensionality(self.brains, self.brain_spec)
 
+        # update individual bests:
+        for i, br in enumerate(self.brains):
+            fitness = self.brain_fitness[br]
+            velo = self.brain_velocity[br]
+
+            best_brain = self.individual_bests[i][0]
+            best_velo = self.individual_bests[i][1]
+
+            if velo > best_velo:
+                self.individual_bests[i] = (br.copy(), velo)
+
         # find global best:
         global_best_brain = self.individual_bests[0][0]
         global_best_velo = self.individual_bests[0][1]
@@ -601,41 +613,37 @@ class PSOLearner(RobotLearner):
                 global_best_velo = velo
                 global_best_brain = br
 
-
-        for i, br in enumerate(self.brains):
-            fitness = self.brain_fitness[br]
-            velo = self.brain_velocity[br]
-
-            best_brain = self.individual_bests[i][0]
-            best_velo = self.individual_bests[i][1]
-
-
-            if velo > best_velo:
-                self.individual_bests[i][0] = br.copy()
-                self.individual_bests[i][1] = velo
-
+        # calculate current positions:
         current_positions = []
         for br in self.brains:
             current_positions.append(br.to_vector(hm_params, self.brain_spec))
 
+        # calculate individual best positions:
         ind_best_positions = []
         for (br, velo) in self.individual_bests:
             ind_best_positions.append(br.to_vector(hm_params, self.brain_spec))
 
-        # calculate new positions;
-        new_positions = []
+        # calculate global best position:
         global_best_vector = global_best_brain.to_vector(hm_params, self.brain_spec)
 
+        # calculate new positions;
+        new_positions = []
         for i in range(len(current_positions)):
+
+            if len(self.param_space_velocities) == 0:
+                param_velo = None
+            else:
+                param_velo = self.param_space_velocities[i]
+
             new_pos = self.pso.step(
                 ind_best=ind_best_positions[i],
                 global_best=global_best_vector,
                 current_pos=current_positions[i],
-                velocity=self.param_space_velocities[i]) # this will change inside the method
-            new_positions.append[new_pos]
+                velocity=param_velo) # this will change inside the method
+            new_positions.append(new_pos)
 
 
-        # update positions:
+        # update brains from new positions:
         for i in range(len(self.brains)):
             self.brains[i].from_vector(new_positions[i], hm_params, self.brain_spec)
 
@@ -669,6 +677,9 @@ class PSOptimizer:
     def step(self, ind_best, global_best, current_pos, velocity):
         new_pos = [0 for _ in range(len(ind_best))]
 
+        if velocity is None:
+            velocity = [0 for _ in range(len(ind_best))]
+
         for i in range(len(new_pos)):
             accel = self.ind_coef * (ind_best[i] - current_pos[i]) + \
                     self.social_coef * (global_best[i] - current_pos[i])
@@ -677,3 +688,5 @@ class PSOptimizer:
 
         for i in range(len(new_pos)):
             new_pos[i] = current_pos[i] + velocity[i]
+
+        return new_pos
