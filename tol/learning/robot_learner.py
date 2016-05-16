@@ -569,7 +569,7 @@ class PSOLearner(RobotLearner):
         self.param_space_velocities = []
 
         # TODO put coefficients into spec
-        self.pso = PSOptimizer(0.01, 0.01)
+        self.pso = PSOptimizer(0.1, 0.1)
 
 
     @trollius.coroutine
@@ -593,6 +593,19 @@ class PSOLearner(RobotLearner):
 
     def produce_new_generation(self, logging_callback = None):
         hm_params = GeneticEncoding.get_space_dimensionality(self.brains, self.brain_spec)
+
+        # save list of brains sorted by unshared fitness:
+        brain_velocity_list = [(br, velo) for br, velo in self.brain_velocity.items()]
+        brain_velocity_list = sorted(brain_velocity_list, key=lambda elem: elem[1], reverse=True)
+
+
+        # create a list of elite candidates:
+        num_elite = self.pop_size - self.num_children
+        elite_brains = []
+        for i in range(num_elite):
+            elite_brains.append(brain_velocity_list[i][0])
+            print "saving parent #{0}, velocity = {1}".format(str(i+1), brain_velocity_list[i][1])
+
 
         # update individual bests:
         for i, br in enumerate(self.brains):
@@ -644,9 +657,12 @@ class PSOLearner(RobotLearner):
 
 
         # update brains from new positions:
+        num_updated = 0
         for i in range(len(self.brains)):
-            self.brains[i].from_vector(new_positions[i], hm_params, self.brain_spec)
-
+            if self.brains[i] not in elite_brains:
+                self.brains[i].from_vector(new_positions[i], hm_params, self.brain_spec)
+                num_updated += 1
+        print "{0} brains updated".format(num_updated)
 
         for br in self.brains:
             # apply structural mutation:
@@ -655,9 +671,6 @@ class PSOLearner(RobotLearner):
             # add the brain to the evaluation queue:
             self.evaluation_queue.append(br)
 
-
-        brain_velocity_list = [(br, velo) for br, velo in self.brain_velocity.items()]
-        brain_velocity_list = sorted(brain_velocity_list, key=lambda elem: elem[1], reverse=True)
 
         # do not store information about old positions:
         self.brain_fitness.clear()
