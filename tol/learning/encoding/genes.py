@@ -292,7 +292,7 @@ class GeneticEncoding:
 
 
     @staticmethod
-    def get_space_dimensionality(genotypes, brain_spec):
+    def get_space_map(genotypes, brain_spec):
         '''
         this method returns the list of pairs (historical mark, number of parameters for that gene)
         for those genes that are not present, the number of parameters is zero

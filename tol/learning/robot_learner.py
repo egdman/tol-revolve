@@ -338,7 +338,7 @@ class RobotLearner:
 
 
         # brain_list = [br for (br, velo) in brain_velocity_list]
-        # hm_params = GeneticEncoding.get_space_dimensionality(brain_list, self.brain_spec)
+        # hm_params = GeneticEncoding.get_space_map(brain_list, self.brain_spec)
         # vector_list = [br.to_vector(hm_params, self.brain_spec) for br in brain_list]
         #
         # recycled_brains = [br.copy() for br in brain_list]
@@ -451,7 +451,7 @@ class RobotLearner:
         return selected
 
 
-    def exec_logging_callback(self, logging_callback, brain_velocity_list):
+    def exec_logging_callback(self, logging_callback, brain_velocity_list, vector_list):
         log_data = {}
         best_genotypes_string = ""
         all_genotypes_string = ""
@@ -472,11 +472,11 @@ class RobotLearner:
             all_genotypes_string += brain_velocity_list[i][0].to_yaml()
             all_genotypes_string += "\n"
 
-        # vector_string = ""
-        # for vector in vector_list:
-        #     for val in vector:
-        #         vector_string += "{0},".format(val)
-        #     vector_string += "\n"
+        vector_string = ""
+        for vector in vector_list:
+            for val in vector:
+                vector_string += "{0},".format(val)
+            vector_string += "\n"
         #
         # brain_string = ""
         # for br in brain_list:
@@ -486,7 +486,7 @@ class RobotLearner:
         log_data["velocities.log"] = velocities_string
         log_data["genotypes.log"] = best_genotypes_string
         log_data["gen_{0}_genotypes.log".format(self.generation_number)] = all_genotypes_string
-        # log_data["gen_{0}_vectors.log".format(self.generation_number)] = vector_string
+        log_data["gen_{0}_vectors.log".format(self.generation_number)] = vector_string
         # log_data["gen_{0}_recycled.log".format(self.generation_number)] = brain_string
         logging_callback(log_data)
 
@@ -592,7 +592,7 @@ class PSOLearner(RobotLearner):
 
 
     def produce_new_generation(self, logging_callback = None):
-        hm_params = GeneticEncoding.get_space_dimensionality(self.brains, self.brain_spec)
+        hm_params = GeneticEncoding.get_space_map(self.brains, self.brain_spec)
 
         # save list of brains sorted by unshared fitness:
         brain_velocity_list = [(br, velo) for br, velo in self.brain_velocity.items()]
@@ -639,20 +639,21 @@ class PSOLearner(RobotLearner):
         # calculate global best position:
         global_best_vector = global_best_brain.to_vector(hm_params, self.brain_spec)
 
+        # initialize param space velocities of brains (if not initialized yet)
+        if len(self.param_space_velocities) == 0:
+            print "initializing parameter space velocities"
+            for vec in current_positions:
+                self.param_space_velocities.append([0 for _ in range(len(vec))])
+
         # calculate new positions;
         new_positions = []
         for i in range(len(current_positions)):
-
-            if len(self.param_space_velocities) == 0:
-                param_velo = None
-            else:
-                param_velo = self.param_space_velocities[i]
 
             new_pos = self.pso.step(
                 ind_best=ind_best_positions[i],
                 global_best=global_best_vector,
                 current_pos=current_positions[i],
-                velocity=param_velo) # this will change inside the method
+                velocity=self.param_space_velocities[i]) # this will change inside the method
             new_positions.append(new_pos)
 
 
@@ -676,9 +677,19 @@ class PSOLearner(RobotLearner):
         self.brain_fitness.clear()
         self.brain_velocity.clear()
 
+        debug_out = []
+        space_map = []
+        for hm, num_par in hm_params:
+            for i in range(num_par):
+                space_map.append(hm)
+
+        debug_out.append(space_map)
+        for par_velo in self.param_space_velocities:
+            debug_out.append(par_velo)
+            
         # log important information:
         if logging_callback:
-            self.exec_logging_callback(logging_callback, brain_velocity_list)
+            self.exec_logging_callback(logging_callback, brain_velocity_list, debug_out)
 
 
 
