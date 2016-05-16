@@ -34,6 +34,26 @@ class Neuron:
                              neuron_params=deepcopy(self.neuron_params))
         return copy_neuron
 
+
+    def set_neuron_param(self, param_name, param_value, param_spec):
+        max_value = param_spec.max
+        min_value = param_spec.min
+
+        if param_value > max_value:
+            if param_spec.max_inclusive:
+                param_value = max_value
+            else:
+                param_value = max_value - param_spec.epsilon
+
+        if param_value < min_value:
+            if param_spec.min_inclusive:
+                param_value = min_value
+            else:
+                param_value = min_value + param_spec.epsilon
+
+        self.neuron_params[param_name] = param_value
+
+
     def __str__(self):
         return "id={0}, layer={1}, type={2}, part={3}".format(self.neuron_id, self.layer, self.neuron_type, self.body_part_id)
 
@@ -401,12 +421,12 @@ class GeneticEncoding:
                 elif isinstance(this_gene, NeuronGene):
                     neuron_spec = brain_spec.get(this_gene.neuron.neuron_type)
 
-                    neuron_params = {}
                     for par_name in neuron_spec.parameters:
                         par_index = neuron_spec.parameters[par_name][0]
-                        neuron_params[par_name] = this_gene_params[par_index]
+                        par_spec = neuron_spec.parameters[par_name][1]
+                        par_value = this_gene_params[par_index]
 
-                    this_gene.neuron.neuron_params = neuron_params
+                        this_gene.neuron.set_neuron_param(par_name, par_value, par_spec)
 
             base_index += par_num
 

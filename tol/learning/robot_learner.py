@@ -569,7 +569,7 @@ class PSOLearner(RobotLearner):
         self.param_space_velocities = []
 
         # TODO put coefficients into spec
-        self.pso = PSOptimizer(0.5, 0.5)
+        self.pso = PSOptimizer(0.01, 0.01)
 
 
     @trollius.coroutine

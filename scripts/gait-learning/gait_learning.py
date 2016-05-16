@@ -121,7 +121,7 @@ def run():
     conf.weight_mutation_sigma = 5.0
     conf.param_mutation_probability = 0.8
     conf.param_mutation_sigma = 0.25
-    conf.structural_mutation_probability = 0.75
+    conf.structural_mutation_probability = 0.0
     conf.removal_mutation_probability = 0.0
 
     # this is the world state update frequency in simulation Hz
@@ -146,9 +146,9 @@ def run():
 
     mut_spec = get_default_mutation_spec(brain_spec)
 
-    # disallow to add oscillators:
-    types_of_new_neurons = filter(lambda item: item != "Oscillator", mut_spec['types'])
-    mut_spec['types'] = types_of_new_neurons
+#    # disallow to add oscillators:
+#    types_of_new_neurons = filter(lambda item: item != "Oscillator", mut_spec['types'])
+#    mut_spec['types'] = types_of_new_neurons
 
     print "New types: {0}".format(mut_spec['types'])
 
