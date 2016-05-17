@@ -581,9 +581,10 @@ class PSOLearner(RobotLearner):
         
         loc_coef = conf.pso_local_coef
         glob_coef = conf.pso_global_coef
+        pso_temp = conf.pso_temperature
 
         # particle swarm optimizer:
-        self.pso = PSOptimizer(individual_coef=loc_coef, social_coef=glob_coef)
+        self.pso = PSOptimizer(individual_coef=loc_coef, social_coef=glob_coef, temperature=pso_temp)
 
 
     @trollius.coroutine
@@ -764,19 +765,17 @@ class PSOLearner(RobotLearner):
 
 
 class PSOptimizer:
-    def __init__(self, individual_coef, social_coef):
+    def __init__(self, individual_coef, social_coef, temperature):
         self.ind_coef = individual_coef
         self.social_coef = social_coef
+        self.temperature = temperature
 
     def step(self, ind_best, global_best, current_pos, velocity):
         new_pos = [0 for _ in range(len(ind_best))]
 
-        if velocity is None:
-            velocity = [0 for _ in range(len(ind_best))]
-
         for i in range(len(new_pos)):
-            accel = self.ind_coef * (ind_best[i] - current_pos[i]) + \
-                    self.social_coef * (global_best[i] - current_pos[i])
+            accel = random.gauss(1.0, self.temperature) * self.ind_coef * (ind_best[i] - current_pos[i]) + \
+                    random.gauss(1.0, self.temperature) * self.social_coef * (global_best[i] - current_pos[i])
 
             velocity[i] += accel
 

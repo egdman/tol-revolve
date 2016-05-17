@@ -123,6 +123,12 @@ parser.add_argument(
     default=0,
     help='coefficient for the global pso component')
 
+parser.add_argument(
+    '--pso-temperature',
+    type=float,
+    default=0,
+    help='temperature value for PSO')
+
 
 @trollius.coroutine
 def run():
