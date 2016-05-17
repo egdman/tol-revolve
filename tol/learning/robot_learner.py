@@ -410,31 +410,27 @@ class RobotLearner:
 
 
     def apply_structural_mutation(self, genotype):
+
+        # apply augmentation mutation:
         if random.random() < self.structural_mutation_probability:
-            #            print "applying structural mutation..."
 
             # if no connections, add connection
             if len(genotype.connection_genes) == 0:
-                #                print "inserting new CONNECTION..."
                 self.mutator.add_connection_mutation(genotype, self.mutator.new_connection_sigma)
                 validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
-                #                print "inserting new CONNECTION successful"
 
             # otherwise add connection or neuron with equal probability
             else:
                 if random.random() < 0.5:
-                    #                    print "inserting new CONNECTION..."
                     self.mutator.add_connection_mutation(genotype, self.mutator.new_connection_sigma)
                     validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
-                    #                    print "inserting new CONNECTION successful"
 
                 else:
-                    #                   print "inserting new NEURON..."
                     self.mutator.add_neuron_mutation(genotype)
                     validate_genotype(genotype, "inserting new NEURON created invalid genotype")
-                    #                   print "inserting new NEURON successful"
 
-                    # apply removal mutation:
+
+        # apply removal mutation:
         if random.random() < self.removal_mutation_probability:
             if random.random() < 0.5:
                 self.mutator.remove_connection_mutation(genotype)
@@ -568,8 +564,12 @@ class PSOLearner(RobotLearner):
         # list of velocities in parameter space:
         self.param_space_velocities = []
 
-        # TODO put coefficients into spec
-        self.pso = PSOptimizer(0.1, 0.1)
+        
+        loc_coef = conf.pso_local_coef
+        glob_coef = conf.pso_global_coef
+
+        # particle swarm optimizer:
+        self.pso = PSOptimizer(individual_coef=loc_coef, social_coef=glob_coef)
 
 
     @trollius.coroutine
@@ -598,8 +598,12 @@ class PSOLearner(RobotLearner):
         brain_velocity_list = [(br, velo) for br, velo in self.brain_velocity.items()]
         brain_velocity_list = sorted(brain_velocity_list, key=lambda elem: elem[1], reverse=True)
 
+        # save the list of brains sorted by shared fitness:
+        brain_fitness_list = [(br, fit) for br, fit in self.brain_fitness.items()]
+        brain_fitness_list = sorted(brain_fitness_list, key = lambda elem: elem[1], reverse=True)
 
-        # create a list of elite candidates:
+
+        # create a list of elite candidates using unshared fitness:
         num_elite = self.pop_size - self.num_children
         elite_brains = []
         for i in range(num_elite):
@@ -643,19 +647,58 @@ class PSOLearner(RobotLearner):
         if len(self.param_space_velocities) == 0:
             print "initializing parameter space velocities"
             for vec in current_positions:
-                self.param_space_velocities.append([0 for _ in range(len(vec))])
+                param_velo = {}
+                for hm, num_params in hm_params:
+                    param_velo[hm] = [0 for _ in range(num_params)]
+                self.param_space_velocities.append(param_velo)
+
+
+        # gather parameter space valocity data for debug: #####################
+        debug_out = []
+        space_map = []
+        for hm, num_par in hm_params:
+            for i in range(num_par):
+                space_map.append(hm)
+        debug_out.append(space_map)
+        #######################################################################
 
         # calculate new positions;
         new_positions = []
         for i in range(len(current_positions)):
 
+            # flatten param space velocity dictionary into vector:
+            param_velocity_vector = []
+            param_velocity_dict = self.param_space_velocities[i]
+            for hm, num_params in hm_params:
+                subvector = param_velocity_dict.get(hm, None)
+
+                # if velocity data for this hm does not exist (e.g. this hm was added in last generation):
+                if subvector is None:
+                    for n in range(num_params):
+                        param_velocity_vector.append(0)
+                else:
+                    for val in subvector:
+                        param_velocity_vector.append(val)
+
+            # calculate new position for this particle:
             new_pos = self.pso.step(
                 ind_best=ind_best_positions[i],
                 global_best=global_best_vector,
                 current_pos=current_positions[i],
-                velocity=self.param_space_velocities[i]) # this will change inside the method
+                velocity=param_velocity_vector) # this will change inside the method
             new_positions.append(new_pos)
 
+            # turn velocity vector back into dictionary:
+            base_index = 0
+            for hm, num_params in hm_params:
+                subvector = []
+                for j in range(base_index, base_index + num_params):
+                    subvector.append(param_velocity_vector[j])
+                param_velocity_dict[hm] = subvector
+                base_index += num_params
+            self.param_space_velocities[i] = param_velocity_dict
+
+            debug_out.append(param_velocity_vector)
 
         # update brains from new positions:
         num_updated = 0
@@ -666,6 +709,12 @@ class PSOLearner(RobotLearner):
         print "{0} brains updated".format(num_updated)
 
         for br in self.brains:
+            # adopt other brains' genes:
+            tournament = self.select_for_tournament(brain_fitness_list)
+            adoptee = tournament[0][0]
+            br.adopt(adoptee)
+            validate_genotype(br, "ADOPTING genes created invalid genotype")
+
             # apply structural mutation:
             self.apply_structural_mutation(br)
 
@@ -677,16 +726,6 @@ class PSOLearner(RobotLearner):
         self.brain_fitness.clear()
         self.brain_velocity.clear()
 
-        debug_out = []
-        space_map = []
-        for hm, num_par in hm_params:
-            for i in range(num_par):
-                space_map.append(hm)
-
-        debug_out.append(space_map)
-        for par_velo in self.param_space_velocities:
-            debug_out.append(par_velo)
-            
         # log important information:
         if logging_callback:
             self.exec_logging_callback(logging_callback, brain_velocity_list, debug_out)
@@ -694,8 +733,8 @@ class PSOLearner(RobotLearner):
 
 
 class PSOptimizer:
-    def __init__(self, ind_coef, social_coef):
-        self.ind_coef = ind_coef
+    def __init__(self, individual_coef, social_coef):
+        self.ind_coef = individual_coef
         self.social_coef = social_coef
 
     def step(self, ind_best, global_best, current_pos, velocity):

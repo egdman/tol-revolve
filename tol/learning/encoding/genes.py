@@ -86,6 +86,15 @@ class NeuronGene(Gene):
     def __str__(self):
         return "NEAT Neuron gene, " + str(self.neuron) + ", mark " + str(self.historical_mark)
 
+    def copy(self):
+        new_gene = NeuronGene(
+            neuron = self.neuron.copy(),
+            innovation_number = self.historical_mark,
+            enabled = self.enabled
+            )
+        return new_gene
+
+
 
 class ConnectionGene(Gene):
     def __init__(self, mark_from, mark_to, weight, innovation_number=0, enabled=True):
@@ -117,6 +126,15 @@ class ConnectionGene(Gene):
             return "NEAT Connection gene at " + hex(id(self)) + ",mark " + str(self.historical_mark) + \
                 " (from " + str(self.mark_from) + " to " + str(self.mark_to) + ")"
 
+    def copy(self):
+        new_gene = ConnectionGene(
+            mark_from = self.mark_from,
+            mark_to = self.mark_to,
+            weight = self.weight,
+            innovation_number = self.historical_mark,
+            enabled = self.enabled
+            )
+        return new_gene
 
 
 class MutationRateGene(Gene):
@@ -429,6 +447,23 @@ class GeneticEncoding:
                         this_gene.neuron.set_neuron_param(par_name, par_value, par_spec)
 
             base_index += par_num
+
+
+    def adopt(self, adoptee):
+        my_sorted_genes = self.get_sorted_genes()
+        adoptee_sorted_genes = adoptee.get_sorted_genes()
+        pairs = GeneticEncoding.get_pairs(adoptee_sorted_genes, my_sorted_genes)
+
+        for gene_pair in pairs:
+            # adopt genes that I don't have:
+            if gene_pair[0] and not gene_pair[1]:
+                my_gene = gene_pair[0].copy()
+                if isinstance(my_gene, NeuronGene):
+                    self.add_neuron_gene(my_gene)
+                elif isinstance(my_gene, ConnectionGene):
+                    self.add_connection_gene(my_gene)
+
+
 
 
     def get_sorted_genes(self):
