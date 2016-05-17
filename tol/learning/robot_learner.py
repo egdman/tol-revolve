@@ -591,6 +591,9 @@ class PSOLearner(RobotLearner):
         yield From(self.activate_brain(world, first_brain))
 
 
+
+
+
     def produce_new_generation(self, logging_callback = None):
         hm_params = GeneticEncoding.get_space_map(self.brains, self.brain_spec)
 
@@ -611,9 +614,11 @@ class PSOLearner(RobotLearner):
             print "saving parent #{0}, velocity = {1}".format(str(i+1), brain_velocity_list[i][1])
 
 
+
+        
+        # PSO PART #########################################################################################
         # update individual bests:
         for i, br in enumerate(self.brains):
-            fitness = self.brain_fitness[br]
             velo = self.brain_velocity[br]
 
             best_brain = self.individual_bests[i][0]
@@ -653,7 +658,7 @@ class PSOLearner(RobotLearner):
                 self.param_space_velocities.append(param_velo)
 
 
-        # gather parameter space valocity data for debug: #####################
+        # gather parameter space velocity data for debug: #####################
         debug_out = []
         space_map = []
         for hm, num_par in hm_params:
@@ -707,18 +712,30 @@ class PSOLearner(RobotLearner):
                 self.brains[i].from_vector(new_positions[i], hm_params, self.brain_spec)
                 num_updated += 1
         print "{0} brains updated".format(num_updated)
+        ####################################################################################################
 
+
+
+
+        # NON-PSO PART #####################################################################################
+        # apply non-pso operations (adoption, structural mutation)
         for br in self.brains:
-            # adopt other brains' genes:
-            tournament = self.select_for_tournament(brain_fitness_list)
-            adoptee = tournament[0][0]
-            br.adopt(adoptee)
-            validate_genotype(br, "ADOPTING genes created invalid genotype")
+            if br not in elite_brains:
+                # adopt other brains' genes:
+                tournament = self.select_for_tournament(brain_fitness_list)
+                adoptee = tournament[0][0]
 
-            # apply structural mutation:
-            self.apply_structural_mutation(br)
+                if self.brain_fitness[adoptee] > self.brain_fitness[br]:
+                    br.adopt(adoptee)
+                    validate_genotype(br, "ADOPTING genes created invalid genotype")
 
-            # add the brain to the evaluation queue:
+                # apply structural mutation:
+                self.apply_structural_mutation(br)
+        #####################################################################################################
+
+
+        # add the brains to the evaluation queue:
+        for br in self.brains:
             self.evaluation_queue.append(br)
 
 
