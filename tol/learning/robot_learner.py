@@ -447,43 +447,57 @@ class RobotLearner:
         return selected
 
 
-    def exec_logging_callback(self, logging_callback, brain_velocity_list, vector_list):
-        log_data = {}
-        best_genotypes_string = ""
-        all_genotypes_string = ""
+    def exec_logging_callback(self, logging_callback, brain_velocity_list, vector_list=None):
 
-        # Log best 3 genotypes in this generation:
-        best_genotypes_string += "generation #{0}\n".format(self.generation_number)
+        log_data = {}
+
+        # Log best 3 genotypes in this generation:`
+        best_genotypes_string = ""
+        best_genotypes_string += "- generation : {0}\n".format(self.generation_number)
+
         for i in range(3):
-            best_genotypes_string += "velocity : {0}\n".format(brain_velocity_list[i][1])
-            best_genotypes_string += brain_velocity_list[i][0].to_yaml()
+            best_genotypes_string += "  - velocity : {0}\n".format(brain_velocity_list[i][1])
+            best_genotypes_string += '    '
+            best_genotypes_string += brain_velocity_list[i][0].to_yaml().replace('\n', '\n    ')
             best_genotypes_string += "\n"
+
+        log_data["genotypes.log"] = best_genotypes_string
+
 
         # Log velocity values of all genotypes in this generation:
         # Log all genotypes in the curent generation to a separate file:
         velocities_string = "- generation: {0}\n  velocities:\n".format(self.generation_number)
+        neuron_sizes_string = "- generation: {0}\n  sizes:\n".format(self.generation_number)
+        connection_sizes_string = "- generation: {0}\n  sizes:\n".format(self.generation_number)
+
+        all_genotypes_string = ""
         for i in range(len(brain_velocity_list)):
             velocities_string += "  - {0}\n".format(brain_velocity_list[i][1])
+            neuron_sizes_string += "  - {0}\n".format(brain_velocity_list[i][0].num_neuron_genes())
+            connection_sizes_string += "  - {0}\n".format(brain_velocity_list[i][0].num_connection_genes())
+
             all_genotypes_string += "- velocity : {0}\n".format(brain_velocity_list[i][1])
-            all_genotypes_string += brain_velocity_list[i][0].to_yaml()
+            all_genotypes_string += "  "
+            all_genotypes_string += brain_velocity_list[i][0].to_yaml().replace('\n', '\n  ')
             all_genotypes_string += "\n"
 
-        vector_string = ""
-        for vector in vector_list:
-            for val in vector:
-                vector_string += "{0},".format(val)
-            vector_string += "\n"
-        #
-        # brain_string = ""
-        # for br in brain_list:
-        #     brain_string += br.to_yaml()
-        #     brain_string += '\n'
-
+    
         log_data["velocities.log"] = velocities_string
-        log_data["genotypes.log"] = best_genotypes_string
+        log_data["num_neurons.log"] = neuron_sizes_string
+        log_data["num_connections.log"] = connection_sizes_string
+
         log_data["gen_{0}_genotypes.log".format(self.generation_number)] = all_genotypes_string
-        log_data["gen_{0}_vectors.log".format(self.generation_number)] = vector_string
-        # log_data["gen_{0}_recycled.log".format(self.generation_number)] = brain_string
+
+        # log additional vectors if present:
+        if vector_list is not None:
+            vector_string = ""
+            for vector in vector_list:
+                for val in vector:
+                    vector_string += "{0},".format(val)
+                vector_string += "\n"
+            log_data["gen_{0}_vectors.log".format(self.generation_number)] = vector_string
+
+        # call the logging callback with the data
         logging_callback(log_data)
 
 

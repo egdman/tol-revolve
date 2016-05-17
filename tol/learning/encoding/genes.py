@@ -158,7 +158,15 @@ class GeneticEncoding:
     def num_genes(self):
         return len(self.neuron_genes) + len(self.connection_genes)
 
-    
+
+    def num_neuron_genes(self):
+        return len(self.neuron_genes)
+
+
+    def num_connection_genes(self):
+        return len(self.connection_genes)
+
+
     def connection_exists(self, mark_from, mark_to):
         exists = False
         for c_g in self.connection_genes:
@@ -566,6 +574,14 @@ class GeneticEncoding:
         yaml_brain['neurons'] = neuron_genes
         yaml_brain['connections'] = conn_genes
         return yaml.dump(yaml_brain, default_flow_style=False)
+
+
+    def to_dictionary(self):
+        neuron_genes, conn_genes = self.to_lists()
+        yaml_brain = {}
+        yaml_brain['neurons'] = neuron_genes
+        yaml_brain['connections'] = conn_genes
+        return yaml_brain
 
 
     def copy(self):
