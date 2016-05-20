@@ -130,6 +130,13 @@ parser.add_argument(
     help='temperature value for PSO')
 
 
+parser.add_argument(
+    '--asexual',
+    action='store_true',
+    help='when this flag is set, the reproduction is asexual'
+)
+
+
 @trollius.coroutine
 def run():
 
@@ -195,7 +202,7 @@ def run():
                                    mutator=mutator,
                                    conf=conf)
         else:
-            learner = PSOLearner(world=world,
+            learner = RobotLearner(world=world,
                                    robot=robot,
                                    insert_position=Vector3(0, 0, 0.2),
                                    body_spec=body_spec,

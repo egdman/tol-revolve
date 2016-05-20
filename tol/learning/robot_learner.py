@@ -21,6 +21,7 @@ from ..util import StateSwitch, rotate_vertical
 class RobotLearner:
 
     def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
+        self.asexual = conf.asexual
         self.robot = robot
         self.insert_pos = insert_position
         self.active_brain = None
@@ -58,6 +59,7 @@ class RobotLearner:
         self.state_switch = StateSwitch(['warmup', 'evaluate', 'next_brain'], world.get_world_time())
         self.state_switch.set_duration('warmup', self.warmup_time)
         self.state_switch.set_duration('evaluate', self.evaluation_time_actual)
+
 
     def set_parameters(self, conf):
         """
@@ -328,10 +330,7 @@ class RobotLearner:
         # this is list with unshared fitnesses:
         brain_velocity_list = [(br, velo) for br, velo in self.brain_velocity.items()]
 
-        # do not store information about old generations:
-        self.brain_fitness.clear()
-        self.brain_velocity.clear()
-
+        
         # sort parents from best to worst:
         brain_fitness_list = sorted(brain_fitness_list, key = lambda elem: elem[1], reverse=True)
         brain_velocity_list = sorted(brain_velocity_list, key = lambda elem: elem[1], reverse=True)
@@ -371,6 +370,10 @@ class RobotLearner:
             print "saving parent #{0}, velocity = {1}".format(str(i+1), brain_velocity_list[i][1])
             self.evaluation_queue.append(brain_velocity_list[i][0])
 
+        # do not store information about old generations:
+        self.brain_fitness.clear()
+        self.brain_velocity.clear()
+
         # log important information:
         if logging_callback:
             self.exec_logging_callback(logging_callback, brain_velocity_list)
@@ -379,8 +382,11 @@ class RobotLearner:
     def produce_child(self, parent1, parent2):
         # apply crossover:
 #        print "applying crossover..."
-        child_genotype = Crossover.crossover(parent1, parent2)
-        validate_genotype(child_genotype, "crossover created invalid genotype")
+        if self.asexual:
+            child_genotype = parent1.copy()
+        else:
+            child_genotype = Crossover.crossover(parent1, parent2)
+            validate_genotype(child_genotype, "crossover created invalid genotype")
 #         print "crossover successful"
 
 
@@ -516,6 +522,7 @@ class RobotLearner:
         out += "speciation threshold set to {0}\n".format(self.speciation_threshold)
         out += "evaluation repeats   set to {0}\n".format(self.repeat_evaluations)
         out += "max number of generations set to {0}\n".format(self.max_generations)
+        out += "asexual reproduction: {0}\n".format(self.asexual)
         return out
 
 
@@ -776,6 +783,9 @@ class PSOptimizer:
         for i in range(len(new_pos)):
             accel = random.gauss(1.0, self.temperature) * self.ind_coef * (ind_best[i] - current_pos[i]) + \
                     random.gauss(1.0, self.temperature) * self.social_coef * (global_best[i] - current_pos[i])
+
+            # accel = self.ind_coef * ( random.gauss(1.0, self.temperature)*ind_best[i] - current_pos[i] ) + \
+            #         self.social_coef * ( random.gauss(1.0, self.temperature)*global_best[i] - current_pos[i] )
 
             velocity[i] += accel
 
