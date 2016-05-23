@@ -188,7 +188,7 @@ def main():
 
     try:
         loop = trollius.get_event_loop()
-        loop.set_debug(enabled=False)
+        loop.set_debug(enabled=True)
 #        logging.basicConfig(level=logging.DEBUG)
         loop.set_exception_handler(handler)
         loop.run_until_complete(run())

@@ -30,10 +30,11 @@ echo "BODY FILE="$BODY_FILE
 
 
 # launch gazebo:
-GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:`pwd`/../../build GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:`pwd`/../../tools/models $CMD -u $WORLD 2> >(grep -v -e '^$' -e 'LCP internal error') &
+# GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:`pwd`/../../build GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:`pwd`/../../tools/models $CMD -u $WORLD 2> >(grep -v -e '^$' -e 'LCP internal error') &
+GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:`pwd`/../../build GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:`pwd`/../../tools/models $CMD -u $WORLD &
 GZ_PID=$!
 
-echo $GAZEBO_PLUGIN_PATH
+echo $GAZEBO_PLUGIN_PATHbrain_
 echo $GAZEBO_MODEL_PATH
 
 

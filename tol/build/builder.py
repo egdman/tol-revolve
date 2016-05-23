@@ -3,7 +3,7 @@ from sdfbuilder import SDF, Element
 from sdfbuilder.physics import Friction
 from sdfbuilder.structure import Collision
 from sdfbuilder.util import number_format as nf
-from ..spec import get_body_spec, get_brain_spec
+from ..spec import get_body_spec, get_brain_spec, get_extended_brain_spec
 from ..config import constants
 
 
@@ -13,7 +13,7 @@ def get_builder(conf):
     :return:
     """
     body_spec = get_body_spec(conf)
-    brain_spec = get_brain_spec(conf)
+    brain_spec = get_extended_brain_spec(conf)
     return RobotBuilder(BodyBuilder(body_spec, conf), NeuralNetBuilder(brain_spec))
 
 

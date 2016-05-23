@@ -188,6 +188,12 @@ brain:
   - dst: Leg00Joint-cpg-0
     src: Leg00Joint-cpg-1
     weight: 1.0
+  - dst: Leg00Joint-cpg-0
+    src: Leg00Joint-cpg-0
+    weight: 1.0
+  - dst: Leg00Joint-cpg-1
+    src: Leg00Joint-cpg-1
+    weight: 1.0
   - dst: Leg00Joint-out-0
     src: Leg00Joint-cpg-0
     weight: 1.0
@@ -198,6 +204,12 @@ brain:
     src: Leg01Joint-cpg-2
     weight: 1.0
   - dst: Leg01Joint-cpg-2
+    src: Leg01Joint-cpg-3
+    weight: 1.0
+  - dst: Leg01Joint-cpg-2
+    src: Leg01Joint-cpg-2
+    weight: 1.0
+  - dst: Leg01Joint-cpg-3
     src: Leg01Joint-cpg-3
     weight: 1.0
   - dst: Leg01Joint-out-0
@@ -218,6 +230,12 @@ brain:
   - dst: Leg10Joint-cpg-4
     src: Leg10Joint-cpg-5
     weight: 1.0
+  - dst: Leg10Joint-cpg-4
+    src: Leg10Joint-cpg-4
+    weight: 1.0
+  - dst: Leg10Joint-cpg-5
+    src: Leg10Joint-cpg-5
+    weight: 1.0
   - dst: Leg10Joint-out-0
     src: Leg10Joint-cpg-4
     weight: 1.0
@@ -228,6 +246,12 @@ brain:
     src: Leg11Joint-cpg-6
     weight: 1.0
   - dst: Leg11Joint-cpg-6
+    src: Leg11Joint-cpg-7
+    weight: 1.0
+  - dst: Leg11Joint-cpg-6
+    src: Leg11Joint-cpg-6
+    weight: 1.0
+  - dst: Leg11Joint-cpg-7
     src: Leg11Joint-cpg-7
     weight: 1.0
   - dst: Leg11Joint-out-0
@@ -248,6 +272,12 @@ brain:
   - dst: Leg20Joint-cpg-8
     src: Leg20Joint-cpg-9
     weight: 1.0
+  - dst: Leg20Joint-cpg-8
+    src: Leg20Joint-cpg-8
+    weight: 1.0
+  - dst: Leg20Joint-cpg-9
+    src: Leg20Joint-cpg-9
+    weight: 1.0
   - dst: Leg20Joint-out-0
     src: Leg20Joint-cpg-8
     weight: 1.0
@@ -258,6 +288,12 @@ brain:
     src: Leg21Joint-cpg-10
     weight: 1.0
   - dst: Leg21Joint-cpg-10
+    src: Leg21Joint-cpg-11
+    weight: 1.0
+  - dst: Leg21Joint-cpg-10
+    src: Leg21Joint-cpg-10
+    weight: 1.0
+  - dst: Leg21Joint-cpg-11
     src: Leg21Joint-cpg-11
     weight: 1.0
   - dst: Leg21Joint-out-0
@@ -278,6 +314,12 @@ brain:
   - dst: Leg30Joint-cpg-12
     src: Leg30Joint-cpg-13
     weight: 1.0
+  - dst: Leg30Joint-cpg-12
+    src: Leg30Joint-cpg-12
+    weight: 1.0
+  - dst: Leg30Joint-cpg-13
+    src: Leg30Joint-cpg-13
+    weight: 1.0
   - dst: Leg30Joint-out-0
     src: Leg30Joint-cpg-12
     weight: 1.0
@@ -288,6 +330,12 @@ brain:
     src: Leg31Joint-cpg-14
     weight: 1.0
   - dst: Leg31Joint-cpg-14
+    src: Leg31Joint-cpg-15
+    weight: 1.0
+  - dst: Leg31Joint-cpg-14
+    src: Leg31Joint-cpg-14
+    weight: 1.0
+  - dst: Leg31Joint-cpg-15
     src: Leg31Joint-cpg-15
     weight: 1.0
   - dst: Leg31Joint-out-0

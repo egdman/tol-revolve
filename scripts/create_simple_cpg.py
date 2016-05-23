@@ -6,7 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from revolve.convert import yaml_to_robot, robot_to_yaml
 from revolve.spec.exception import err
 
-from tol.spec import get_body_spec, get_extended_brain_spec
+from tol.spec import get_body_spec, get_brain_spec
 from tol.config import parser
 
 parser.add_argument( 'file_name', metavar='FILENAME', type=str, help='path to input YAML file')
@@ -21,45 +21,29 @@ class CPG_Factory:
         self.brain_spec = brain_spec
         self.root_nodes = []
 
-    def _add_cpg(self, pb_part, pb_brain):
+    def _add_cpg(self, pb_part, pb_brain, neuron_type):
         part_id = pb_part.id
 
-        neuron_data_v = {}
-        neuron_data_v['type'] = "V-Neuron"
-        neuron_data_v['layer'] = 'hidden'
-        neuron_data_v['partId'] = part_id
-        neuron_data_v['params'] = {"alpha" : 1.0, "tau" : 1.0, "energy" : 1.0}
-        id_v = self._add_neuron(neuron_data_v, pb_brain)
-
-        neuron_data_x = {}
-        neuron_data_x['type'] = "X-Neuron"
-        neuron_data_x['layer'] = 'hidden'
-        neuron_data_x['partId'] = part_id
-        neuron_data_x['params'] = {"tau" : 1.0}
-        id_x = self._add_neuron(neuron_data_x, pb_brain)
-
-        neuron_data_q = {}
-        neuron_data_q['type'] = "QuadNeuron"
-        neuron_data_q['layer'] = 'hidden'
-        neuron_data_q['partId'] = part_id
-        neuron_data_q['params'] = {}
-        id_q = self._add_neuron(neuron_data_q, pb_brain)
+        neuron_data = {}
+        neuron_data['type'] = neuron_type
+        neuron_data['layer'] = 'hidden'
+        neuron_data['partId'] = part_id
+        neuron_data['params'] = {"Bias" : 0.0, "Gain" : 0.5}
+        id_1 = self._add_neuron(neuron_data, pb_brain)
+        id_2 = self._add_neuron(neuron_data, pb_brain)
 
         # mutual connections:
-        xv_data = {'src': id_x, 'dst': id_v, 'weight': 1.0, 'socket': 'from_x'}
-        vx_data = {'src': id_v, 'dst': id_x, 'weight': 1.0, 'socket': 'from_v'}
+        conn_data1 = {'src': id_1, 'dst': id_2, 'weight': 1.0}
+        conn_data2 = {'src': id_2, 'dst': id_1, 'weight': 1.0}
 
-        xq_data = {'src': id_x, 'dst': id_q, 'weight': 1.0}
-        qv_data = {'src': id_q, 'dst': id_v, 'weight': 1.0, 'socket': 'from_q'}
-
-        vq_data = {'src': id_v, 'dst': id_q, 'weight': 1.0}
-
+        # recurrent connections:
+        conn_data11 = {'src': id_1, 'dst': id_1, 'weight': 1.0}
+        conn_data22 = {'src': id_2, 'dst': id_2, 'weight': 1.0}
         
-        self._add_connection(xv_data, pb_brain)
-        self._add_connection(vx_data, pb_brain)
-        self._add_connection(xq_data, pb_brain)
-        self._add_connection(qv_data, pb_brain)
-        self._add_connection(vq_data, pb_brain)
+        self._add_connection(conn_data1, pb_brain)
+        self._add_connection(conn_data2, pb_brain)
+        self._add_connection(conn_data11, pb_brain)
+        self._add_connection(conn_data22, pb_brain)
 
         # find output neuron:
         out_id = None
@@ -68,9 +52,11 @@ class CPG_Factory:
                 out_id = neuron.id
 
         if out_id is not None:
-            to_output_data = {'src': id_v, 'dst': out_id, 'weight': 1.0}
-            self._add_connection(to_output_data, pb_brain)
-        return id_v
+            conn_data3 = {'src': id_1, 'dst': out_id, 'weight': 1.0}
+            conn_data4 = {'src': out_id, 'dst': id_2, 'weight': 1.0}
+            self._add_connection(conn_data3, pb_brain)
+            self._add_connection(conn_data4, pb_brain)
+        return id_1
 
 
 
@@ -101,8 +87,6 @@ class CPG_Factory:
         conn.src = data['src']
         conn.dst = data['dst']
         conn.weight = data['weight']
-        if 'socket' in data:
-            conn.socket = data['socket']
 
 
     def _add_double_connection(self, id1, id2, weight, pb_brain):
@@ -116,7 +100,7 @@ class CPG_Factory:
         part_type = pb_part.type
 
         if part_type == 'ActiveHinge':
-            cpg_id = self._add_cpg(pb_part, pb_brain)
+            cpg_id = self._add_cpg(pb_part, pb_brain, neuron_type)
             cpg_stack.append(cpg_id)
 
 
@@ -178,7 +162,7 @@ def main():
         yaml_bot = yamlfile.read()
 
     body_spec = get_body_spec(conf)
-    brain_spec = get_modified_brain_spec(conf)
+    brain_spec = get_brain_spec(conf)
 
     print "converting to protobuf..."
     pb_bot = yaml_to_robot(body_spec, brain_spec, yaml_bot)
