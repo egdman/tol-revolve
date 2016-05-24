@@ -534,7 +534,7 @@ class GeneticEncoding:
                 "weight": conn_gene.weight,
             })
             if conn_gene.socket is not None:
-                conn_list[-1].update({'socket' : conn_gene,socket})
+                conn_list[-1].update({'socket' : conn_gene.socket})
 
         return neuron_list, conn_list
 
