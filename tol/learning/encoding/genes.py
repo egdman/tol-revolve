@@ -590,27 +590,13 @@ class GeneticEncoding:
 
     def copy(self):
         copy_gen = GeneticEncoding()
-        old_to_new = {}
 
         for n_gene in self.neuron_genes:
-
-            new_n_gene = NeuronGene(
-                    neuron=n_gene.neuron.copy(),
-                    innovation_number=n_gene.historical_mark,
-                    enabled=n_gene.enabled)
-
-            old_to_new[n_gene.neuron] = new_n_gene.neuron
+            new_n_gene = n_gene.copy()
             copy_gen.add_neuron_gene(new_n_gene)
 
-
         for c_gene in self.connection_genes:
-
-            new_c_gene = ConnectionGene(
-                    mark_from=c_gene.mark_from,
-                    mark_to= c_gene.mark_to,
-                    weight=c_gene.weight,
-                    innovation_number=c_gene.historical_mark,
-                    enabled=c_gene.enabled)
+            new_c_gene = c_gene.copy()
             copy_gen.add_connection_gene(new_c_gene)
 
         return copy_gen
