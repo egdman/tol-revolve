@@ -40,11 +40,16 @@ def parse_connections(connections, genotype, mutator, neuron_marks):
         from_mark = conn['from']
         to_mark = conn['to']
         weight = conn['weight']
+
+        # this is optional field
+        socket = conn_info.get('socket', None)
+
         if enabled:
             mutator.add_connection(mark_from=neuron_marks[from_mark],
                                    mark_to=neuron_marks[to_mark],
                                    weight=weight,
-                                   genotype=genotype)
+                                   genotype=genotype,
+                                   socket=socket)
 
 def get_neuron_genes(neurons):
     '''
@@ -80,7 +85,7 @@ def get_connection_genes(connections):
     '''
     This method parses connections keeping their original historical marks
     :param connections:
-    :return:
+    :return: connection_genes
     '''
 
     conn_genes = []
@@ -91,12 +96,16 @@ def get_connection_genes(connections):
         to_mark = conn_info['to']
         weight = conn_info['weight']
 
+        # this is optional field
+        socket = conn_info.get('socket', None)
+
         connection_gene = ConnectionGene(
             mark_from=from_mark,
             mark_to=to_mark,
             weight=weight,
             innovation_number=hist_mark,
-            enabled=enabled
+            enabled=enabled,
+            socket=socket
         )
         conn_genes.append(connection_gene)
     return conn_genes

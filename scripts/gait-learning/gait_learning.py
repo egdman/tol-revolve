@@ -29,7 +29,7 @@ from tol.logging import logger, output_console
 from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline, PSOLearner
 from tol.learning.encoding import Mutator, get_default_mutation_spec
 from tol.learning import get_brains_from_file
-from tol.spec import get_body_spec, get_brain_spec, get_extended_brain_spec
+from tol.spec import get_body_spec, get_extended_brain_spec
 
 
 # Log output to console
@@ -192,6 +192,8 @@ def run():
         tree = Tree.from_body_brain(bot.body, bot.brain, body_spec)
 
         robot = yield From(wait_for(world.insert_robot(tree, pose)))
+        yield From(world.pause(False))
+
 
         if conf.online:
             learner = RobotLearnerOnline(world=world,
@@ -209,7 +211,6 @@ def run():
                                    brain_spec=brain_spec,
                                    mutator=mutator,
                                    conf=conf)
-
         gen_files = []
         init_brain_list = None
 

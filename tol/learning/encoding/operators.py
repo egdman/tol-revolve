@@ -277,11 +277,14 @@ class Mutator:
         return new_neuron_gene.historical_mark
 
 
-    def add_connection(self, mark_from, mark_to, weight, genotype):
-        new_conn_gene = ConnectionGene(mark_from, mark_to,
+    def add_connection(self, mark_from, mark_to, weight, genotype, socket=None):
+        new_conn_gene = ConnectionGene(
+                                  mark_from=mark_from,
+                                  mark_to=mark_to,
                                   weight = weight,
                                   innovation_number = self.innovation_number,
-                                  enabled = True)
+                                  enabled = True,
+                                  socket=socket)
         self.innovation_number += 1
         genotype.add_connection_gene(new_conn_gene)
         return new_conn_gene.historical_mark

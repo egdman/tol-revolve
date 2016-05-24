@@ -32,7 +32,7 @@ from sdfbuilder.math import Vector3, Quaternion
 from tol.config import parser
 from tol.manage import World
 from tol.logging import logger, output_console
-from tol.spec import get_body_spec, get_brain_spec
+from tol.spec import get_body_spec, get_extended_brain_spec
 
 from tol.learning.convert import NeuralNetworkParser, yaml_to_genotype
 from tol.util import random_rotation, rotate_vertical
@@ -71,6 +71,13 @@ parser.add_argument(
     help="how long to record the robot's trajectory (in simulation seconds)"
 )
 
+parser.add_argument(
+    "--log-directory",
+    type=str,
+    default="log",
+    help="directory where experiment logs are stored"
+)
+
 
 
 @trollius.coroutine
@@ -86,7 +93,7 @@ def run():
     conf.pose_update_frequency = 5
 
     body_spec = get_body_spec(conf)
-    brain_spec = get_brain_spec(conf)
+    brain_spec = get_extended_brain_spec(conf)
 
 
     if conf.trajectory_file != '':

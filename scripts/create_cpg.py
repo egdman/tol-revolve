@@ -28,38 +28,38 @@ class CPG_Factory:
         neuron_data_v['type'] = "V-Neuron"
         neuron_data_v['layer'] = 'hidden'
         neuron_data_v['partId'] = part_id
-        neuron_data_v['params'] = {"alpha" : 1.0, "tau" : 1.0, "energy" : 1.0}
+        neuron_data_v['params'] = {"alpha" : 1.0, "tau" : 5.0, "energy" : 2.0}
         id_v = self._add_neuron(neuron_data_v, pb_brain)
 
         neuron_data_x = {}
         neuron_data_x['type'] = "X-Neuron"
         neuron_data_x['layer'] = 'hidden'
         neuron_data_x['partId'] = part_id
-        neuron_data_x['params'] = {"tau" : 1.0}
+        neuron_data_x['params'] = {"tau" : 5.0}
         id_x = self._add_neuron(neuron_data_x, pb_brain)
 
-        neuron_data_q = {}
-        neuron_data_q['type'] = "QuadNeuron"
-        neuron_data_q['layer'] = 'hidden'
-        neuron_data_q['partId'] = part_id
-        neuron_data_q['params'] = {}
-        id_q = self._add_neuron(neuron_data_q, pb_brain)
+        # neuron_data_q = {}
+        # neuron_data_q['type'] = "QuadNeuron"
+        # neuron_data_q['layer'] = 'hidden'
+        # neuron_data_q['partId'] = part_id
+        # neuron_data_q['params'] = {}
+        # id_q = self._add_neuron(neuron_data_q, pb_brain)
 
         # mutual connections:
         xv_data = {'src': id_x, 'dst': id_v, 'weight': 1.0, 'socket': 'from_x'}
         vx_data = {'src': id_v, 'dst': id_x, 'weight': 1.0, 'socket': 'from_v'}
 
-        xq_data = {'src': id_x, 'dst': id_q, 'weight': 1.0}
-        qv_data = {'src': id_q, 'dst': id_v, 'weight': 1.0, 'socket': 'from_q'}
+        # xq_data = {'src': id_x, 'dst': id_q, 'weight': 1.0}
+        # qv_data = {'src': id_q, 'dst': id_v, 'weight': 1.0, 'socket': 'from_q'}
 
-        vq_data = {'src': id_v, 'dst': id_q, 'weight': 1.0}
+        # vq_data = {'src': id_v, 'dst': id_q, 'weight': 1.0}
 
         
         self._add_connection(xv_data, pb_brain)
         self._add_connection(vx_data, pb_brain)
-        self._add_connection(xq_data, pb_brain)
-        self._add_connection(qv_data, pb_brain)
-        self._add_connection(vq_data, pb_brain)
+        # self._add_connection(xq_data, pb_brain)
+        # self._add_connection(qv_data, pb_brain)
+        # self._add_connection(vq_data, pb_brain)
 
         # find output neuron:
         out_id = None
@@ -70,7 +70,7 @@ class CPG_Factory:
         if out_id is not None:
             to_output_data = {'src': id_v, 'dst': out_id, 'weight': 1.0}
             self._add_connection(to_output_data, pb_brain)
-        return id_v
+        return {'id_v': id_v, 'id_x': id_x}
 
 
 
@@ -112,12 +112,31 @@ class CPG_Factory:
         self._add_connection(conn_data2, pb_brain)
 
 
+    def _add_inter_CPG_connections(self, ids1, ids2, weight, pb_brain):
+        id1_x = ids1['id_x']
+        id2_x = ids2['id_x']
+
+        id1_v = ids1['id_v']
+        id2_v = ids1['id_v']
+
+        conn_data1 = {'src': id1_x, 'dst': id2_v, 'weight': weight, 'socket': 'from_x_ext'}
+        conn_data2 = {'src': id2_x, 'dst': id1_v, 'weight': weight, 'socket': 'from_x_ext'}
+
+        conn_data3 = {'src': id1_v, 'dst': id2_v, 'weight': weight, 'socket': 'from_v_ext'}
+        conn_data4 = {'src': id2_v, 'dst': id1_v, 'weight': weight, 'socket': 'from_v_ext'}
+
+        self._add_connection(conn_data1, pb_brain)
+        self._add_connection(conn_data2, pb_brain)
+        self._add_connection(conn_data3, pb_brain)
+        self._add_connection(conn_data4, pb_brain)
+
+
     def _parse_part(self, pb_part, pb_brain, cpg_stack, neuron_type):
         part_type = pb_part.type
 
         if part_type == 'ActiveHinge':
-            cpg_id = self._add_cpg(pb_part, pb_brain)
-            cpg_stack.append(cpg_id)
+            cpg_ids = self._add_cpg(pb_part, pb_brain)
+            cpg_stack.append(cpg_ids)
 
 
 
@@ -127,10 +146,11 @@ class CPG_Factory:
             next_part = connection.part
             self._parse_part(next_part, pb_brain, cpg_stack, neuron_type)
 
+        # add inter-CPG connections (from x to v and from v to v)
         while len(cpg_stack) > 1:
-            id1 = cpg_stack[-1]
-            id2 = cpg_stack[-2]
-            self._add_double_connection(id1, id2, 1.0, pb_brain)
+            ids1 = cpg_stack[-1]
+            ids2 = cpg_stack[-2]
+            # self._add_inter_CPG_connections(ids1, ids2, 1.0, pb_brain)
             del cpg_stack[-1]
         if len(cpg_stack) == 1:
             self.root_nodes.append(cpg_stack[0])
@@ -152,10 +172,11 @@ class CPG_Factory:
 
 
         if len(self.root_nodes) != 0:
+
             # connect inputs to root neurons:
             for rn in self.root_nodes:
                 for inp_n in input_neurons:
-                    conn_data = {'src': inp_n.id, 'dst': rn, 'weight': 1.0}
+                    conn_data = {'src': inp_n.id, 'dst': rn['id_v'], 'weight': 1.0}
                     self._add_connection(conn_data, brain)
 
             # connect root nodes together:
@@ -163,7 +184,7 @@ class CPG_Factory:
                 rn1 = self.root_nodes[i]
                 for j in range(i+1, len(self.root_nodes)):
                     rn2 = self.root_nodes[j]
-                    self._add_double_connection(rn1, rn2, weight=1.0, pb_brain=brain)
+                    self._add_inter_CPG_connections(rn1, rn2, weight=1.0, pb_brain=brain)
 
 
 
@@ -178,7 +199,7 @@ def main():
         yaml_bot = yamlfile.read()
 
     body_spec = get_body_spec(conf)
-    brain_spec = get_modified_brain_spec(conf)
+    brain_spec = get_extended_brain_spec(conf)
 
     print "converting to protobuf..."
     pb_bot = yaml_to_robot(body_spec, brain_spec, yaml_bot)

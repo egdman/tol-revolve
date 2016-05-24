@@ -60,7 +60,7 @@ def get_extended_brain_spec(conf):
         ),
 
 
-        # these neurons are for the CPG model found in Ijspeers (2005):
+        # these neurons are for the nonlinear oscillator CPG model found in Ijspeert (2005):
         "V-Neuron": NeuronSpec(
             params=[
                 ParamSpec("alpha", min_value = 0.05, max_value = 10.0, epsilon = epsilon),
@@ -75,12 +75,12 @@ def get_extended_brain_spec(conf):
                 ParamSpec("tau", min_value = 0.0, max_value = 10.0, epsilon = epsilon),
             ],
             layers = ["output", "hidden"]
-        ),
-
-        "QuadNeuron": NeuronSpec(
-            params=[],
-            layers = ["output", "hidden"]
         )
+
+        # "QuadNeuron": NeuronSpec(
+        #     params=[],
+        #     layers = ["output", "hidden"]
+        # )
 
     })
 

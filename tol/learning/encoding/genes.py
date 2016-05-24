@@ -97,7 +97,7 @@ class NeuronGene(Gene):
 
 
 class ConnectionGene(Gene):
-    def __init__(self, mark_from, mark_to, weight, innovation_number=0, enabled=True):
+    def __init__(self, mark_from, mark_to, weight, innovation_number=0, enabled=True, socket=None):
         Gene.__init__(self, innovation_number = innovation_number,
                                              enabled = enabled)
 
@@ -120,6 +120,7 @@ class ConnectionGene(Gene):
         self.mark_from = mark_from
         self.mark_to = mark_to
         self.weight = weight
+        self.socket = socket
 
 
     def __str__(self):
@@ -132,7 +133,8 @@ class ConnectionGene(Gene):
             mark_to = self.mark_to,
             weight = self.weight,
             innovation_number = self.historical_mark,
-            enabled = self.enabled
+            enabled = self.enabled,
+            socket=self.socket
             )
         return new_gene
 
@@ -529,8 +531,10 @@ class GeneticEncoding:
                 "enabled": conn_gene.enabled,
                 "from": conn_gene.mark_from,
                 "to": conn_gene.mark_to,
-                "weight": conn_gene.weight
+                "weight": conn_gene.weight,
             })
+            if conn_gene.socket is not None:
+                conn_list[-1].update({'socket' : conn_gene,socket})
 
         return neuron_list, conn_list
 

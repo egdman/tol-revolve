@@ -17,7 +17,6 @@ class NeuralNetworkParser:
         pb_connections = pb_brain.connection
 
         neuron_map = self._parse_neurons(pb_neurons)
-        connection_descriptions = self._parse_connections(pb_connections)
 
         genotype = GeneticEncoding()
 
@@ -28,13 +27,19 @@ class NeuralNetworkParser:
             mark = mutator.add_neuron(neuron, genotype)
             id_mark_map[neuron_id] = mark
 
-        for connection in connection_descriptions:
+        for pb_connection in pb_connections:
+            socket=None
+            if pb_connection.HasField('socket'):
+                socket=pb_connection.socket
+
             mutator.add_connection(
-                mark_from=id_mark_map[connection["src"]],
-                mark_to=id_mark_map[connection["dst"]],
-                weight=connection["weight"],
-                genotype=genotype
+                mark_from=id_mark_map[pb_connection.src],
+                mark_to=id_mark_map[pb_connection.dst],
+                weight=pb_connection.weight,
+                genotype=genotype,
+                socket=socket
             )
+
         return genotype
 
 
@@ -96,11 +101,12 @@ class NeuralNetworkParser:
                 from_id = genotype.find_gene_by_mark(mark_from).neuron.neuron_id
                 to_id = genotype.find_gene_by_mark(mark_to).neuron.neuron_id
 
-                weight = conn_gene.weight
                 pb_conn = brain.connection.add()
                 pb_conn.src = from_id
                 pb_conn.dst = to_id
-                pb_conn.weight = weight
+                pb_conn.weight = conn_gene.weight
+                if conn_gene.socket is not None:
+                    pb_conn.socket = conn_gene.socket
 
 
 
@@ -131,13 +137,13 @@ class NeuralNetworkParser:
         return neuron_map
 
 
-    def _parse_connections(self, pb_connections):
-        conn_descriptions = []
-        for connection in pb_connections:
-            conn_descriptions.append({
-                "src": connection.src,
-                "dst": connection.dst,
-                "weight": connection.weight
-            })
+    # def _parse_connections(self, pb_connections):
+    #     conn_descriptions = []
+    #     for connection in pb_connections:
+    #         conn_descriptions.append({
+    #             "src": connection.src,
+    #             "dst": connection.dst,
+    #             "weight": connection.weight
+    #         })
 
-        return conn_descriptions
+    #     return conn_descriptions
