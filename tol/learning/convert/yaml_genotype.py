@@ -42,7 +42,7 @@ def parse_connections(connections, genotype, mutator, neuron_marks):
         weight = conn['weight']
 
         # this is optional field
-        socket = conn_info.get('socket', None)
+        socket = conn.get('socket', None)
 
         if enabled:
             mutator.add_connection(mark_from=neuron_marks[from_mark],

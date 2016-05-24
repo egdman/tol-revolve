@@ -53,32 +53,6 @@ class Mutator:
                 # ##################################
 
 
-                # ###################################################################################
-                # neuron_spec = self.brain_spec.get(neuron_gene.neuron.neuron_type)
-                # neuron_params = neuron_spec.parameters
-                #
-                # if neuron_params:
-                #     param_name, param_tuple = random.choice(neuron_params.items())
-                #     param_spec = param_tuple[1]
-                #     param_value = neuron_gene.neuron.neuron_params[param_name]
-                #     max_value = param_spec.max
-                #     min_value = param_spec.min
-                #     param_value += random.gauss(0, sigma)
-                #
-                #     if param_value > max_value:
-                #         if param_spec.max_inclusive:
-                #             param_value = max_value
-                #         else:
-                #             param_value = max_value - param_spec.epsilon
-                #
-                #     if param_value < min_value:
-                #         if param_spec.min_inclusive:
-                #             param_value = min_value
-                #         else:
-                #             param_value = min_value + param_spec.epsilon
-                # ###################################################################################
-
-
                 ###################################################################################
                 neuron_params = self.mutation_spec['params'][neuron_gene.neuron.neuron_type]
                 if len(neuron_params) > 0:
@@ -88,9 +62,9 @@ class Mutator:
                     min_value = param_spec.min
 
                     range_of_values = max_value - min_value
-                    sigma = sigma*range_of_values
+                    abs_sigma = sigma*range_of_values
 
-                    param_value += random.gauss(0, sigma)
+                    param_value += random.gauss(0, abs_sigma)
 
                     if param_value > max_value:
                         if param_spec.max_inclusive:
