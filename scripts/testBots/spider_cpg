@@ -207,19 +207,19 @@ brain:
   - dst: Leg01Joint-cpg-2
     socket: from_x_ext
     src: Leg01Joint-cpg-3
-    weight: 1.0
+    weight: 0.0
   - dst: Leg01Joint-cpg-2
     socket: from_x_ext
     src: Leg00Joint-cpg-1
-    weight: 1.0
+    weight: 0.0
   - dst: Leg01Joint-cpg-2
     socket: from_v_ext
     src: Leg01Joint-cpg-2
-    weight: 1.0
+    weight: 0.0
   - dst: Leg01Joint-cpg-2
     socket: from_v_ext
     src: Leg01Joint-cpg-2
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     socket: from_x
     src: Leg10Joint-cpg-5
@@ -245,19 +245,19 @@ brain:
   - dst: Leg11Joint-cpg-6
     socket: from_x_ext
     src: Leg11Joint-cpg-7
-    weight: 1.0
+    weight: 0.0
   - dst: Leg11Joint-cpg-6
     socket: from_x_ext
     src: Leg10Joint-cpg-5
-    weight: 1.0
+    weight: 0.0
   - dst: Leg11Joint-cpg-6
     socket: from_v_ext
     src: Leg11Joint-cpg-6
-    weight: 1.0
+    weight: 0.0
   - dst: Leg11Joint-cpg-6
     socket: from_v_ext
     src: Leg11Joint-cpg-6
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     socket: from_x
     src: Leg20Joint-cpg-9
@@ -283,19 +283,19 @@ brain:
   - dst: Leg21Joint-cpg-10
     socket: from_x_ext
     src: Leg21Joint-cpg-11
-    weight: 1.0
+    weight: 0.0
   - dst: Leg21Joint-cpg-10
     socket: from_x_ext
     src: Leg20Joint-cpg-9
-    weight: 1.0
+    weight: 0.0
   - dst: Leg21Joint-cpg-10
     socket: from_v_ext
     src: Leg21Joint-cpg-10
-    weight: 1.0
+    weight: 0.0
   - dst: Leg21Joint-cpg-10
     socket: from_v_ext
     src: Leg21Joint-cpg-10
-    weight: 1.0
+    weight: 0.0
   - dst: Leg30Joint-cpg-12
     socket: from_x
     src: Leg30Joint-cpg-13
@@ -321,187 +321,187 @@ brain:
   - dst: Leg31Joint-cpg-14
     socket: from_x_ext
     src: Leg31Joint-cpg-15
-    weight: 1.0
+    weight: 0.0
   - dst: Leg31Joint-cpg-14
     socket: from_x_ext
     src: Leg30Joint-cpg-13
-    weight: 1.0
-  - dst: Leg31Joint-cpg-14
-    socket: from_v_ext
-    src: Leg31Joint-cpg-14
-    weight: 1.0
+    weight: 0.0
   - dst: Leg31Joint-cpg-14
     socket: from_v_ext
     src: Leg31Joint-cpg-14
-    weight: 1.0
+    weight: 0.0
+  - dst: Leg31Joint-cpg-14
+    socket: from_v_ext
+    src: Leg31Joint-cpg-14
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-5
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-4
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-3
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-2
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-1
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     src: Core-in-5
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     src: Core-in-4
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     src: Core-in-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     src: Core-in-3
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     src: Core-in-2
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     src: Core-in-1
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     src: Core-in-5
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     src: Core-in-4
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     src: Core-in-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     src: Core-in-3
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     src: Core-in-2
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     src: Core-in-1
-    weight: 1.0
+    weight: 0.0
   - dst: Leg30Joint-cpg-12
     src: Core-in-5
-    weight: 1.0
+    weight: 0.0
   - dst: Leg30Joint-cpg-12
     src: Core-in-4
-    weight: 1.0
+    weight: 0.0
   - dst: Leg30Joint-cpg-12
     src: Core-in-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg30Joint-cpg-12
     src: Core-in-3
-    weight: 1.0
+    weight: 0.0
   - dst: Leg30Joint-cpg-12
     src: Core-in-2
-    weight: 1.0
+    weight: 0.0
   - dst: Leg30Joint-cpg-12
     src: Core-in-1
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_x_ext
     src: Leg00Joint-cpg-1
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_x_ext
     src: Leg10Joint-cpg-5
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_v_ext
     src: Leg00Joint-cpg-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_v_ext
     src: Leg00Joint-cpg-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_x_ext
     src: Leg00Joint-cpg-1
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_x_ext
     src: Leg20Joint-cpg-9
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_v_ext
     src: Leg00Joint-cpg-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_v_ext
     src: Leg00Joint-cpg-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_x_ext
     src: Leg00Joint-cpg-1
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_x_ext
     src: Leg30Joint-cpg-13
-    weight: 1.0
-  - dst: Leg00Joint-cpg-0
-    socket: from_v_ext
-    src: Leg00Joint-cpg-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     socket: from_v_ext
     src: Leg00Joint-cpg-0
-    weight: 1.0
+    weight: 0.0
+  - dst: Leg00Joint-cpg-0
+    socket: from_v_ext
+    src: Leg00Joint-cpg-0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     socket: from_x_ext
     src: Leg10Joint-cpg-5
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     socket: from_x_ext
     src: Leg20Joint-cpg-9
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     socket: from_v_ext
     src: Leg10Joint-cpg-4
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     socket: from_v_ext
     src: Leg10Joint-cpg-4
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     socket: from_x_ext
     src: Leg10Joint-cpg-5
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     socket: from_x_ext
     src: Leg30Joint-cpg-13
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     socket: from_v_ext
     src: Leg10Joint-cpg-4
-    weight: 1.0
+    weight: 0.0
   - dst: Leg10Joint-cpg-4
     socket: from_v_ext
     src: Leg10Joint-cpg-4
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     socket: from_x_ext
     src: Leg20Joint-cpg-9
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     socket: from_x_ext
     src: Leg30Joint-cpg-13
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     socket: from_v_ext
     src: Leg20Joint-cpg-8
-    weight: 1.0
+    weight: 0.0
   - dst: Leg20Joint-cpg-8
     socket: from_v_ext
     src: Leg20Joint-cpg-8
-    weight: 1.0
+    weight: 0.0
   neurons:
     Core-in-0:
       id: Core-in-0
@@ -656,73 +656,73 @@ brain:
   params:
     Leg00Joint-cpg-0:
       alpha: 1.0
-      energy: 2.0
-      tau: 5.0
+      energy: 10.0
+      tau: 0.5
     Leg00Joint-cpg-1:
-      tau: 5.0
+      tau: 0.5
     Leg00Joint-out-0:
       bias: 0.0
       gain: 0.5
     Leg01Joint-cpg-2:
       alpha: 1.0
-      energy: 2.0
-      tau: 5.0
+      energy: 10.0
+      tau: 0.5
     Leg01Joint-cpg-3:
-      tau: 5.0
+      tau: 0.5
     Leg01Joint-out-0:
       bias: 0.0
       gain: 0.5
     Leg10Joint-cpg-4:
       alpha: 1.0
-      energy: 2.0
-      tau: 5.0
+      energy: 10.0
+      tau: 0.5
     Leg10Joint-cpg-5:
-      tau: 5.0
+      tau: 0.5
     Leg10Joint-out-0:
       bias: 0.0
       gain: 0.5
     Leg11Joint-cpg-6:
       alpha: 1.0
-      energy: 2.0
-      tau: 5.0
+      energy: 10.0
+      tau: 0.5
     Leg11Joint-cpg-7:
-      tau: 5.0
+      tau: 0.5
     Leg11Joint-out-0:
       bias: 0.0
       gain: 0.5
     Leg20Joint-cpg-8:
       alpha: 1.0
-      energy: 2.0
-      tau: 5.0
+      energy: 10.0
+      tau: 0.5
     Leg20Joint-cpg-9:
-      tau: 5.0
+      tau: 0.5
     Leg20Joint-out-0:
       bias: 0.0
       gain: 0.5
     Leg21Joint-cpg-10:
       alpha: 1.0
-      energy: 2.0
-      tau: 5.0
+      energy: 10.0
+      tau: 0.5
     Leg21Joint-cpg-11:
-      tau: 5.0
+      tau: 0.5
     Leg21Joint-out-0:
       bias: 0.0
       gain: 0.5
     Leg30Joint-cpg-12:
       alpha: 1.0
-      energy: 2.0
-      tau: 5.0
+      energy: 10.0
+      tau: 0.5
     Leg30Joint-cpg-13:
-      tau: 5.0
+      tau: 0.5
     Leg30Joint-out-0:
       bias: 0.0
       gain: 0.5
     Leg31Joint-cpg-14:
       alpha: 1.0
-      energy: 2.0
-      tau: 5.0
+      energy: 10.0
+      tau: 0.5
     Leg31Joint-cpg-15:
-      tau: 5.0
+      tau: 0.5
     Leg31Joint-out-0:
       bias: 0.0
       gain: 0.5

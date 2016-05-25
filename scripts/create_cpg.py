@@ -28,14 +28,14 @@ class CPG_Factory:
         neuron_data_v['type'] = "V-Neuron"
         neuron_data_v['layer'] = 'hidden'
         neuron_data_v['partId'] = part_id
-        neuron_data_v['params'] = {"alpha" : 1.0, "tau" : 5.0, "energy" : 2.0}
+        neuron_data_v['params'] = {"alpha" : 1.0, "tau" : 0.5, "energy" : 10.0}
         id_v = self._add_neuron(neuron_data_v, pb_brain)
 
         neuron_data_x = {}
         neuron_data_x['type'] = "X-Neuron"
         neuron_data_x['layer'] = 'hidden'
         neuron_data_x['partId'] = part_id
-        neuron_data_x['params'] = {"tau" : 5.0}
+        neuron_data_x['params'] = {"tau" : 0.5}
         id_x = self._add_neuron(neuron_data_x, pb_brain)
 
         # neuron_data_q = {}
@@ -150,7 +150,7 @@ class CPG_Factory:
         while len(cpg_stack) > 1:
             ids1 = cpg_stack[-1]
             ids2 = cpg_stack[-2]
-            self._add_inter_CPG_connections(ids1, ids2, 1.0, pb_brain)
+            self._add_inter_CPG_connections(ids1, ids2, weight=0.0, pb_brain=pb_brain)
             del cpg_stack[-1]
         if len(cpg_stack) == 1:
             self.root_nodes.append(cpg_stack[0])
@@ -176,7 +176,7 @@ class CPG_Factory:
             # connect inputs to root neurons:
             for rn in self.root_nodes:
                 for inp_n in input_neurons:
-                    conn_data = {'src': inp_n.id, 'dst': rn['id_v'], 'weight': 1.0}
+                    conn_data = {'src': inp_n.id, 'dst': rn['id_v'], 'weight': 0.0}
                     self._add_connection(conn_data, brain)
 
             # connect root nodes together:
@@ -184,7 +184,7 @@ class CPG_Factory:
                 rn1 = self.root_nodes[i]
                 for j in range(i+1, len(self.root_nodes)):
                     rn2 = self.root_nodes[j]
-                    self._add_inter_CPG_connections(rn1, rn2, weight=1.0, pb_brain=brain)
+                    self._add_inter_CPG_connections(rn1, rn2, weight=0.0, pb_brain=brain)
 
 
 
