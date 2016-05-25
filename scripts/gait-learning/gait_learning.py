@@ -29,7 +29,7 @@ from tol.logging import logger, output_console
 from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline, PSOLearner
 from tol.learning.encoding import Mutator, get_default_mutation_spec
 from tol.learning import get_brains_from_file
-from tol.spec import get_body_spec, get_extended_brain_spec
+from tol.spec import get_body_spec, get_brain_spec, get_extended_brain_spec
 
 
 # Log output to console
@@ -136,6 +136,12 @@ parser.add_argument(
     help='when this flag is set, the reproduction is asexual'
 )
 
+parser.add_argument(
+    '--extended',
+    action='store_true',
+    help='when this flag is set, the neuron types from the extended spec are available'
+)
+
 
 @trollius.coroutine
 def run():
@@ -146,7 +152,7 @@ def run():
     conf.weight_mutation_sigma = 5.0
     conf.param_mutation_probability = 0.8
     conf.param_mutation_sigma = 0.25
-    conf.structural_mutation_probability = 0.0
+    conf.structural_mutation_probability = 8.0
     conf.removal_mutation_probability = 0.0
 
     # this is the world state update frequency in simulation Hz
@@ -167,7 +173,13 @@ def run():
 
     path_to_log_dir = os.path.join(world.path_to_log_dir, "learner1")
     body_spec = get_body_spec(conf)
-    brain_spec = get_extended_brain_spec(conf)
+
+
+    if conf.extended:
+        brain_spec = get_extended_brain_spec(conf)
+    else:
+        brain_spec = get_brain_spec(conf)
+
 
     mut_spec = get_default_mutation_spec(brain_spec)
 

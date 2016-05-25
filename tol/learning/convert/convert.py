@@ -83,11 +83,12 @@ class NeuralNetworkParser:
 
                 neuron_spec = self.spec.get(neuron_info.neuron_type)
                 serialized_params = neuron_spec.serialize_params(neuron_info.neuron_params)
-                for param_value in serialized_params:
-                    param = pb_neuron.param.add()
-                    param.value = param_value
 
-
+                for param_name in neuron_info.neuron_params:
+                    param_value = neuron_info.neuron_params[param_name];
+                    pb_param = pb_neuron.param.add()
+                    pb_param.name = param_name
+                    pb_param.value = param_value
 
 
 

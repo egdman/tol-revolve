@@ -150,7 +150,7 @@ class CPG_Factory:
         while len(cpg_stack) > 1:
             ids1 = cpg_stack[-1]
             ids2 = cpg_stack[-2]
-            # self._add_inter_CPG_connections(ids1, ids2, 1.0, pb_brain)
+            self._add_inter_CPG_connections(ids1, ids2, 1.0, pb_brain)
             del cpg_stack[-1]
         if len(cpg_stack) == 1:
             self.root_nodes.append(cpg_stack[0])
