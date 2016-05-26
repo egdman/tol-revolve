@@ -177,12 +177,16 @@ class Mutator:
         :type genotype: GeneticEncoding
         """
 
-        connection_to_split = random.choice(genotype.connection_genes)
+        connection_to_split_id = random.choice(range(len(genotype.connection_genes)))
+        connection_to_split = genotype.connection_genes[connection_to_split_id]
+
         old_weight = connection_to_split.weight
-        connection_to_split.enabled = False
 
         mark_from = connection_to_split.mark_from
         mark_to = connection_to_split.mark_to
+
+        # delete the old connection from the genotype
+        genotype.remove_connection_gene(connection_to_split_id)
 
         neuron_from = genotype.find_gene_by_mark(mark_from).neuron
         neuron_to = genotype.find_gene_by_mark(mark_to).neuron

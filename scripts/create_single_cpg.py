@@ -117,52 +117,6 @@ class CPG_Factory:
         self._add_connection(conn_data2, pb_brain)
 
 
-    def _add_inter_CPG_connections(self, ids1, ids2, weight, pb_brain):
-        id1_x = ids1['id_x']
-        id2_x = ids2['id_x']
-
-        id1_v = ids1['id_v']
-        id2_v = ids1['id_v']
-
-        conn_data1 = {'src': id1_x, 'dst': id2_v, 'weight': weight, 'socket': 'from_x_ext'}
-        conn_data2 = {'src': id2_x, 'dst': id1_v, 'weight': weight, 'socket': 'from_x_ext'}
-
-        conn_data3 = {'src': id1_v, 'dst': id2_v, 'weight': weight, 'socket': 'from_v_ext'}
-        conn_data4 = {'src': id2_v, 'dst': id1_v, 'weight': weight, 'socket': 'from_v_ext'}
-
-        self._add_connection(conn_data1, pb_brain)
-        self._add_connection(conn_data2, pb_brain)
-        self._add_connection(conn_data3, pb_brain)
-        self._add_connection(conn_data4, pb_brain)
-
-
-    def _parse_part(self, pb_part, pb_brain, cpg_stack, neuron_type):
-        part_type = pb_part.type
-
-        if part_type == 'ActiveHinge':
-            cpg_ids = self._add_cpg(pb_part, pb_brain)
-            cpg_stack.append(cpg_ids)
-
-
-
-        connections = pb_part.child
-
-        for connection in connections:
-            next_part = connection.part
-            self._parse_part(next_part, pb_brain, cpg_stack, neuron_type)
-
-        # add inter-CPG connections (from x to v and from v to v)
-        while len(cpg_stack) > 1:
-            ids1 = cpg_stack[-1]
-            ids2 = cpg_stack[-2]
-            self._add_inter_CPG_connections(ids1, ids2, weight=0.0, pb_brain=pb_brain)
-            del cpg_stack[-1]
-        if len(cpg_stack) == 1:
-            self.root_nodes.append(cpg_stack[0])
-            del cpg_stack[0]
-
-
-
     def add_CPGs(self, pb_robot, neuron_type):
         core = pb_robot.body.root
         brain = pb_robot.brain

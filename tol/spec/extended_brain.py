@@ -64,7 +64,7 @@ def get_extended_brain_spec(conf):
         "V-Neuron": NeuronSpec(
             params=[
                 ParamSpec("alpha", min_value = 0.05, max_value = 10.0, epsilon = epsilon),
-                ParamSpec("tau", min_value = 0.01, max_value = 1.0, epsilon = epsilon),
+                ParamSpec("tau", min_value = 1.0, max_value = 50.0, epsilon = epsilon),
                 ParamSpec("energy", min_value = 0.0, max_value = 25.0, epsilon = epsilon)
             ],
             layers = ["output", "hidden"]
@@ -72,7 +72,7 @@ def get_extended_brain_spec(conf):
 
         "X-Neuron": NeuronSpec(
             params=[
-                ParamSpec("tau", min_value = 0.01, max_value = 1.0, epsilon = epsilon),
+                ParamSpec("tau", min_value = 0.01, max_value = 5.0, epsilon = epsilon),
             ],
             layers = ["output", "hidden"]
         ),

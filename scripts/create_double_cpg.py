@@ -136,62 +136,39 @@ class CPG_Factory:
         self._add_connection(conn_data4, pb_brain)
 
 
-    def _parse_part(self, pb_part, pb_brain, cpg_stack, neuron_type):
-        part_type = pb_part.type
-
-        if part_type == 'ActiveHinge':
-            cpg_ids = self._add_cpg(pb_part, pb_brain)
-            cpg_stack.append(cpg_ids)
-
-
-
-        connections = pb_part.child
-
-        for connection in connections:
-            next_part = connection.part
-            self._parse_part(next_part, pb_brain, cpg_stack, neuron_type)
-
-        # add inter-CPG connections (from x to v and from v to v)
-        while len(cpg_stack) > 1:
-            ids1 = cpg_stack[-1]
-            ids2 = cpg_stack[-2]
-            self._add_inter_CPG_connections(ids1, ids2, weight=0.0, pb_brain=pb_brain)
-            del cpg_stack[-1]
-        if len(cpg_stack) == 1:
-            self.root_nodes.append(cpg_stack[0])
-            del cpg_stack[0]
-
-
-
+    
     def add_CPGs(self, pb_robot, neuron_type):
         core = pb_robot.body.root
         brain = pb_robot.brain
-        cpg_stack = []
-        self._parse_part(core, brain, cpg_stack, neuron_type)
+
+        coupling_weight = 0.0
+
+        # add single CPG to the core component
+        cpg_ids1 = self._add_cpg(core, brain)
+        cpg_ids2 = self._add_cpg(core, brain)
 
         # find all input neurons:
         input_neurons = []
+        output_neurons = []
         for n in brain.neuron:
             if n.layer == 'input':
                 input_neurons.append(n)
+            elif n.layer == 'output':
+                output_neurons.append(n)
 
+        # # connect inputs to the CPG:
+        # for in_neuron in input_neurons:
+        #     conn_data = {'src': in_neuron.id, 'dst': cpg_ids1['id_v'], 'weight': 0.0}
+        #     self._add_connection(conn_data, brain)
 
-        if len(self.root_nodes) != 0:
+        # connect CPGs together:
+        self._add_inter_CPG_connections(cpg_ids1, cpg_ids2, coupling_weight, brain)
 
-            # connect inputs to root neurons:
-            for rn in self.root_nodes:
-                for inp_n in input_neurons:
-                    conn_data = {'src': inp_n.id, 'dst': rn['id_v'], 'weight': 0.0}
-                    self._add_connection(conn_data, brain)
-
-            # connect root nodes together:
-            for i in range(len(self.root_nodes) - 1):
-                rn1 = self.root_nodes[i]
-                for j in range(i+1, len(self.root_nodes)):
-                    rn2 = self.root_nodes[j]
-                    self._add_inter_CPG_connections(rn1, rn2, weight=0.0, pb_brain=brain)
-
-
+        # connect the CPG to the outputs:
+        for out_neuron in output_neurons:
+            conn_data = {'src': cpg_ids2['id_v'], 'dst': out_neuron.id, 'weight': 1.0}
+            self._add_connection(conn_data, brain)
+            
 
 
 def main():

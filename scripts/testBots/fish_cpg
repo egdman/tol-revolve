@@ -53,54 +53,62 @@ body:
   type: Core
 brain:
   connections:
-  - dst: Leg00Joint-cpg-1
-    src: Leg00Joint-cpg-0
-    weight: 1.0
   - dst: Leg00Joint-cpg-0
+    socket: from_x
     src: Leg00Joint-cpg-1
+    weight: 1.0
+  - dst: Leg00Joint-cpg-1
+    socket: from_v
+    src: Leg00Joint-cpg-0
     weight: 1.0
   - dst: Leg00Joint-out-0
     src: Leg00Joint-cpg-0
     weight: 1.0
-  - dst: Leg00Joint-cpg-1
-    src: Leg00Joint-out-0
+  - dst: Leg01Joint-cpg-2
+    socket: from_x
+    src: Leg01Joint-cpg-3
     weight: 1.0
   - dst: Leg01Joint-cpg-3
+    socket: from_v
     src: Leg01Joint-cpg-2
-    weight: 1.0
-  - dst: Leg01Joint-cpg-2
-    src: Leg01Joint-cpg-3
     weight: 1.0
   - dst: Leg01Joint-out-0
     src: Leg01Joint-cpg-2
     weight: 1.0
-  - dst: Leg01Joint-cpg-3
-    src: Leg01Joint-out-0
-    weight: 1.0
   - dst: Leg00Joint-cpg-0
-    src: Leg01Joint-cpg-2
-    weight: 1.0
+    socket: from_x_ext
+    src: Leg01Joint-cpg-3
+    weight: 0.0
   - dst: Leg01Joint-cpg-2
+    socket: from_x_ext
+    src: Leg00Joint-cpg-1
+    weight: 0.0
+  - dst: Leg00Joint-cpg-0
+    socket: from_v_ext
+    src: Leg01Joint-cpg-2
+    weight: 0.0
+  - dst: Leg01Joint-cpg-2
+    socket: from_v_ext
     src: Leg00Joint-cpg-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-5
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-4
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-1
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-0
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-3
-    weight: 1.0
+    weight: 0.0
   - dst: Leg00Joint-cpg-0
     src: Core-in-2
-    weight: 1.0
+    weight: 0.0
   neurons:
     Core-in-0:
       id: Core-in-0
@@ -136,12 +144,12 @@ brain:
       id: Leg00Joint-cpg-0
       layer: hidden
       part_id: Leg00Joint
-      type: Simple
+      type: V-Neuron
     Leg00Joint-cpg-1:
       id: Leg00Joint-cpg-1
       layer: hidden
       part_id: Leg00Joint
-      type: Simple
+      type: X-Neuron
     Leg00Joint-out-0:
       id: Leg00Joint-out-0
       layer: output
@@ -151,12 +159,12 @@ brain:
       id: Leg01Joint-cpg-2
       layer: hidden
       part_id: Leg01Joint
-      type: Simple
+      type: V-Neuron
     Leg01Joint-cpg-3:
       id: Leg01Joint-cpg-3
       layer: hidden
       part_id: Leg01Joint
-      type: Simple
+      type: X-Neuron
     Leg01Joint-out-0:
       id: Leg01Joint-out-0
       layer: output
@@ -164,20 +172,20 @@ brain:
       type: Simple
   params:
     Leg00Joint-cpg-0:
-      bias: 0.0
-      gain: 0.5
+      alpha: 1.0
+      energy: 1.0
+      tau: 1.0
     Leg00Joint-cpg-1:
-      bias: 0.0
-      gain: 0.5
+      tau: 1.0
     Leg00Joint-out-0:
       bias: 0.0
       gain: 0.5
     Leg01Joint-cpg-2:
-      bias: 0.0
-      gain: 0.5
+      alpha: 1.0
+      energy: 1.0
+      tau: 1.0
     Leg01Joint-cpg-3:
-      bias: 0.0
-      gain: 0.5
+      tau: 1.0
     Leg01Joint-out-0:
       bias: 0.0
       gain: 0.5
