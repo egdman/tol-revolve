@@ -43,12 +43,12 @@ def get_extended_brain_spec(conf):
         #     layers=["output", "hidden"]
         # ),
 
-        # "Bias": NeuronSpec(
-        #     params=[
-        #         ParamSpec("bias", min_value=-1, max_value=1, epsilon=epsilon),
-        #     ],
-        #     layers=["output", "hidden"]
-        # ),
+        "Bias": NeuronSpec(
+            params=[
+                ParamSpec("bias", min_value=-1.0, max_value=1.0, epsilon=epsilon),
+            ],
+            layers=["output", "hidden"]
+        ),
 
         "Oscillator": NeuronSpec(
             params=[
@@ -64,18 +64,42 @@ def get_extended_brain_spec(conf):
         "V-Neuron": NeuronSpec(
             params=[
                 ParamSpec("alpha", min_value = 0.05, max_value = 10.0, epsilon = epsilon),
-                ParamSpec("tau", min_value = 0.0, max_value = 10.0, epsilon = epsilon),
-                ParamSpec("energy", min_value = 0.0, max_value = 10.0, epsilon = epsilon)
+                ParamSpec("tau", min_value = 0.01, max_value = 1.0, epsilon = epsilon),
+                ParamSpec("energy", min_value = 0.0, max_value = 25.0, epsilon = epsilon)
             ],
             layers = ["output", "hidden"]
         ),
 
         "X-Neuron": NeuronSpec(
             params=[
-                ParamSpec("tau", min_value = 0.0, max_value = 10.0, epsilon = epsilon),
+                ParamSpec("tau", min_value = 0.01, max_value = 1.0, epsilon = epsilon),
             ],
             layers = ["output", "hidden"]
-        )
+        ),
+        
+        # # Leaky integrator
+        # "Leaky": NeuronSpec(
+        #     params=[
+        #         ParamSpec("bias", min_value = 0.01, max_value = 10.0, epsilon = epsilon),
+        #         ParamSpec("tau", min_value = 0.01, max_value = 10.0, epsilon = epsilon),
+        #     ],
+        #     layers = ["output", "hidden"]
+        # ),
+
+        # "NL-Main": NeuronSpec(
+        #     params=[
+        #         ParamSpec("a", min_value = 0.01, max_value = 10.0, epsilon = epsilon),
+        #         ParamSpec("amplitude", min_value = 0.01, max_value = 10.0, epsilon = epsilon)
+        #     ],
+        #     layers = ["output", "hidden"]
+        # )
+
+        # "NL-Theta": NeuronSpec(
+        #     params=[
+        #         ParamSpec("freq", min_value = 0.01, max_value = 10.0, epsilon = epsilon)
+        #     ],
+        #     layers = ["output", "hidden"]
+        # )
 
         # "QuadNeuron": NeuronSpec(
         #     params=[],

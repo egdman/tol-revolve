@@ -152,7 +152,7 @@ def run():
     conf.weight_mutation_sigma = 5.0
     conf.param_mutation_probability = 0.8
     conf.param_mutation_sigma = 0.25
-    conf.structural_mutation_probability = 8.0
+    conf.structural_mutation_probability = 0.8
     conf.removal_mutation_probability = 0.0
 
     # this is the world state update frequency in simulation Hz
@@ -186,6 +186,14 @@ def run():
 #    # disallow to add oscillators:
 #    types_of_new_neurons = filter(lambda item: item != "Oscillator", mut_spec['types'])
 #    mut_spec['types'] = types_of_new_neurons
+
+    # # Use only Leaky Integrators:
+    # types_of_new_neurons = filter(lambda item: item == "Leaky" or item == "Bias", mut_spec['types'])
+    # mut_spec['types'] = types_of_new_neurons
+
+    # Use only Simple and Sigmoid neurons:
+    types_of_new_neurons = filter(lambda item: item == "Simple" or item == "Sigmoid", mut_spec['types'])
+    mut_spec['types'] = types_of_new_neurons
 
     print "New types: {0}".format(mut_spec['types'])
 
