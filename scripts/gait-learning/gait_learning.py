@@ -152,7 +152,7 @@ def run():
     conf.weight_mutation_sigma = 5.0
     conf.param_mutation_probability = 0.8
     conf.param_mutation_sigma = 0.25
-    conf.structural_mutation_probability = 0.8
+    conf.structural_mutation_probability = 0.0
     conf.removal_mutation_probability = 0.0
 
     # this is the world state update frequency in simulation Hz
@@ -212,8 +212,6 @@ def run():
         tree = Tree.from_body_brain(bot.body, bot.brain, body_spec)
 
         robot = yield From(wait_for(world.insert_robot(tree, pose)))
-        yield From(world.pause(False))
-
 
         if conf.online:
             learner = RobotLearnerOnline(world=world,

@@ -6,13 +6,17 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from revolve.convert import yaml_to_robot, robot_to_yaml
 from revolve.spec.exception import err
 
-from tol.spec import get_body_spec, get_brain_spec
+from tol.spec import get_body_spec, get_extended_brain_spec
 from tol.config import parser
 
 parser.add_argument( 'file_name', metavar='FILENAME', type=str, help='path to input YAML file')
 parser.add_argument('-o', '--output', type=str, default='output.yaml', help='name of the output file')
 parser.add_argument('--type', type=str, default='Simple', help="type of the neurons in the cpg")
 
+"""
+This script creates CPG made of paired differential CPG neurons for each joint.
+Chains CPGs together.
+"""
 
 class CPG_Factory:
     def __init__(self, body_spec, brain_spec):
@@ -25,25 +29,21 @@ class CPG_Factory:
         part_id = pb_part.id
 
         neuron_data = {}
-        neuron_data['type'] = neuron_type
+        neuron_data['type'] = 'DifferentialCPG'
         neuron_data['layer'] = 'hidden'
         neuron_data['partId'] = part_id
-        neuron_data['params'] = {"Bias" : 0.0, "Gain" : 0.5}
+        neuron_data['params'] = {"bias" : 0.0}
         id_1 = self._add_neuron(neuron_data, pb_brain)
         id_2 = self._add_neuron(neuron_data, pb_brain)
 
         # mutual connections:
         conn_data1 = {'src': id_1, 'dst': id_2, 'weight': 1.0}
-        conn_data2 = {'src': id_2, 'dst': id_1, 'weight': 1.0}
+        conn_data2 = {'src': id_2, 'dst': id_1, 'weight': -1.0}
 
-        # recurrent connections:
-        conn_data11 = {'src': id_1, 'dst': id_1, 'weight': 1.0}
-        conn_data22 = {'src': id_2, 'dst': id_2, 'weight': 1.0}
-        
+
         self._add_connection(conn_data1, pb_brain)
         self._add_connection(conn_data2, pb_brain)
-        self._add_connection(conn_data11, pb_brain)
-        self._add_connection(conn_data22, pb_brain)
+       
 
         # find output neuron:
         out_id = None
@@ -111,6 +111,7 @@ class CPG_Factory:
             next_part = connection.part
             self._parse_part(next_part, pb_brain, cpg_stack, neuron_type)
 
+        # chain CPGs together
         while len(cpg_stack) > 1:
             id1 = cpg_stack[-1]
             id2 = cpg_stack[-2]
@@ -162,7 +163,7 @@ def main():
         yaml_bot = yamlfile.read()
 
     body_spec = get_body_spec(conf)
-    brain_spec = get_brain_spec(conf)
+    brain_spec = get_extended_brain_spec(conf)
 
     print "converting to protobuf..."
     pb_bot = yaml_to_robot(body_spec, brain_spec, yaml_bot)

@@ -76,6 +76,13 @@ def get_extended_brain_spec(conf):
             ],
             layers = ["output", "hidden"]
         ),
+
+        "DifferentialCPG": NeuronSpec(
+            params=[
+                ParamSpec("bias", min_value = -1.0, max_value = 1.0, epsilon = epsilon),
+            ],
+            layers = ["output", "hidden"]
+        ),
         
         # # Leaky integrator
         # "Leaky": NeuronSpec(
