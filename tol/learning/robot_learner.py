@@ -87,8 +87,8 @@ class RobotLearner:
         self.weight_mutation_sigma = conf.weight_mutation_sigma
         self.param_mutation_probability = conf.param_mutation_probability
         self.param_mutation_sigma = conf.param_mutation_sigma
-        self.structural_mutation_probability = conf.structural_mutation_probability
-        self.removal_mutation_probability = conf.removal_mutation_probability
+        self.structural_augmentation_probability = conf.structural_augmentation_probability
+        self.structural_removal_probability = conf.structural_removal_probability
         self.max_generations = conf.max_generations
         self.speciation_threshold = conf.speciation_threshold
         self.repeat_evaluations = conf.repeat_evaluations
@@ -304,14 +304,21 @@ class RobotLearner:
 
     def share_fitness(self):
         new_fitness = {}
+        # with open('/home/dmitry/projects/debug/gene_dissim/gene_dissim_{0}.log'.format(
+            # self.generation_number), 'w') as out_f:
 
         for cur_brain, cur_fitness in self.brain_fitness.items():
             species_size = 1
             for other_brain, other_fitness in self.brain_fitness.items():
                 if not other_brain == cur_brain:
                     distance = GeneticEncoding.get_dissimilarity(other_brain, cur_brain)
+                    # out_f.write("{0},".format(distance))
                     if distance < self.speciation_threshold:
                         species_size += 1
+                # else:
+                    # out_f.write("{0},".format(0))
+            # out_f.write("\n")
+
             new_fitness[cur_brain] = cur_fitness / float(species_size)
             
             # FOR DEBUG
@@ -411,13 +418,14 @@ class RobotLearner:
 
         # apply structural mutations:
         self.apply_structural_mutation(child_genotype)
+
         return child_genotype
 
 
     def apply_structural_mutation(self, genotype):
 
         # apply augmentation mutation:
-        if random.random() < self.structural_mutation_probability:
+        if random.random() < self.structural_augmentation_probability:
 
             # if no connections, add connection
             if len(genotype.connection_genes) == 0:
@@ -436,7 +444,7 @@ class RobotLearner:
 
 
         # apply removal mutation:
-        if random.random() < self.removal_mutation_probability:
+        if random.random() < self.structural_removal_probability:
             if random.random() < 0.5:
                 self.mutator.remove_connection_mutation(genotype)
                 validate_genotype(genotype, "removing a CONNECTION created invalid genotype")

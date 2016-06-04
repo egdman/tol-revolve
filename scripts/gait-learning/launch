@@ -1,13 +1,7 @@
 #!/bin/bash
 # Start learning test with one robot with supervisor.
 
-python start.py --output-directory out_spider1 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.03 --test-bot "../testBots/spider_diff_cpg" --max-generations 50 --repeat-evaluations 1 --pso-local-coef 0.5 --pso-global-coef 0.5 --pso-temperature 0.1 --extended
+python start.py --output-directory snake-diff-noloop-1 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.03 --test-bot "../testBots/proper_snake_diff_coupled" --max-generations 50 --repeat-evaluations 1 --pso-local-coef 0.5 --pso-global-coef 0.5 --pso-temperature 0.1 --structural-augmentation-probability 0.0 --extended
 
-
-python start.py --output-directory out_spider2 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.03 --test-bot "../testBots/spider_diff_cpg" --max-generations 50 --repeat-evaluations 1 --pso-local-coef 0.5 --pso-global-coef 0.5 --pso-temperature 0.1 --extended
-
-
-python start.py --output-directory out_snake1 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.03 --test-bot "../testBots/proper_snake_diff_cpg" --max-generations 50 --repeat-evaluations 1 --pso-local-coef 0.5 --pso-global-coef 0.5 --pso-temperature 0.1 --extended
-
-python start.py --output-directory out_snake2 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.03 --test-bot "../testBots/proper_snake_diff_cpg" --max-generations 50 --repeat-evaluations 1 --pso-local-coef 0.5 --pso-global-coef 0.5 --pso-temperature 0.1 --extended
+python start.py --output-directory snake-diff-noloop-2 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.03 --test-bot "../testBots/proper_snake_diff_coupled" --max-generations 50 --repeat-evaluations 1 --pso-local-coef 0.5 --pso-global-coef 0.5 --pso-temperature 0.1 --structural-augmentation-probability 0.0 --extended
 

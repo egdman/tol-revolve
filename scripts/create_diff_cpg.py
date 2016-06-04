@@ -13,6 +13,12 @@ parser.add_argument( 'file_name', metavar='FILENAME', type=str, help='path to in
 parser.add_argument('-o', '--output', type=str, default='output.yaml', help='name of the output file')
 parser.add_argument('--type', type=str, default='Simple', help="type of the neurons in the cpg")
 
+parser.add_argument('--loopback', action='store_true',
+    help='If this flag is set, output signals are not looped back to CPGs')
+
+parser.add_argument('--coupling', action='store_true',
+    help='If this flag is set, the CPGs will not be connected to each other')
+
 """
 This script creates CPG made of paired differential CPG neurons for each joint.
 Chains CPGs together.
@@ -25,7 +31,7 @@ class CPG_Factory:
         self.brain_spec = brain_spec
         self.root_nodes = []
 
-    def _add_cpg(self, pb_part, pb_brain, neuron_type):
+    def _add_cpg(self, pb_part, pb_brain, loopback):
         part_id = pb_part.id
 
         neuron_data = {}
@@ -53,9 +59,12 @@ class CPG_Factory:
 
         if out_id is not None:
             conn_data3 = {'src': id_1, 'dst': out_id, 'weight': 1.0}
-            conn_data4 = {'src': out_id, 'dst': id_2, 'weight': 1.0}
             self._add_connection(conn_data3, pb_brain)
-            self._add_connection(conn_data4, pb_brain)
+
+            # if loopback is true, add connection from output to CPG
+            if loopback:
+                conn_data4 = {'src': out_id, 'dst': id_2, 'weight': 1.0}
+                self._add_connection(conn_data4, pb_brain)
         return id_1
 
 
@@ -96,11 +105,11 @@ class CPG_Factory:
         self._add_connection(conn_data2, pb_brain)
 
 
-    def _parse_part(self, pb_part, pb_brain, cpg_stack, neuron_type):
+    def _parse_part(self, pb_part, pb_brain, cpg_stack, loopback, coupling):
         part_type = pb_part.type
 
         if part_type == 'ActiveHinge':
-            cpg_id = self._add_cpg(pb_part, pb_brain, neuron_type)
+            cpg_id = self._add_cpg(pb_part, pb_brain, loopback)
             cpg_stack.append(cpg_id)
 
 
@@ -109,13 +118,16 @@ class CPG_Factory:
 
         for connection in connections:
             next_part = connection.part
-            self._parse_part(next_part, pb_brain, cpg_stack, neuron_type)
+            self._parse_part(next_part, pb_brain, cpg_stack, loopback, coupling)
 
         # chain CPGs together
         while len(cpg_stack) > 1:
             id1 = cpg_stack[-1]
             id2 = cpg_stack[-2]
-            self._add_double_connection(id1, id2, 1.0, pb_brain)
+
+            if coupling:
+                self._add_double_connection(id1, id2, 1.0, pb_brain)
+
             del cpg_stack[-1]
         if len(cpg_stack) == 1:
             self.root_nodes.append(cpg_stack[0])
@@ -123,11 +135,11 @@ class CPG_Factory:
 
 
 
-    def add_CPGs(self, pb_robot, neuron_type):
+    def add_CPGs(self, pb_robot, loopback, coupling):
         core = pb_robot.body.root
         brain = pb_robot.brain
         cpg_stack = []
-        self._parse_part(core, brain, cpg_stack, neuron_type)
+        self._parse_part(core, brain, cpg_stack, loopback, coupling)
 
         # find all input neurons:
         input_neurons = []
@@ -135,20 +147,20 @@ class CPG_Factory:
             if n.layer == 'input':
                 input_neurons.append(n)
 
+        if coupling:
+            if len(self.root_nodes) != 0:
+                # connect inputs to root neurons:
+                for rn in self.root_nodes:
+                    for inp_n in input_neurons:
+                        conn_data = {'src': inp_n.id, 'dst': rn, 'weight': 1.0}
+                        self._add_connection(conn_data, brain)
 
-        if len(self.root_nodes) != 0:
-            # connect inputs to root neurons:
-            for rn in self.root_nodes:
-                for inp_n in input_neurons:
-                    conn_data = {'src': inp_n.id, 'dst': rn, 'weight': 1.0}
-                    self._add_connection(conn_data, brain)
-
-            # connect root nodes together:
-            for i in range(len(self.root_nodes) - 1):
-                rn1 = self.root_nodes[i]
-                for j in range(i+1, len(self.root_nodes)):
-                    rn2 = self.root_nodes[j]
-                    self._add_double_connection(rn1, rn2, weight=1.0, pb_brain=brain)
+                # connect root nodes together:
+                for i in range(len(self.root_nodes) - 1):
+                    rn1 = self.root_nodes[i]
+                    for j in range(i+1, len(self.root_nodes)):
+                        rn2 = self.root_nodes[j]
+                        self._add_double_connection(rn1, rn2, weight=1.0, pb_brain=brain)
 
 
 
@@ -169,7 +181,14 @@ def main():
     pb_bot = yaml_to_robot(body_spec, brain_spec, yaml_bot)
 
     cpg_factory = CPG_Factory(body_spec=body_spec, brain_spec=brain_spec)
-    cpg_factory.add_CPGs(pb_bot, conf.type)
+
+    loopback =conf.loopback
+    print "Loopback: {0}".format(loopback)
+
+    coupling = conf.coupling
+    print "Coupling: {0}".format(coupling)
+
+    cpg_factory.add_CPGs(pb_bot, loopback, coupling)
 
 
     print "converting to yaml..."

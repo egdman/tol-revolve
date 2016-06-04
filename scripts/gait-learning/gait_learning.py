@@ -143,6 +143,20 @@ parser.add_argument(
 )
 
 
+parser.add_argument(
+    '--structural-augmentation-probability',
+    type=float,
+    default=0.8,
+    help='Probability of structural augmentations'
+)
+
+parser.add_argument(
+    '--structural-removal-probability',
+    type=float,
+    default=0.0,
+    help='Probability of structural removal'
+)
+
 @trollius.coroutine
 def run():
 
@@ -152,8 +166,6 @@ def run():
     conf.weight_mutation_sigma = 5.0
     conf.param_mutation_probability = 0.8
     conf.param_mutation_sigma = 0.25
-    conf.structural_mutation_probability = 0.0
-    conf.removal_mutation_probability = 0.0
 
     # this is the world state update frequency in simulation Hz
     conf.pose_update_frequency = 5 # in simulation Hz
@@ -181,7 +193,10 @@ def run():
         brain_spec = get_brain_spec(conf)
 
 
+    # mutation spec that contains info about what types of neurons can be added
+    # and what parameters of neurons can be mutated
     mut_spec = get_default_mutation_spec(brain_spec)
+
 
 #    # disallow to add oscillators:
 #    types_of_new_neurons = filter(lambda item: item != "Oscillator", mut_spec['types'])
@@ -191,9 +206,11 @@ def run():
     # types_of_new_neurons = filter(lambda item: item == "Leaky" or item == "Bias", mut_spec['types'])
     # mut_spec['types'] = types_of_new_neurons
 
-    # Use only Simple and Sigmoid neurons:
-    types_of_new_neurons = filter(lambda item: item == "Simple" or item == "Sigmoid", mut_spec['types'])
-    mut_spec['types'] = types_of_new_neurons
+    # Use only Simple and Sigmoid and Differential neurons:
+    # types_of_new_neurons = filter(lambda item: 
+    #     item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
+
+    # mut_spec['types'] = types_of_new_neurons
 
     print "New types: {0}".format(mut_spec['types'])
 

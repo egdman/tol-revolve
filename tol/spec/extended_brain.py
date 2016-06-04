@@ -54,7 +54,7 @@ def get_extended_brain_spec(conf):
             params=[
                 ParamSpec("period", min_value=0, max_value=10, epsilon=epsilon),
                 ParamSpec("phase_offset", min_value=0, max_value=3.14, epsilon=epsilon),
-                ParamSpec("amplitude", min_value=0, default=1, max_value=2, epsilon=epsilon)
+                ParamSpec("amplitude", min_value=0, default=1, max_value=10000, epsilon=epsilon)
             ],
             layers=["output", "hidden"]
         ),
