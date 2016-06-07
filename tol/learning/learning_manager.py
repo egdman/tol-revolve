@@ -41,21 +41,28 @@ class LearningManager(World):
         self.learners = {}
 
         # path to the logging directory
-        self.path_to_log_dir = os.path.join(conf.output_directory, conf.log_directory)
+        self.path_to_log_dir = None
+
+
+        # create path to logging directory if directory names are given:
+        if conf.output_directory and conf.log_directory:
+            # path to the logging directory
+            self.path_to_log_dir = os.path.join(conf.output_directory, conf.log_directory)
+
+            # create logging directory:
+            try:
+                os.mkdir(self.path_to_log_dir)
+            except OSError:
+                print "Directory " + self.path_to_log_dir + " already exists."
+
 
         self.pending_requests = {}
-
 
         # publishers that sends ModifyNeuralNetwork messages:
         self.nn_publishers = {}
 
         # subscribers that listens to responses about successful neural network modifications:
         self.nn_subscribers = {}
-
-        try:
-            os.mkdir(self.path_to_log_dir)
-        except OSError:
-            print "Directory " + self.path_to_log_dir + " already exists."
 
         if self.output_directory:
             self.fitness_filename = os.path.join(self.output_directory, 'fitness.csv')
@@ -123,7 +130,7 @@ class LearningManager(World):
 
 
     def log_info(self, log_data, log_name):
-        if self.output_directory:
+        if self.output_directory and self.path_to_log_dir:
             for filename, data in log_data.items():
                 genotype_log_filename = os.path.join(self.path_to_log_dir, log_name, filename)
                 with open(genotype_log_filename, "a") as genotype_log_file:
@@ -198,7 +205,7 @@ class LearningManager(World):
     @trollius.coroutine
     def add_learner(self, learner, log_name=None, init_brain_list=None):
         # create directory for this learner's logs:
-        if log_name is not None:
+        if log_name is not None and self.path_to_log_dir is not None:
             try:
                 os.mkdir(os.path.join(self.path_to_log_dir, log_name))
             except OSError:

@@ -230,7 +230,7 @@ class RobotLearner:
             print "%%%%%%%%%%%%%%%%%%\n\nEvaluated {0} brains".format(str(self.total_brains_evaluated+1))
             print "last evaluated: {0}".format(self.active_brain)
             print "queue length = {0}".format(len(self.evaluation_queue))
-            print "fitness (distance covered): {0}".format(self.fitness )
+            print "distance covered: {0}".format(self.fitness )
             print "evaluation time was {0}s\n\n%%%%%%%%%%%%%%%%%%".format(self.evaluation_time_actual)
   #          print "simulation time: {0}".format(world.get_world_time())
 

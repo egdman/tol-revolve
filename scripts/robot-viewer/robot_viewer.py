@@ -30,11 +30,14 @@ from sdfbuilder.math import Vector3, Quaternion
 
 #ToL
 from tol.config import parser
-from tol.manage import World
+# from tol.manage import World
 from tol.logging import logger, output_console
 from tol.spec import get_body_spec, get_extended_brain_spec
 
 from tol.learning.convert import NeuralNetworkParser, yaml_to_genotype
+
+from tol.learning import LearningManager as World
+
 from tol.util import random_rotation, rotate_vertical
 
 
@@ -78,6 +81,11 @@ parser.add_argument(
     help="directory where experiment logs are stored"
 )
 
+parser.add_argument(
+    '--online',
+    action='store_true',
+    help='when this flag is set, online brain upload is used'
+)
 
 
 @trollius.coroutine
@@ -120,30 +128,50 @@ def run():
 #    pose = Pose(position=Vector3(0, 0, 0.5), rotation=random_rotation())
     pose = Pose(position=Vector3(0, 0, 0.5), rotation=rotate_vertical(0))
 
+    # convert YAML stream to protobuf robot:
+    robot_pb = yaml_to_robot(body_spec, brain_spec, bot_yaml)
+    body_pb = robot_pb.body
+ 
+    nn_parser = NeuralNetworkParser(brain_spec)
+
     # if brain genotype is given, combine body and brain:
     if genotype_yaml:
-        # convert YAML stream to protobuf body:
-        robot_body_pb = yaml_to_robot(body_spec, brain_spec, bot_yaml).body
 
         # convert YAML stream to genotype:
-        robot_brain_genotype = yaml_to_genotype(genotype_yaml, brain_spec)
+        brain_genotype = yaml_to_genotype(genotype_yaml, brain_spec)
 
-        # convert genotype to protobuf brain:
-        nn_parser = NeuralNetworkParser(brain_spec)
-        robot_brain_pb = nn_parser.genotype_to_brain(robot_brain_genotype)
+        if conf.online:
+            brain_pb = robot_pb.brain
+            # brain_pb = nn_parser.genotype_to_brain(brain_genotype)
+        else: 
+            # convert genotype to protobuf brain:   
+            brain_pb = nn_parser.genotype_to_brain(brain_genotype)
 
-        tree = Tree.from_body_brain(robot_body_pb, robot_brain_pb, body_spec)
-
-
-    # if brain genotype is not given, just insert the body:
+    # if brain genotype is not given, get brain from body:
     else:
-         # convert YAML stream to protobuf robot:
-        robot_pb = yaml_to_robot(body_spec, brain_spec, bot_yaml)
-        tree = Tree.from_body_brain(robot_pb.body, robot_pb.brain, body_spec)
+        brain_pb = robot_pb.brain
 
 
     print "INSERTING ROBOT!!!!!!!!!!!!!!!!!!!!!!"
+
+    tree = Tree.from_body_brain(body_pb, brain_pb, body_spec)
     robot = yield From(wait_for(world.insert_robot(tree, pose)))
+
+
+    yield From(world.pause(False))
+
+    if conf.online:
+
+        # yield From(trollius.sleep(10.0))
+
+        print "UPLOADING BRAIN!!!!!!!!!!!!!!!!!!!!"
+        yield From(world.create_nn_publisher(robot.name))
+
+        brain_msg = nn_parser.genotype_to_modify_msg(brain_genotype)
+        fut = yield From(world.modify_brain(brain_msg, robot.name))
+        yield From(fut)
+        print "BRAIN UPLOADED!!!!!!!!!!!!!!!!!!!!!!!!!"
+
 
 #     print "INSERTING SOUND OBJECTS!!!!!!!!"
 #     sound_src_link = Link("sound_src_1_link")

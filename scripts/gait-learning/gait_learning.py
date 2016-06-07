@@ -210,7 +210,11 @@ def run():
     # types_of_new_neurons = filter(lambda item: 
     #     item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
 
-    # mut_spec['types'] = types_of_new_neurons
+    # Use only Simple and Sigmoid and Differential neurons:
+    types_of_new_neurons = filter(lambda item: 
+        item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
+
+    mut_spec['types'] = types_of_new_neurons
 
     print "New types: {0}".format(mut_spec['types'])
 
