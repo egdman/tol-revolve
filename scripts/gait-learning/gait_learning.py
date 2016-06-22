@@ -136,11 +136,11 @@ parser.add_argument(
     help='when this flag is set, the reproduction is asexual'
 )
 
-parser.add_argument(
-    '--extended',
-    action='store_true',
-    help='when this flag is set, the neuron types from the extended spec are available'
-)
+# parser.add_argument(
+#     '--extended',
+#     action='store_true',
+#     help='when this flag is set, the neuron types from the extended spec are available'
+# )
 
 
 parser.add_argument(
@@ -159,6 +159,7 @@ parser.add_argument(
 
 @trollius.coroutine
 def run():
+
 
     conf = parser.parse_args()
     conf.evaluation_time_sigma = 2.0
@@ -187,39 +188,20 @@ def run():
     body_spec = get_body_spec(conf)
 
 
-    if conf.extended:
-        brain_spec = get_extended_brain_spec(conf)
-    else:
-        brain_spec = get_brain_spec(conf)
+    brain_spec = get_extended_brain_spec(conf)
 
 
     # mutation spec that contains info about what types of neurons can be added
     # and what parameters of neurons can be mutated
     mut_spec = get_default_mutation_spec(brain_spec)
 
-
-#    # disallow to add oscillators:
-#    types_of_new_neurons = filter(lambda item: item != "Oscillator", mut_spec['types'])
-#    mut_spec['types'] = types_of_new_neurons
-
-    # # Use only Leaky Integrators:
-    # types_of_new_neurons = filter(lambda item: item == "Leaky" or item == "Bias", mut_spec['types'])
-    # mut_spec['types'] = types_of_new_neurons
-
-
     # Use only Simple and Sigmoid and Differential neurons:
     types_of_new_neurons = filter(lambda item: 
         item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
 
-
     # # Use only Simple and Sigmoid and Oscillator neurons:
     # types_of_new_neurons = filter(lambda item:
     #     item == "Simple" or item == "Sigmoid" or item == 'Oscillator', mut_spec['types'])
-
-
-    # Use only Simple and Sigmoid and Differential neurons:
-   #  types_of_new_neurons = filter(lambda item: 
-   #     item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
 
     mut_spec['types'] = types_of_new_neurons
 
