@@ -1,9 +1,23 @@
 #!/bin/bash
 # Start learning test with one robot with supervisor.
 
-python start.py --output-directory output1 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.03 --test-bot "../testBots/spider_diff_coupled" --max-generations 10 --repeat-evaluations 1 --structural-augmentation-probability 0.0 --extended --online
+python start.py --output-directory snake-diff-coupled-1 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/proper_snake_diff_coupled" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.0 --extended
 
-python start.py --output-directory output2 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.03 --test-bot "../testBots/spider_diff_coupled" --max-generations 10 --repeat-evaluations 1 --structural-augmentation-probability 0.0 --extended
+python start.py --output-directory snake-diff-coupled-2 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/proper_snake_diff_coupled" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.0 --extended
 
-# python start.py --output-directory output2 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.03 --test-bot "../testBots/spider_diff_coupled" --max-generations 50 --repeat-evaluations 1 --pso-local-coef 0.5 --pso-global-coef 0.5 --pso-temperature 0.1 --structural-augmentation-probability 0.8 --extended
+python start.py --output-directory snake-diff-decoupled-1 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/proper_snake_diff_decoupled" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.0 --extended
+
+python start.py --output-directory snake-diff-decoupled-2 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/proper_snake_diff_decoupled" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.0 --extended
+
+#python start.py --output-directory output-cpg-3 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/proper_snake_diff_coupled" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.0 --extended
+
+#python start.py --output-directory output-cpg-4 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/proper_snake_diff_coupled" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.0 --extended
+
+#python start.py --output-directory output-cpg-5 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/proper_snake_diff_coupled" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.0 --extended
+
+python start.py --output-directory output-cpg-6 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/proper_snake_diff_coupled" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.0 --extended
+
+#python start.py --output-directory output-neat-4 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/proper_snake_diff_single" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.8 --extended
+
+#python start.py --output-directory output2 --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/spider_single_diff_cpg" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.8 --extended
 

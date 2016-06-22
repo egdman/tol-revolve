@@ -131,6 +131,8 @@ class RobotLearner:
         for _ in range(self.pop_size):
             mutated_genotype = init_genotype.copy()
 
+            self.apply_structural_mutation(mutated_genotype)
+            
             self.mutator.mutate_weights(
                 genotype=mutated_genotype,
                 probability=self.weight_mutation_probability,

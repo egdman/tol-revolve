@@ -141,8 +141,8 @@ def run():
         brain_genotype = yaml_to_genotype(genotype_yaml, brain_spec)
 
         if conf.online:
-            brain_pb = robot_pb.brain
-            # brain_pb = nn_parser.genotype_to_brain(brain_genotype)
+            # brain_pb = robot_pb.brain
+            brain_pb = nn_parser.genotype_to_brain(brain_genotype)
         else: 
             # convert genotype to protobuf brain:   
             brain_pb = nn_parser.genotype_to_brain(brain_genotype)
@@ -162,7 +162,7 @@ def run():
 
     if conf.online:
 
-        # yield From(trollius.sleep(10.0))
+        yield From(trollius.sleep(10.0))
 
         print "UPLOADING BRAIN!!!!!!!!!!!!!!!!!!!!"
         yield From(world.create_nn_publisher(robot.name))

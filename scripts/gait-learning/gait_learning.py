@@ -206,13 +206,20 @@ def run():
     # types_of_new_neurons = filter(lambda item: item == "Leaky" or item == "Bias", mut_spec['types'])
     # mut_spec['types'] = types_of_new_neurons
 
-    # Use only Simple and Sigmoid and Differential neurons:
-    # types_of_new_neurons = filter(lambda item: 
-    #     item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
 
     # Use only Simple and Sigmoid and Differential neurons:
     types_of_new_neurons = filter(lambda item: 
         item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
+
+
+    # # Use only Simple and Sigmoid and Oscillator neurons:
+    # types_of_new_neurons = filter(lambda item:
+    #     item == "Simple" or item == "Sigmoid" or item == 'Oscillator', mut_spec['types'])
+
+
+    # Use only Simple and Sigmoid and Differential neurons:
+   #  types_of_new_neurons = filter(lambda item: 
+   #     item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
 
     mut_spec['types'] = types_of_new_neurons
 
