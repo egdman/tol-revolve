@@ -14,9 +14,12 @@ from revolve.util import multi_future, wait_for
 from revolve.angle import Tree
 
 # ToL
-from .encoding import Crossover, GeneticEncoding, validate_genotype
+# from .encoding import Crossover, GeneticEncoding, validate_genotype
 from .convert import NeuralNetworkParser
 from ..util import StateSwitch, rotate_vertical
+
+# NEAT
+from neat import crossover, GeneticEncoding
 
 class RobotLearner:
 
@@ -103,7 +106,7 @@ class RobotLearner:
             brain_population = init_genotypes
 
         for br in brain_population:
-            validate_genotype(br, "initial generation created invalid genotype")
+            # validate_genotype(br, "initial generation created invalid genotype")
             self.evaluation_queue.append(br)
 
         first_brain = self.evaluation_queue.popleft()
@@ -393,8 +396,8 @@ class RobotLearner:
         if self.asexual:
             child_genotype = parent1.copy()
         else:
-            child_genotype = Crossover.crossover(parent1, parent2)
-            validate_genotype(child_genotype, "crossover created invalid genotype")
+            child_genotype = crossover(parent1, parent2)
+            # validate_genotype(child_genotype, "crossover created invalid genotype")
 #         print "crossover successful"
 
 
@@ -405,7 +408,7 @@ class RobotLearner:
             genotype=child_genotype,
             probability=self.weight_mutation_probability,
             sigma=self.weight_mutation_sigma)
-        validate_genotype(child_genotype, "weight mutation created invalid genotype")
+        # validate_genotype(child_genotype, "weight mutation created invalid genotype")
 #         print "weight mutation successful"
 
 
@@ -414,7 +417,7 @@ class RobotLearner:
             genotype=child_genotype,
             probability=self.param_mutation_probability,
             sigma=self.param_mutation_sigma)
-        validate_genotype(child_genotype, "neuron parameters mutation created invalid genotype")
+        # validate_genotype(child_genotype, "neuron parameters mutation created invalid genotype")
 #        print "neuron parameters mutation successful"
 
 
@@ -432,27 +435,27 @@ class RobotLearner:
             # if no connections, add connection
             if len(genotype.connection_genes) == 0:
                 self.mutator.add_connection_mutation(genotype, self.mutator.new_connection_sigma)
-                validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
+                # validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
 
             # otherwise add connection or neuron with equal probability
             else:
                 if random.random() < 0.5:
                     self.mutator.add_connection_mutation(genotype, self.mutator.new_connection_sigma)
-                    validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
+                    # validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
 
                 else:
                     self.mutator.add_neuron_mutation(genotype)
-                    validate_genotype(genotype, "inserting new NEURON created invalid genotype")
+                    # validate_genotype(genotype, "inserting new NEURON created invalid genotype")
 
 
         # apply removal mutation:
         if random.random() < self.structural_removal_probability:
             if random.random() < 0.5:
                 self.mutator.remove_connection_mutation(genotype)
-                validate_genotype(genotype, "removing a CONNECTION created invalid genotype")
+                # validate_genotype(genotype, "removing a CONNECTION created invalid genotype")
             else:
                 self.mutator.remove_neuron_mutation(genotype)
-                validate_genotype(genotype, "removing a NEURON created invalid genotype")
+                # validate_genotype(genotype, "removing a NEURON created invalid genotype")
 
 
 

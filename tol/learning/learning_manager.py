@@ -25,8 +25,7 @@ from ..logging import logger, output_console
 from ..spec import get_body_spec, get_brain_spec
 
 from .robot_learner import RobotLearner, RobotLearnerOnline
-from .encoding import Mutator
-from .convert import yaml_to_genotype
+
 
 
 

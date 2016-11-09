@@ -1,10 +1,11 @@
-# Revolve
 import yaml
-from revolve.spec.msgs import Body, BodyPart, NeuralNetwork
-from revolve.spec.exception import err
 
-# ToL
-from ..encoding import GeneticEncoding, Neuron, NeuronGene, ConnectionGene, Mutator
+# Revolve
+from revolve.spec.exception import err
+# from revolve.spec.msgs import Body, BodyPart, NeuralNetwork
+
+# NEAT
+from neat import GeneticEncoding, NeuronGene, ConnectionGene, Mutator
 
 
 
@@ -12,7 +13,7 @@ def parse_neurons(neurons, genotype, mutator):
     # map old marks to new marks:
     neuron_marks = {}
     for neuron_gene in neurons:
-        id = neuron_gene['id']
+        Id = neuron_gene['id']
         layer = neuron_gene['layer']
         neuron_type = neuron_gene['type']
         part_id = neuron_gene['part_id']
@@ -21,16 +22,25 @@ def parse_neurons(neurons, genotype, mutator):
         enabled = neuron_gene['enabled']
 
         if enabled:
-            neuron = Neuron(neuron_id=id,
-                            layer=layer,
-                            neuron_type=neuron_type,
-                            body_part_id=part_id,
-                            neuron_params=params)
+            # neuron = Neuron(neuron_id=Id,
+            #                 layer=layer,
+            #                 neuron_type=neuron_type,
+            #                 body_part_id=part_id,
+            #                 neuron_params=params)
 
-            new_mark = mutator.add_neuron(neuron, genotype)
+            # new_mark = mutator.add_neuron(neuron, genotype)
+            new_mark = mutator._add_neuron(
+                genotype,
+                neuron_type,
+                neuron_id=Id,
+                layer=layer,
+                body_part_id=part_id,
+                **params
+            )
             neuron_marks[old_mark] = new_mark
 
     return neuron_marks
+
 
 
 def parse_connections(connections, genotype, mutator, neuron_marks):
@@ -45,11 +55,22 @@ def parse_connections(connections, genotype, mutator, neuron_marks):
         socket = conn.get('socket', None)
 
         if enabled:
-            mutator.add_connection(mark_from=neuron_marks[from_mark],
-                                   mark_to=neuron_marks[to_mark],
-                                   weight=weight,
-                                   genotype=genotype,
-                                   socket=socket)
+            # mutator.add_connection(mark_from=neuron_marks[from_mark],
+            #                        mark_to=neuron_marks[to_mark],
+            #                        weight=weight,
+            #                        genotype=genotype,
+            #                        socket=socket)
+
+            mutator._add_connection(
+                genotype,
+                connection_type='default',
+                mark_from=neuron_marks[from_mark],
+                mark_to=neuron_marks[to_mark],
+                weight=weight,
+                socket=socket
+            )
+
+
 
 def get_neuron_genes(neurons):
     '''
@@ -60,7 +81,7 @@ def get_neuron_genes(neurons):
 
     neuron_genes = []
     for neuron_info in neurons:
-        id = neuron_info['id']
+        Id = neuron_info['id']
         layer = neuron_info['layer']
         neuron_type = neuron_info['type']
         part_id = neuron_info['part_id']
@@ -68,16 +89,28 @@ def get_neuron_genes(neurons):
         mark = neuron_info['hist_mark']
         enabled = neuron_info['enabled']
 
-        neuron =  Neuron(
-                neuron_id=id,
-                layer=layer,
-                neuron_type=neuron_type,
-                body_part_id=part_id,
-                neuron_params=params)
+        # neuron =  Neuron(
+        #         neuron_id=Id, #
+        #         layer=layer,  #
+        #         neuron_type=neuron_type,
+        #         body_part_id=part_id, #
+        #         neuron_params=params)
 
-        neuron_gene = NeuronGene(neuron=neuron, innovation_number=mark, enabled=enabled)
+
+        # neuron_gene = NeuronGene(neuron=neuron, innovation_number=mark, enabled=enabled)
+
+        neuron_gene = NeuronGene(
+            neuron_type=neuron_type,
+            historical_mark=mark,
+            enabled=enabled,
+            neuron_id=Id,
+            layer=layer,
+            body_part_id=part_id,
+            **params
+        )
         neuron_genes.append(neuron_gene)
     return neuron_genes
+
 
 
 def get_connection_genes(connections):
@@ -99,16 +132,27 @@ def get_connection_genes(connections):
         # this is optional field
         socket = conn_info.get('socket', None)
 
+        # connection_gene = ConnectionGene(
+        #     mark_from=from_mark,
+        #     mark_to=to_mark,
+        #     weight=weight,
+        #     innovation_number=hist_mark,
+        #     enabled=enabled,
+        #     socket=socket #
+        # )
+
         connection_gene = ConnectionGene(
+            connection_type='default',
             mark_from=from_mark,
             mark_to=to_mark,
-            weight=weight,
-            innovation_number=hist_mark,
+            historical_mark=hist_mark,
             enabled=enabled,
+            weight=weight,
             socket=socket
         )
         conn_genes.append(connection_gene)
     return conn_genes
+
 
 
 def yaml_to_genotype(yaml_stream, brain_spec, keep_historical_marks=False):
