@@ -52,16 +52,16 @@ class LearningManager(World):
             # create logging directory:
             try:
                 os.mkdir(self.path_to_log_dir)
-            except OSError:
-                print "Directory " + self.path_to_log_dir + " already exists."
+            except OSError: 
+                logger.debug("Directory " + self.path_to_log_dir + " already exists.")
 
 
         self.pending_requests = {}
 
-        # publishers that sends ModifyNeuralNetwork messages:
+        # publishers that send ModifyNeuralNetwork messages:
         self.nn_publishers = {}
 
-        # subscribers that listens to responses about successful neural network modifications:
+        # subscribers that listen to responses about successful neural network modifications:
         self.nn_subscribers = {}
 
         if self.output_directory:

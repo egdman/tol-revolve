@@ -40,6 +40,8 @@ from tol.learning import LearningManager as World
 
 from tol.util import random_rotation, rotate_vertical
 
+import logging
+
 
 # Log output to console
 output_console()
@@ -121,10 +123,10 @@ def run():
         with open (conf.brain_file, 'r') as gen_file:
             genotype_yaml = gen_file.read()
 
-    print "CREATING WORLD!!!!!!!!!!!!!!!!!!!"
+    print "CREATING WORLD!!!!!!!!!!!!!!!"
     world = yield From(World.create(conf))
     yield From(world.pause(True))
-
+    print "WORLD CREATED!!!!!!!!!!!!!!!!!!!!!!"
 #    pose = Pose(position=Vector3(0, 0, 0.5), rotation=random_rotation())
     pose = Pose(position=Vector3(0, 0, 0.5), rotation=rotate_vertical(0))
 

@@ -68,13 +68,6 @@ parser.add_argument(
     "the new generation will consist of this many children and the rest will be filled with the best of parents"
 )
 
-# parser.add_argument(
-#     '--evaluation-time',
-#     default=15,
-#     type=float,
-#     help="time of individual evaluation in simulation seconds"
-# )
-
 parser.add_argument(
     '--test-bot',
     type=str,
@@ -89,7 +82,6 @@ parser.add_argument(
     "must be between 0 and 1; the smaller it is, the more similar genotypes have to be"
     "to be considered the same species"
 )
-
 
 parser.add_argument(
     '--max-generations',
@@ -243,9 +235,10 @@ def run():
         init_brain_list = None
 
         if (os.path.isdir(path_to_log_dir)):
-            for file_name in os.listdir(path_to_log_dir):
-                if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
-                    gen_files.append(file_name)
+            gen_files = [fname for fname in os.listdir(path_to_log_dir) if fnmatch.fnmatch(file_name, "gen_*_genotypes.log")]
+            # for file_name in os.listdir(path_to_log_dir):
+            #     if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
+            #         gen_files.append(file_name)
 
         # if we are reading an initial population from a file:
         if len(gen_files) > 0:
