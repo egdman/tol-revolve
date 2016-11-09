@@ -3,7 +3,8 @@ from revolve.spec.msgs import NeuralNetwork, ModifyNeuralNetwork
 from revolve.spec.exception import err
 
 # ToL
-from ..encoding import GeneticEncoding, Neuron
+from neat import GeneticEncoding
+
 
 class NeuralNetworkParser:
 
@@ -11,43 +12,109 @@ class NeuralNetworkParser:
         self.spec = spec
 
 
+
+    def _parse_pb_neurons(self, pb_neurons):
+        neuron_map = []
+
+        for neuron in pb_neurons:
+            neuron_type = neuron.type
+
+            neuron_id = neuron.id
+            neuron_layer = neuron.layer
+            neuron_part_id = neuron.partId
+
+
+            if neuron_id in neuron_map:
+                err("Duplicate neuron ID '%s'" % neuron_id)
+
+
+            neuron_spec = self.spec.get(neuron_type)
+            if neuron_spec is None:
+                err("Unknown neuron type '%s'" % neuron_type)
+            neuron_params = neuron_spec.unserialize_params(neuron.param)
+
+
+            neuron_params.update(
+                {
+                    'neuron_id' : neuron_id
+                    'part_id'   : neuron_part_id,
+                    'layer'     : neuron_layer
+                }    
+            )
+
+
+            neuron_map.append((neuron_id, neuron_type, neuron_params))
+
+            # neuron_map[neuron_id] = Neuron(
+            #     neuron_id=neuron_id,
+            #     layer=neuron_layer,
+            #     neuron_type=neuron_type,
+            #     part_id=neuron_part_id,
+            #     neuron_params=neuron_params)
+
+        return neuron_map
+
+
+
+
+
     def brain_to_genotype(self, pb_brain, mutator):
 
         pb_neurons = pb_brain.neuron
         pb_connections = pb_brain.connection
 
-        neuron_map = self._parse_neurons(pb_neurons)
+        neuron_map = self._parse_pb_neurons(pb_neurons)
 
         genotype = GeneticEncoding()
 
         # map neuron ids to historical marks of their respective genes:
         id_mark_map = {}
 
-        for neuron_id, neuron in neuron_map.items():
-            mark = mutator.add_neuron(neuron, genotype)
+        for neuron_id, neuron_type, neuron_params in neuron_map:
+
+            mark = mutator._add_neuron(genotype, neuron_type, neuron_params)
             id_mark_map[neuron_id] = mark
+
 
         for pb_connection in pb_connections:
             socket=None
             if pb_connection.HasField('socket'):
                 socket=pb_connection.socket
 
-            mutator.add_connection(
+
+            mutator._add_connection(
+                genotype,
+                connection_type='default',
                 mark_from=id_mark_map[pb_connection.src],
                 mark_to=id_mark_map[pb_connection.dst],
                 weight=pb_connection.weight,
-                genotype=genotype,
                 socket=socket
             )
+
+
+            # mutator.add_connection(
+            #     mark_from=id_mark_map[pb_connection.src],
+            #     mark_to=id_mark_map[pb_connection.dst],
+            #     weight=pb_connection.weight,
+            #     genotype=genotype,
+            #     socket=socket
+            # )
 
         return genotype
 
 
+
+
+
+
+
+
+
     def genotype_to_modify_msg(self, genotype):
-        brain = self.genotype_to_brain(genotype)
+        pb_brain = self.genotype_to_brain(genotype)
         msg = ModifyNeuralNetwork()
-        pb_neurons = brain.neuron
-        pb_connections = brain.connection
+        pb_neurons = pb_brain.neuron
+        pb_connections = pb_brain.connection
 
         for pb_neuron in pb_neurons:
             if pb_neuron.layer == "hidden":
@@ -59,24 +126,32 @@ class NeuralNetworkParser:
         return msg
 
 
+
+
+
+
     def genotype_to_brain(self, genotype):
 
-        brain = NeuralNetwork()
+        pb_brain = NeuralNetwork()
 
-        self._parse_neuron_genes(genotype, brain)
-        self._parse_connection_genes(genotype, brain)
+        self._parse_neuron_genes(genotype, pb_brain)
+        self._parse_connection_genes(genotype, pb_brain)
 
-        return brain
+        return pb_brain
 
 
-    def _parse_neuron_genes(self, genotype, brain):
+
+
+
+
+    def _parse_neuron_genes(self, genotype, pb_brain):
 
         for neuron_gene in genotype.neuron_genes:
             if neuron_gene.enabled:
 
                 neuron_params = neuron_gene.neuron_params
 
-                pb_neuron = brain.neuron.add()
+                pb_neuron = pb_brain.neuron.add()
 
                 pb_neuron.type      = neuron_gene.neuron_type
 
@@ -102,7 +177,7 @@ class NeuralNetworkParser:
 
 
 
-    def _parse_connection_genes(self, genotype, brain):
+    def _parse_connection_genes(self, genotype, pb_brain):
         for conn_gene in genotype.connection_genes:
             if conn_gene.enabled:
 
@@ -112,50 +187,9 @@ class NeuralNetworkParser:
                 from_id = genotype.find_gene_by_mark(mark_from).neuron_id
                 to_id = genotype.find_gene_by_mark(mark_to).neuron_id
 
-                pb_conn = brain.connection.add()
+                pb_conn = pb_brain.connection.add()
                 pb_conn.src = from_id
                 pb_conn.dst = to_id
                 pb_conn.weight = conn_gene.weight
                 if conn_gene.socket is not None:
                     pb_conn.socket = conn_gene.socket
-
-
-
-    def _parse_neurons(self, pb_neurons):
-        neuron_map = {}
-        for neuron in pb_neurons:
-            neuron_id = neuron.id
-            neuron_layer = neuron.layer
-            neuron_type = neuron.type
-            neuron_part_id = neuron.partId
-
-
-            if neuron_id in neuron_map:
-                err("Duplicate neuron ID '%s'" % neuron_id)
-
-            neuron_spec = self.spec.get(neuron_type)
-            if neuron_spec is None:
-                err("Unknown neuron type '%s'" % neuron_type)
-            neuron_params = neuron_spec.unserialize_params(neuron.param)
-
-
-            neuron_map[neuron_id] = Neuron(
-                neuron_id=neuron_id,
-                layer=neuron_layer,
-                neuron_type=neuron_type,
-                part_id=neuron_part_id,
-                neuron_params=neuron_params)
-
-        return neuron_map
-
-
-    # def _parse_connections(self, pb_connections):
-    #     conn_descriptions = []
-    #     for connection in pb_connections:
-    #         conn_descriptions.append({
-    #             "src": connection.src,
-    #             "dst": connection.dst,
-    #             "weight": connection.weight
-    #         })
-
-    #     return conn_descriptions
