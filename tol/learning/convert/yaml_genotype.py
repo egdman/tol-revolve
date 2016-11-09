@@ -81,9 +81,10 @@ def get_neuron_genes(neurons):
 
     neuron_genes = []
     for neuron_info in neurons:
-        Id = neuron_info['id']
+
+        Id = neuron_info.get('id', neuron_info['neuron_id'])
+        neuron_type = neuron_info.get('type', neuron_info['neuron_type'])
         layer = neuron_info['layer']
-        neuron_type = neuron_info['type']
         part_id = neuron_info['part_id']
         params = neuron_info['params']
         mark = neuron_info['hist_mark']
@@ -103,9 +104,10 @@ def get_neuron_genes(neurons):
             neuron_type=neuron_type,
             historical_mark=mark,
             enabled=enabled,
+
             neuron_id=Id,
             layer=layer,
-            body_part_id=part_id,
+            part_id=part_id,
             **params
         )
         neuron_genes.append(neuron_gene)

@@ -1,5 +1,5 @@
 # Revolve
-from revolve.spec.msgs import Body, BodyPart, NeuralNetwork, ModifyNeuralNetwork
+from revolve.spec.msgs import NeuralNetwork, ModifyNeuralNetwork
 from revolve.spec.exception import err
 
 # ToL
@@ -73,19 +73,29 @@ class NeuralNetworkParser:
 
         for neuron_gene in genotype.neuron_genes:
             if neuron_gene.enabled:
-                neuron_info = neuron_gene.neuron
+
+                neuron_params = neuron_gene.neuron_params
 
                 pb_neuron = brain.neuron.add()
-                pb_neuron.id = neuron_info.neuron_id
-                pb_neuron.layer = neuron_info.layer
-                pb_neuron.type = neuron_info.neuron_type
-                pb_neuron.partId = neuron_info.body_part_id
 
-                neuron_spec = self.spec.get(neuron_info.neuron_type)
-                serialized_params = neuron_spec.serialize_params(neuron_info.neuron_params)
+                pb_neuron.type      = neuron_gene.neuron_type
 
-                for param_name in neuron_info.neuron_params:
-                    param_value = neuron_info.neuron_params[param_name];
+                pb_neuron.id        = neuron_params.pop('id')
+                pb_neuron.layer     = neuron_params.pop('layer')
+                pb_neuron.partId    = neuron_params.pop('part_id')
+
+
+                # pb_neuron.id = neuron_gene.neuron_id
+                # pb_neuron.layer = neuron_gene.layer
+                # pb_neuron.type = neuron_gene.neuron_type
+                # pb_neuron.partId = neuron_gene.body_part_id
+
+
+                # serialize the remaining params and put them into protobuf 'param' attribute
+                neuron_spec = self.spec.get(neuron_gene.neuron_type)
+                serialized_params = neuron_spec.serialize_params(neuron_params)
+
+                for param_name, param_value in neuron_params.items():
                     pb_param = pb_neuron.param.add()
                     pb_param.name = param_name
                     pb_param.value = param_value
@@ -99,8 +109,8 @@ class NeuralNetworkParser:
                 mark_from = conn_gene.mark_from
                 mark_to = conn_gene.mark_to
 
-                from_id = genotype.find_gene_by_mark(mark_from).neuron.neuron_id
-                to_id = genotype.find_gene_by_mark(mark_to).neuron.neuron_id
+                from_id = genotype.find_gene_by_mark(mark_from).neuron_id
+                to_id = genotype.find_gene_by_mark(mark_to).neuron_id
 
                 pb_conn = brain.connection.add()
                 pb_conn.src = from_id
@@ -133,8 +143,9 @@ class NeuralNetworkParser:
                 neuron_id=neuron_id,
                 layer=neuron_layer,
                 neuron_type=neuron_type,
-                body_part_id=neuron_part_id,
+                part_id=neuron_part_id,
                 neuron_params=neuron_params)
+
         return neuron_map
 
 

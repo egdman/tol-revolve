@@ -136,15 +136,13 @@ class RobotLearner:
 
             self.apply_structural_mutation(mutated_genotype)
             
-            self.mutator.mutate_weights(
+            self.mutator.mutate_connection_params(
                 genotype=mutated_genotype,
-                probability=self.weight_mutation_probability,
-                sigma=self.weight_mutation_sigma)
+                probability=self.weight_mutation_probability)
 
             self.mutator.mutate_neuron_params(
                 genotype=mutated_genotype,
-                probability=self.param_mutation_probability,
-                sigma=self.param_mutation_sigma)
+                probability=self.param_mutation_probability)
 
             init_pop.append(mutated_genotype)
 
