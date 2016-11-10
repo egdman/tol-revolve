@@ -38,8 +38,6 @@ from neat import Mutator
 output_console()
 logger.setLevel(logging.DEBUG)
 
-parent_color = (1, 0, 0, 0.5)
-child_color = (0, 1, 0, 0.5)
 
 parser.add_argument(
     "--log-directory",

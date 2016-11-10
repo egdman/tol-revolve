@@ -16,12 +16,12 @@ class NeuralNetworkParser:
     def _parse_pb_neurons(self, pb_neurons):
         neuron_map = []
 
-        for neuron in pb_neurons:
-            neuron_type = neuron.type
+        for pb_neuron in pb_neurons:
+            neuron_type = pb_neuron.type
 
-            neuron_id = neuron.id
-            neuron_layer = neuron.layer
-            neuron_part_id = neuron.partId
+            neuron_id = pb_neuron.id
+            neuron_layer = pb_neuron.layer
+            neuron_part_id = pb_neuron.partId
 
 
             if neuron_id in neuron_map:
@@ -31,9 +31,9 @@ class NeuralNetworkParser:
             neuron_spec = self.spec.get(neuron_type)
             if neuron_spec is None:
                 err("Unknown neuron type '%s'" % neuron_type)
-            neuron_params = neuron_spec.unserialize_params(neuron.param)
 
 
+            neuron_params = neuron_spec.unserialize_params(pb_neuron.param)
             neuron_params.update(
                 {
                     'neuron_id' : neuron_id,
@@ -44,13 +44,6 @@ class NeuralNetworkParser:
 
 
             neuron_map.append((neuron_id, neuron_type, neuron_params))
-
-            # neuron_map[neuron_id] = Neuron(
-            #     neuron_id=neuron_id,
-            #     layer=neuron_layer,
-            #     neuron_type=neuron_type,
-            #     part_id=neuron_part_id,
-            #     neuron_params=neuron_params)
 
         return neuron_map
 
@@ -91,19 +84,7 @@ class NeuralNetworkParser:
                 socket=socket
             )
 
-
-            # mutator.add_connection(
-            #     mark_from=id_mark_map[pb_connection.src],
-            #     mark_to=id_mark_map[pb_connection.dst],
-            #     weight=pb_connection.weight,
-            #     genotype=genotype,
-            #     socket=socket
-            # )
-
         return genotype
-
-
-
 
 
 
@@ -155,21 +136,20 @@ class NeuralNetworkParser:
 
                 pb_neuron.type      = neuron_gene.neuron_type
 
-                pb_neuron.id        = neuron_params.pop('id')
-                pb_neuron.layer     = neuron_params.pop('layer')
-                pb_neuron.partId    = neuron_params.pop('part_id')
+                # new neurons will come without ids, layers and part_ids, so we provide defaults
+                # new ids are of the form 'augmentN', where N is the historical mark of the neuron
+                # the layer of new neurons is always hidden
+                # the way to determine part_ids of new neurons is yet to be devised
+                pb_neuron.id        = neuron_params.pop('id', 'augment{}'.format(pb_neuron.historical_mark))
+                pb_neuron.layer     = neuron_params.pop('layer', 'hidden')
+                pb_neuron.partId    = neuron_params.pop('part_id', 'unknown') #TODO
 
 
-                # pb_neuron.id = neuron_gene.neuron_id
-                # pb_neuron.layer = neuron_gene.layer
-                # pb_neuron.type = neuron_gene.neuron_type
-                # pb_neuron.partId = neuron_gene.body_part_id
-
-
-                # serialize the remaining params and put them into protobuf 'param' attribute
+                # serialize the remaining params and put them into the protobuf 'param' attribute
                 neuron_spec = self.spec.get(neuron_gene.neuron_type)
                 serialized_params = neuron_spec.serialize_params(neuron_params)
 
+                # add parameter names and values
                 for param_name, param_value in neuron_params.items():
                     pb_param = pb_neuron.param.add()
                     pb_param.name = param_name
