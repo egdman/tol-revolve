@@ -26,10 +26,12 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
 #ToL
 from tol.config import parser
 from tol.logging import logger, output_console
-from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline, PSOLearner
-from tol.learning.encoding import Mutator, get_default_mutation_spec
+from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline
+# from tol.learning.encoding import Mutator, get_default_mutation_spec
 from tol.learning import get_brains_from_file
 from tol.spec import get_body_spec, get_brain_spec, get_extended_brain_spec
+
+from neat import Mutator
 
 
 # Log output to console
@@ -103,23 +105,23 @@ parser.add_argument(
     help='when this flag is set, the online gait learning mode is used instead of the offline mode'
 )
 
-parser.add_argument(
-    '--pso-local-coef',
-    type=float,
-    default=0,
-    help='coefficient for the local pso component')
+# parser.add_argument(
+#     '--pso-local-coef',
+#     type=float,
+#     default=0,
+#     help='coefficient for the local pso component')
 
-parser.add_argument(
-    '--pso-global-coef',
-    type=float,
-    default=0,
-    help='coefficient for the global pso component')
+# parser.add_argument(
+#     '--pso-global-coef',
+#     type=float,
+#     default=0,
+#     help='coefficient for the global pso component')
 
-parser.add_argument(
-    '--pso-temperature',
-    type=float,
-    default=0,
-    help='temperature value for PSO')
+# parser.add_argument(
+#     '--pso-temperature',
+#     type=float,
+#     default=0,
+#     help='temperature value for PSO')
 
 
 parser.add_argument(

@@ -36,9 +36,9 @@ class NeuralNetworkParser:
 
             neuron_params.update(
                 {
-                    'neuron_id' : neuron_id
+                    'neuron_id' : neuron_id,
                     'part_id'   : neuron_part_id,
-                    'layer'     : neuron_layer
+                    'layer'     : neuron_layer,
                 }    
             )
 
