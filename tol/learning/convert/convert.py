@@ -130,7 +130,7 @@ class NeuralNetworkParser:
         for neuron_gene in genotype.neuron_genes:
             if neuron_gene.enabled:
 
-                neuron_params = neuron_gene.neuron_params
+                neuron_params = neuron_gene.copy_params()
 
                 pb_neuron = pb_brain.neuron.add()
 
@@ -140,7 +140,7 @@ class NeuralNetworkParser:
                 # new ids are of the form 'augmentN', where N is the historical mark of the neuron
                 # the layer of new neurons is always hidden
                 # the way to determine part_ids of new neurons is yet to be devised
-                pb_neuron.id        = neuron_params.pop('id', 'augment{}'.format(pb_neuron.historical_mark))
+                pb_neuron.id        = neuron_params.pop('id', 'augment{}'.format(neuron_gene.historical_mark))
                 pb_neuron.layer     = neuron_params.pop('layer', 'hidden')
                 pb_neuron.partId    = neuron_params.pop('part_id', 'unknown') #TODO
 
@@ -164,12 +164,16 @@ class NeuralNetworkParser:
                 mark_from = conn_gene.mark_from
                 mark_to = conn_gene.mark_to
 
-                from_id = genotype.find_gene_by_mark(mark_from).neuron_id
-                to_id = genotype.find_gene_by_mark(mark_to).neuron_id
+                from_id = genotype.find_gene_by_mark(mark_from).id
+                to_id = genotype.find_gene_by_mark(mark_to).id
 
                 pb_conn = pb_brain.connection.add()
                 pb_conn.src = from_id
                 pb_conn.dst = to_id
                 pb_conn.weight = conn_gene.weight
-                if conn_gene.socket is not None:
+
+                # add 'socket' property if found in gene
+                try:
                     pb_conn.socket = conn_gene.socket
+                except AttributeError:
+                    pass

@@ -4,6 +4,7 @@ connections:
     hist_mark: 17
     to: 1
     weight: -9.063367131609194
+    socket: non_default_socket
   - enabled: true
     from: 1
     hist_mark: 18

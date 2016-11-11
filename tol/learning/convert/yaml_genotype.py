@@ -104,7 +104,7 @@ def get_neuron_genes(neurons):
             historical_mark=mark,
             enabled=enabled,
 
-            neuron_id=Id,
+            id=Id,
             layer=layer,
             part_id=part_id,
             **params
@@ -149,8 +149,9 @@ def get_connection_genes(connections):
             historical_mark=hist_mark,
             enabled=enabled,
             weight=weight,
-            socket=socket
+            # socket=socket
         )
+        if socket: connection_gene.connection_params['socket'] = socket
         conn_genes.append(connection_gene)
     return conn_genes
 
