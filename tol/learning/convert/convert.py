@@ -65,7 +65,7 @@ class NeuralNetworkParser:
 
         for neuron_id, neuron_type, neuron_params in neuron_map:
 
-            mark = mutator._add_neuron(genotype, neuron_type, neuron_params)
+            mark = mutator._add_neuron(genotype, neuron_type, **neuron_params)
             id_mark_map[neuron_id] = mark
 
 
