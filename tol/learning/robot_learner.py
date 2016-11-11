@@ -21,6 +21,12 @@ from ..util import StateSwitch, rotate_vertical
 # NEAT
 from neat import crossover, GeneticEncoding
 
+
+def validate_genotype(genotype, error_msg):
+    if not genotype.check_validity():
+        raise RuntimeError(error_msg + '\n' + str(genotype))
+
+
 class RobotLearner:
 
     def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
@@ -106,7 +112,7 @@ class RobotLearner:
             brain_population = init_genotypes
 
         for br in brain_population:
-            # validate_genotype(br, "initial generation created invalid genotype")
+            validate_genotype(br, "initial generation created invalid genotype")
             self.evaluation_queue.append(br)
 
         first_brain = self.evaluation_queue.popleft()
@@ -128,7 +134,7 @@ class RobotLearner:
         # FOR DEBUG
         ##########################################
         print "initial genotype:"
-        print init_genotype.debug_string(True)
+        print init_genotype
         ##########################################
         init_pop = []
         for _ in range(self.pop_size):
@@ -173,7 +179,7 @@ class RobotLearner:
             # create and insert robot with new brain:
             tree = Tree.from_body_brain(pb_body, pb_brain, self.body_spec)
         except Exception as ex:
-            print brain_genotype.debug_string(True)
+            print brain_genotype
             raise ex
 
         pose = Pose(position=self.insert_pos,
@@ -231,7 +237,7 @@ class RobotLearner:
             print "Evaluation over"
 
             print "%%%%%%%%%%%%%%%%%%\n\nEvaluated {0} brains".format(str(self.total_brains_evaluated+1))
-            print "last evaluated: {0}".format(self.active_brain)
+            # print "last evaluated: {0}".format(self.active_brain)
             print "queue length = {0}".format(len(self.evaluation_queue))
             print "distance covered: {0}".format(self.fitness )
             print "evaluation time was {0}s\n\n%%%%%%%%%%%%%%%%%%".format(self.evaluation_time_actual)
@@ -390,34 +396,23 @@ class RobotLearner:
 
     def produce_child(self, parent1, parent2):
         # apply crossover:
-#        print "applying crossover..."
         if self.asexual:
             child_genotype = parent1.copy()
         else:
             child_genotype = crossover(parent1, parent2)
-            # validate_genotype(child_genotype, "crossover created invalid genotype")
-#         print "crossover successful"
-
+            validate_genotype(child_genotype, "crossover created invalid genotype")
 
         # apply mutations:
-
-#         print "applying weight mutations..."
-        self.mutator.mutate_weights(
+        self.mutator.mutate_connection_params(
             genotype=child_genotype,
-            probability=self.weight_mutation_probability,
-            sigma=self.weight_mutation_sigma)
-        # validate_genotype(child_genotype, "weight mutation created invalid genotype")
-#         print "weight mutation successful"
+            probability=self.weight_mutation_probability)
+        validate_genotype(child_genotype, "weight mutation created invalid genotype")
 
-
-#         print "applying neuron parameters mutations..."
         self.mutator.mutate_neuron_params(
             genotype=child_genotype,
-            probability=self.param_mutation_probability,
-            sigma=self.param_mutation_sigma)
-        # validate_genotype(child_genotype, "neuron parameters mutation created invalid genotype")
-#        print "neuron parameters mutation successful"
-
+            probability=self.param_mutation_probability)
+            # sigma=self.param_mutation_sigma)
+        validate_genotype(child_genotype, "neuron parameters mutation created invalid genotype")
 
         # apply structural mutations:
         self.apply_structural_mutation(child_genotype)
@@ -432,28 +427,28 @@ class RobotLearner:
 
             # if no connections, add connection
             if len(genotype.connection_genes) == 0:
-                self.mutator.add_connection_mutation(genotype, self.mutator.new_connection_sigma)
-                # validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
+                self.mutator.add_connection_mutation(genotype) #, self.mutator.new_connection_sigma)
+                validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
 
             # otherwise add connection or neuron with equal probability
             else:
                 if random.random() < 0.5:
-                    self.mutator.add_connection_mutation(genotype, self.mutator.new_connection_sigma)
-                    # validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
+                    self.mutator.add_connection_mutation(genotype) #, self.mutator.new_connection_sigma)
+                    validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
 
                 else:
                     self.mutator.add_neuron_mutation(genotype)
-                    # validate_genotype(genotype, "inserting new NEURON created invalid genotype")
+                    validate_genotype(genotype, "inserting new NEURON created invalid genotype")
 
 
         # apply removal mutation:
         if random.random() < self.structural_removal_probability:
             if random.random() < 0.5:
                 self.mutator.remove_connection_mutation(genotype)
-                # validate_genotype(genotype, "removing a CONNECTION created invalid genotype")
+                validate_genotype(genotype, "removing a CONNECTION created invalid genotype")
             else:
                 self.mutator.remove_neuron_mutation(genotype)
-                # validate_genotype(genotype, "removing a NEURON created invalid genotype")
+                validate_genotype(genotype, "removing a NEURON created invalid genotype")
 
 
 

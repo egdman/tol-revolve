@@ -6,6 +6,24 @@ from revolve.spec.exception import err
 from neat import GeneticEncoding
 
 
+def add_missing_params(genotype):
+    for neuron_gene in genotype.neuron_genes:
+        # new ids are of the form 'augmentN', where N is the historical mark of the neuron
+        if not hasattr(neuron_gene, 'id'):
+            neuron_gene.id = 'augment{}'.format(neuron_gene.historical_mark)
+
+        # the layer of new neurons is always hidden
+        if not hasattr(neuron_gene, 'layer'):
+            neuron_gene.layer = 'hidden'
+
+        # TODO:
+        # the way to determine part_ids of new neurons is yet to be devised
+        if not hasattr(neuron_gene, 'part_id'):
+            neuron_gene.part_id = 'Core'
+
+
+
+
 class NeuralNetworkParser:
 
     def __init__(self, spec):
@@ -112,6 +130,8 @@ class NeuralNetworkParser:
 
 
     def genotype_to_brain(self, genotype):
+        # new neurons will come without ids, layers and part_ids, so we provide defaults
+        add_missing_params(genotype)
 
         pb_brain = NeuralNetwork()
 
@@ -136,14 +156,9 @@ class NeuralNetworkParser:
 
                 pb_neuron.type      = neuron_gene.neuron_type
 
-                # new neurons will come without ids, layers and part_ids, so we provide defaults
-                # new ids are of the form 'augmentN', where N is the historical mark of the neuron
-                # the layer of new neurons is always hidden
-                # the way to determine part_ids of new neurons is yet to be devised
-                pb_neuron.id        = neuron_params.pop('id', 'augment{}'.format(neuron_gene.historical_mark))
-                pb_neuron.layer     = neuron_params.pop('layer', 'hidden')
-                pb_neuron.partId    = neuron_params.pop('part_id', 'unknown') #TODO
-
+                pb_neuron.id        = neuron_params.pop('id')
+                pb_neuron.layer     = neuron_params.pop('layer')
+                pb_neuron.partId    = neuron_params.pop('part_id')
 
                 # serialize the remaining params and put them into the protobuf 'param' attribute
                 neuron_spec = self.spec.get(neuron_gene.neuron_type)
