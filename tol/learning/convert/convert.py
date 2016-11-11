@@ -36,7 +36,7 @@ class NeuralNetworkParser:
             neuron_params = neuron_spec.unserialize_params(pb_neuron.param)
             neuron_params.update(
                 {
-                    'neuron_id' : neuron_id,
+                    'id' : neuron_id,
                     'part_id'   : neuron_part_id,
                     'layer'     : neuron_layer,
                 }    
@@ -70,9 +70,9 @@ class NeuralNetworkParser:
 
 
         for pb_connection in pb_connections:
-            socket=None
+            other_params = {}
             if pb_connection.HasField('socket'):
-                socket=pb_connection.socket
+                other_params['socket'] = pb_connection.socket
 
 
             mutator._add_connection(
@@ -81,7 +81,7 @@ class NeuralNetworkParser:
                 mark_from=id_mark_map[pb_connection.src],
                 mark_to=id_mark_map[pb_connection.dst],
                 weight=pb_connection.weight,
-                socket=socket
+                **other_params
             )
 
         return genotype

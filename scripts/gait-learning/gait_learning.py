@@ -29,7 +29,8 @@ from tol.logging import logger, output_console
 from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline
 # from tol.learning.encoding import Mutator, get_default_mutation_spec
 from tol.learning import get_brains_from_file
-from tol.spec import get_body_spec, get_brain_spec, get_extended_brain_spec
+from tol.spec import (get_body_spec, get_brain_spec, get_extended_brain_spec,
+                      get_extended_mutation_spec)
 
 from neat import Mutator
 
@@ -183,24 +184,29 @@ def run():
     brain_spec = get_extended_brain_spec(conf)
 
 
-    # mutation spec that contains info about what types of neurons can be added
-    # and what parameters of neurons can be mutated
-    mut_spec = get_default_mutation_spec(brain_spec)
+    # # mutation spec that contains info about what types of neurons can be added
+    # # and what parameters of neurons can be mutated
+    # mut_spec = get_default_mutation_spec(brain_spec)
 
-    # Use only Simple and Sigmoid and Differential neurons:
-    types_of_new_neurons = filter(lambda item: 
-        item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
+    # # Use only Simple and Sigmoid and Differential neurons:
+    # types_of_new_neurons = filter(lambda item: 
+    #     item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
 
-    # # Use only Simple and Sigmoid and Oscillator neurons:
-    # types_of_new_neurons = filter(lambda item:
-    #     item == "Simple" or item == "Sigmoid" or item == 'Oscillator', mut_spec['types'])
+    # # # Use only Simple and Sigmoid and Oscillator neurons:
+    # # types_of_new_neurons = filter(lambda item:
+    # #     item == "Simple" or item == "Sigmoid" or item == 'Oscillator', mut_spec['types'])
 
-    mut_spec['types'] = types_of_new_neurons
+    # mut_spec['types'] = types_of_new_neurons
 
-    print "New types: {0}".format(mut_spec['types'])
+    # print "New types: {0}".format(mut_spec['types'])
 
-    mutator = Mutator(brain_spec, mutation_spec=mut_spec)
+    # mutator = Mutator(brain_spec, mutation_spec=mut_spec)
 
+
+
+    mut_spec = get_extended_mutation_spec(conf.param_mutation_sigma, conf.weight_mutation_sigma)
+    allowed_types = ["Simple", "Sigmoid", "DifferentialCPG"]
+    mutator = Mutator(mut_spec, allowed_neuron_types = allowed_types)
 
 
     # if we are not restoring a saved state:

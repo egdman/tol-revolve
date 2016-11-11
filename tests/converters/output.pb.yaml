@@ -13,7 +13,6 @@ connections:
   mark_from: 1
   mark_to: 2
   params:
-    socket: null
     weight: -8.66313594846985
 - enabled: true
   gene_type: default
@@ -21,7 +20,6 @@ connections:
   mark_from: 1
   mark_to: 3
   params:
-    socket: null
     weight: -3.7092137422826172
 - enabled: true
   gene_type: default
@@ -29,7 +27,6 @@ connections:
   mark_from: 1
   mark_to: 4
   params:
-    socket: null
     weight: 17.907230525461635
 - enabled: true
   gene_type: default
@@ -37,7 +34,6 @@ connections:
   mark_from: 1
   mark_to: 5
   params:
-    socket: null
     weight: -31.874949659945266
 - enabled: true
   gene_type: default
@@ -45,7 +41,6 @@ connections:
   mark_from: 1
   mark_to: 12
   params:
-    socket: null
     weight: -6.767882494086051
 - enabled: true
   gene_type: default
@@ -53,7 +48,6 @@ connections:
   mark_from: 1
   mark_to: 13
   params:
-    socket: null
     weight: 4.476848194032199
 - enabled: true
   gene_type: default
@@ -61,7 +55,6 @@ connections:
   mark_from: 1
   mark_to: 14
   params:
-    socket: null
     weight: 8.074590208328715
 - enabled: true
   gene_type: default
@@ -69,7 +62,6 @@ connections:
   mark_from: 15
   mark_to: 13
   params:
-    socket: null
     weight: -4.877056106071079
 - enabled: true
   gene_type: default
@@ -77,7 +69,6 @@ connections:
   mark_from: 2
   mark_to: 2
   params:
-    socket: null
     weight: -4.891048306202164
 - enabled: true
   gene_type: default
@@ -85,7 +76,6 @@ connections:
   mark_from: 1
   mark_to: 16
   params:
-    socket: null
     weight: 0.0911337950820501
 - enabled: true
   gene_type: default
@@ -93,7 +83,6 @@ connections:
   mark_from: 16
   mark_to: 15
   params:
-    socket: null
     weight: 20.42571859849851
 - enabled: true
   gene_type: default
@@ -101,7 +90,6 @@ connections:
   mark_from: 12
   mark_to: 5
   params:
-    socket: null
     weight: -18.00880896333167
 - enabled: true
   gene_type: default
@@ -109,7 +97,6 @@ connections:
   mark_from: 8
   mark_to: 3
   params:
-    socket: null
     weight: -0.297565117243258
 - enabled: true
   gene_type: default
@@ -117,7 +104,6 @@ connections:
   mark_from: 6
   mark_to: 0
   params:
-    socket: null
     weight: 1.9783308219501377
 - enabled: true
   gene_type: default
@@ -125,7 +111,6 @@ connections:
   mark_from: 4
   mark_to: 17
   params:
-    socket: null
     weight: 5.864604365953777
 - enabled: true
   gene_type: default
@@ -133,7 +118,6 @@ connections:
   mark_from: 17
   mark_to: 5
   params:
-    socket: null
     weight: -2.138443602091295
 - enabled: true
   gene_type: default
@@ -141,7 +125,6 @@ connections:
   mark_from: 14
   mark_to: 4
   params:
-    socket: null
     weight: -0.051318472267090576
 - enabled: true
   gene_type: default
@@ -149,7 +132,6 @@ connections:
   mark_from: 1
   mark_to: 18
   params:
-    socket: null
     weight: 13.73431354392218
 - enabled: true
   gene_type: default
@@ -157,7 +139,6 @@ connections:
   mark_from: 18
   mark_to: 0
   params:
-    socket: null
     weight: 1.0
 neurons:
 - enabled: true
@@ -165,16 +146,16 @@ neurons:
   historical_mark: 0
   params:
     bias: -0.15910037204778982
+    id: Core-hidden-0
     layer: hidden
-    neuron_id: Core-hidden-0
     part_id: Core
 - enabled: true
   gene_type: DifferentialCPG
   historical_mark: 1
   params:
     bias: -0.21141604060049524
+    id: Core-hidden-1
     layer: hidden
-    neuron_id: Core-hidden-1
     part_id: Core
 - enabled: true
   gene_type: Simple
@@ -182,8 +163,8 @@ neurons:
   params:
     bias: -1
     gain: 0.7094714152023417
+    id: Leg20Joint-out-0
     layer: output
-    neuron_id: Leg20Joint-out-0
     part_id: Leg20Joint
 - enabled: true
   gene_type: Simple
@@ -191,8 +172,8 @@ neurons:
   params:
     bias: -0.6733665729475744
     gain: 0.5
+    id: Leg30Joint-out-0
     layer: output
-    neuron_id: Leg30Joint-out-0
     part_id: Leg30Joint
 - enabled: true
   gene_type: Simple
@@ -200,8 +181,8 @@ neurons:
   params:
     bias: -0.530286833615784
     gain: 1
+    id: Leg21Joint-out-0
     layer: output
-    neuron_id: Leg21Joint-out-0
     part_id: Leg21Joint
 - enabled: true
   gene_type: Simple
@@ -209,50 +190,50 @@ neurons:
   params:
     bias: 0.7235053715549682
     gain: 0.8866777254164782
+    id: Leg11Joint-out-0
     layer: output
-    neuron_id: Leg11Joint-out-0
     part_id: Leg11Joint
 - enabled: true
   gene_type: Input
   historical_mark: 6
   params:
+    id: Core-in-5
     layer: input
-    neuron_id: Core-in-5
     part_id: Core
 - enabled: true
   gene_type: Input
   historical_mark: 7
   params:
+    id: Core-in-4
     layer: input
-    neuron_id: Core-in-4
     part_id: Core
 - enabled: true
   gene_type: Input
   historical_mark: 8
   params:
+    id: Core-in-1
     layer: input
-    neuron_id: Core-in-1
     part_id: Core
 - enabled: true
   gene_type: Input
   historical_mark: 9
   params:
+    id: Core-in-0
     layer: input
-    neuron_id: Core-in-0
     part_id: Core
 - enabled: true
   gene_type: Input
   historical_mark: 10
   params:
+    id: Core-in-3
     layer: input
-    neuron_id: Core-in-3
     part_id: Core
 - enabled: true
   gene_type: Input
   historical_mark: 11
   params:
+    id: Core-in-2
     layer: input
-    neuron_id: Core-in-2
     part_id: Core
 - enabled: true
   gene_type: Simple
@@ -260,8 +241,8 @@ neurons:
   params:
     bias: -0.9784464224683691
     gain: 0.4040562480740221
+    id: Leg00Joint-out-0
     layer: output
-    neuron_id: Leg00Joint-out-0
     part_id: Leg00Joint
 - enabled: true
   gene_type: Simple
@@ -269,8 +250,8 @@ neurons:
   params:
     bias: -0.42796294870606305
     gain: 0.5751942857041117
+    id: Leg31Joint-out-0
     layer: output
-    neuron_id: Leg31Joint-out-0
     part_id: Leg31Joint
 - enabled: true
   gene_type: Simple
@@ -278,8 +259,8 @@ neurons:
   params:
     bias: 0.1984171013317726
     gain: 0.01884317339192626
+    id: Leg10Joint-out-0
     layer: output
-    neuron_id: Leg10Joint-out-0
     part_id: Leg10Joint
 - enabled: true
   gene_type: Simple
@@ -287,30 +268,30 @@ neurons:
   params:
     bias: 0.5335055669848133
     gain: 0.5266394601340155
+    id: Leg01Joint-out-0
     layer: output
-    neuron_id: Leg01Joint-out-0
     part_id: Leg01Joint
 - enabled: true
   gene_type: DifferentialCPG
   historical_mark: 16
   params:
     bias: 0.35352464489342994
+    id: augment640
     layer: hidden
-    neuron_id: augment640
     part_id: Core
 - enabled: true
   gene_type: DifferentialCPG
   historical_mark: 17
   params:
     bias: 0.515250453910975
+    id: augment1425
     layer: hidden
-    neuron_id: augment1425
     part_id: Leg21Joint
 - enabled: true
   gene_type: DifferentialCPG
   historical_mark: 18
   params:
     bias: 0.17913260965192768
+    id: augment2667
     layer: hidden
-    neuron_id: augment2667
     part_id: Core
