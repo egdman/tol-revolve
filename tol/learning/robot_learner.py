@@ -69,7 +69,7 @@ class RobotLearner:
         self.state_switch.set_duration('warmup', self.warmup_time)
         self.state_switch.set_duration('evaluate', self.evaluation_time_actual)
 
-        evo_conf = dict{
+        evo_conf = dict(
         pop_size = conf.population_size,
         elite_size = conf.population_size - conf.num_children,
         tournament_size = conf.tournament_size,
@@ -78,7 +78,7 @@ class RobotLearner:
         structural_augmentation_proba = conf.structural_augmentation_probability,
         structural_removal_proba = conf.structural_removal_probability,
         speciation_threshold = conf.speciation_threshold
-        }
+        )
         self.evolution = NEAT(mutator=mutator, **evo_conf)
 
 
@@ -98,32 +98,15 @@ class RobotLearner:
         self.max_generations = conf.max_generations
         self.repeat_evaluations = conf.repeat_evaluations
 
-        # self.pop_size = conf.population_size
-        # if self.pop_size < 2:
-            # self.pop_size = 2
-
-        # self.tournament_size = conf.tournament_size
-        # if self.tournament_size > self.pop_size:
-            # self.tournament_size = self.pop_size
-        # if self.tournament_size < 2:
-            # self.tournament_size = 2
-
-        # self.num_children = conf.num_children
-
-        # self.weight_mutation_probability = conf.weight_mutation_probability
-        # self.param_mutation_probability = conf.param_mutation_probability
-        # self.structural_augmentation_probability = conf.structural_augmentation_probability
-        # self.structural_removal_probability = conf.structural_removal_probability
-        # self.speciation_threshold = conf.speciation_threshold
-
 
 
 
     @trollius.coroutine
     def initialize(self, world, init_genotypes=None):
-        if init_genotypes is None:
-            brain_population = self.get_init_brains()
-        else:
+        # this call establishes minimally viable genome based on robot body morphology
+        brain_population = self.get_init_brains()
+
+        if init_genotypes is not None:
             brain_population = init_genotypes
 
         for br in brain_population:
@@ -134,6 +117,29 @@ class RobotLearner:
 
         self.reset_fitness()
         yield From(self.activate_brain(world, first_brain))
+
+
+
+
+    def get_init_brains(self):
+
+        '''
+        generate an initial population by mutating the default brain
+        :return:
+        '''
+
+        # get default brain from robot morphology:
+        init_genotype = self.robot_to_genotype(self.robot)
+
+        # FOR DEBUG
+        ##########################################
+        print "initial genotype:"
+        print init_genotype
+        ##########################################
+        init_pop = self.evolution.produce_init_generation(init_genotype)
+        return init_pop
+
+
 
 
 
@@ -241,7 +247,7 @@ class RobotLearner:
                 # if all brains are evaluated, produce new generation:
                 if len(self.evaluation_queue) == 0:
 
-                    self.evaluation_queue = 
+                    self.evaluation_queue = \
                         deque(self.evolution.produce_new_generation(self.brain_velocity.items()))
                     self.brain_velocity.clear()
                     self.generation_number += 1
@@ -432,17 +438,17 @@ class RobotLearner:
 
     def robot_to_genotype(self, robot):
         pb_robot = robot.tree.to_robot()
-        return self.nn_parser.brain_to_genotype(pb_robot.brain, self.mutator)
+        return self.nn_parser.brain_to_genotype(pb_robot.brain, self.mutator, protect=True)
 
 
     def parameter_string(self):
         out = ""
-        out += "population size      set to {0}\n".format(self.pop_size)
-        out += "tournament size      set to {0}\n".format(self.tournament_size)
-        out += "number of children   set to {0}\n".format(self.num_children)
+        out += "population size      set to {0}\n".format(self.evolution.pop_size)
+        out += "tournament size      set to {0}\n".format(self.evolution.tournament_size)
+        out += "elite size           set to {0}\n".format(self.evolution.elite_size)
+        out += "speciation threshold set to {0}\n".format(self.evolution.speciation_threshold)
         out += "evaluation time      set to {0}\n".format(self.evaluation_time)
         out += "warmup  time         set to {0}\n".format(self.warmup_time)
-        out += "speciation threshold set to {0}\n".format(self.speciation_threshold)
         out += "evaluation repeats   set to {0}\n".format(self.repeat_evaluations)
         out += "max number of generations set to {0}\n".format(self.max_generations)
         out += "asexual reproduction: {0}\n".format(self.asexual)

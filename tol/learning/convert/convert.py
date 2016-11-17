@@ -67,7 +67,7 @@ class NeuralNetworkParser:
 
 
 
-    def brain_to_genotype(self, pb_brain, mutator):
+    def brain_to_genotype(self, pb_brain, mutator, protect):
 
         pb_neurons = pb_brain.neuron
         pb_connections = pb_brain.connection
@@ -81,8 +81,9 @@ class NeuralNetworkParser:
 
         for neuron_id, neuron_type, neuron_params in neuron_map:
 
-            mark = mutator._add_neuron(genotype, neuron_type, **neuron_params)
+            mark = mutator.add_neuron(genotype, neuron_type, **neuron_params)
             id_mark_map[neuron_id] = mark
+            if protect: mutator.protect_gene(mark)
 
 
         for pb_connection in pb_connections:
@@ -91,7 +92,7 @@ class NeuralNetworkParser:
                 other_params['socket'] = pb_connection.socket
 
 
-            mutator._add_connection(
+            mark = mutator.add_connection(
                 genotype,
                 connection_type='default',
                 mark_from=id_mark_map[pb_connection.src],
@@ -99,6 +100,7 @@ class NeuralNetworkParser:
                 weight=pb_connection.weight,
                 **other_params
             )
+            if protect: mutator.protect_gene(mark)            
 
         return genotype
 
