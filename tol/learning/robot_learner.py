@@ -142,6 +142,12 @@ class RobotLearner:
 
 
 
+    def robot_to_genotype(self, robot):
+        pb_robot = robot.tree.to_robot()
+        return self.nn_parser.brain_to_genotype(pb_robot.brain, self.mutator, protect=True)
+
+
+
 
     @trollius.coroutine
     def activate_brain(self, world, brain):
@@ -244,13 +250,21 @@ class RobotLearner:
 
                 print "Brain evaluations are over, average result = {0} ".format(aver_fitness)
 
+
                 # if all brains are evaluated, produce new generation:
                 if len(self.evaluation_queue) == 0:
 
                     self.evaluation_queue = \
                         deque(self.evolution.produce_new_generation(self.brain_velocity.items()))
-                    self.brain_velocity.clear()
                     self.generation_number += 1
+
+                    # do logging stuff
+                    if logging_callback:
+                        self.exec_logging_callback(logging_callback, self.brain_velocity.items())
+
+                    self.brain_velocity.clear()
+
+
 
                 # continue evaluating brains from the queue:
                 next_brain = self.evaluation_queue[0]
@@ -292,94 +306,6 @@ class RobotLearner:
         else:
             raise Return(False)
 
-
-    # def share_fitness(self):
-    #     new_fitness = {}
-
-    #     for cur_brain, cur_fitness in self.brain_fitness.items():
-    #         species_size = 1
-    #         for other_brain, other_fitness in self.brain_fitness.items():
-    #             if not other_brain == cur_brain:
-    #                 distance = GeneticEncoding.get_dissimilarity(other_brain, cur_brain)
-    #                 # out_f.write("{0},".format(distance))
-    #                 if distance < self.speciation_threshold:
-    #                     species_size += 1
-    #             # else:
-    #                 # out_f.write("{0},".format(0))
-    #         # out_f.write("\n")
-
-    #         new_fitness[cur_brain] = cur_fitness / float(species_size)
-            
-    #         # FOR DEBUG
-    #         ################################################
-    #         print 'SHARED FITNESS = {0}, species size = {1}'.format(new_fitness[cur_brain], species_size)
-    #         ################################################
-
-    #     self.brain_fitness = new_fitness
-
-
-    # def produce_new_generation(self, logging_callback = None):
-    #     # this is list with shared fitnesses:
-    #     brain_fitness_list = self.brain_fitness.items()
-
-    #     # this is list with unshared fitnesses:
-    #     brain_velocity_list = in self.brain_velocity.items()
-
-        
-    #     # sort parents from best to worst:
-    #     brain_fitness_list = sorted(brain_fitness_list, key = lambda elem: elem[1], reverse=True)
-    #     brain_velocity_list = sorted(brain_velocity_list, key = lambda elem: elem[1], reverse=True)
-
-
-    #     # brain_list = [br for (br, velo) in brain_velocity_list]
-    #     # hm_params = GeneticEncoding.get_space_map(brain_list, self.brain_spec)
-    #     # vector_list = [br.to_vector(hm_params, self.brain_spec) for br in brain_list]
-    #     #
-    #     # recycled_brains = [br.copy() for br in brain_list]
-    #     # for brain, vector in zip(recycled_brains, vector_list):
-    #     #     brain.from_vector(vector, hm_params, self.brain_spec)
-
-
-    #     parent_pairs = []
-
-    #     # create children:
-    #     for _ in range(self.num_children):
-
-    #         # we select brains using their shared fitnesses:
-    #         selected = self.select_for_tournament(brain_fitness_list)
-
-    #         # select 2 best parents from the tournament:
-    #         parent_a = selected[0]
-    #         parent_b = selected[1]
-
-    #         # first in pair must be the best of two:
-    #         parent_pairs.append((parent_a, parent_b))
-
-    #     # create children and append them to the queue:
-    #     for i, pair in enumerate(parent_pairs):
-    #         child_genotype = self.produce_child(pair[0][0], pair[1][0])
-    #         self.evaluation_queue.append(child_genotype)
-
-    #     # bringing the best parents into next generation:
-    #     for i in range(self.pop_size - self.num_children):
-    #         print "saving parent #{0}, velocity = {1}".format(str(i+1), brain_velocity_list[i][1])
-    #         self.evaluation_queue.append(brain_velocity_list[i][0])
-
-    #     # do not store information about old generations:
-    #     self.brain_fitness.clear()
-    #     self.brain_velocity.clear()
-
-    #     # log important information:
-    #     if logging_callback:
-    #         self.exec_logging_callback(logging_callback, brain_velocity_list)
-
-
-   
-
-    # def select_for_tournament(self, candidates):
-
-    #     selected = sorted(random.sample(candidates, self.tournament_size), key = lambda elem: elem[1], reverse=True)
-    #     return selected
 
 
     def exec_logging_callback(self, logging_callback, brain_velocity_list, vector_list=None):
@@ -436,10 +362,6 @@ class RobotLearner:
         logging_callback(log_data)
 
 
-    def robot_to_genotype(self, robot):
-        pb_robot = robot.tree.to_robot()
-        return self.nn_parser.brain_to_genotype(pb_robot.brain, self.mutator, protect=True)
-
 
     def parameter_string(self):
         out = ""
@@ -453,6 +375,15 @@ class RobotLearner:
         out += "max number of generations set to {0}\n".format(self.max_generations)
         out += "asexual reproduction: {0}\n".format(self.asexual)
         return out
+
+
+
+
+
+
+
+
+
 
 
 
