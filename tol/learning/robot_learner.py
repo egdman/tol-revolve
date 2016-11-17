@@ -19,7 +19,7 @@ from .convert import NeuralNetworkParser
 from ..util import StateSwitch, rotate_vertical
 
 # NEAT
-from neat import crossover, GeneticEncoding
+from neat import NEAT, validate_genotype
 
 
 def validate_genotype(genotype, error_msg):
@@ -47,9 +47,9 @@ class RobotLearner:
         self.nn_parser = NeuralNetworkParser(brain_spec)
         self.mutator = mutator
 
-#        self.timers = Timers(['evaluate', 'warmup'], world.get_world_time())
+
         self.evaluation_queue = deque()
-        self.brain_fitness = {}
+
         self.brain_velocity = {}
         self.generation_number = 0
 
@@ -69,6 +69,18 @@ class RobotLearner:
         self.state_switch.set_duration('warmup', self.warmup_time)
         self.state_switch.set_duration('evaluate', self.evaluation_time_actual)
 
+        evo_conf = dict{
+        pop_size = conf.population_size,
+        elite_size = conf.population_size - conf.num_children,
+        tournament_size = conf.tournament_size,
+        neuron_param_mut_proba = conf.param_mutation_probability,
+        connection_param_mut_proba = conf.weight_mutation_probability,
+        structural_augmentation_proba = conf.structural_augmentation_probability,
+        structural_removal_proba = conf.structural_removal_probability,
+        speciation_threshold = conf.speciation_threshold
+        }
+        self.evolution = NEAT(mutator=mutator, **evo_conf)
+
 
     def set_parameters(self, conf):
         """
@@ -76,31 +88,34 @@ class RobotLearner:
         :param conf:
         :return:
         """
-        self.pop_size = conf.population_size
-        if self.pop_size < 2:
-            self.pop_size = 2
-
-        self.tournament_size = conf.tournament_size
-        if self.tournament_size > self.pop_size:
-            self.tournament_size = self.pop_size
-        if self.tournament_size < 2:
-            self.tournament_size = 2
-
-        self.num_children = conf.num_children
-
         self.evaluation_time = conf.evaluation_time
         self.warmup_time = conf.warmup_time
-        self.evaluation_time_sigma = conf.evaluation_time_sigma
 
-        self.weight_mutation_probability = conf.weight_mutation_probability
+        self.evaluation_time_sigma = conf.evaluation_time_sigma
         self.weight_mutation_sigma = conf.weight_mutation_sigma
-        self.param_mutation_probability = conf.param_mutation_probability
         self.param_mutation_sigma = conf.param_mutation_sigma
-        self.structural_augmentation_probability = conf.structural_augmentation_probability
-        self.structural_removal_probability = conf.structural_removal_probability
+
         self.max_generations = conf.max_generations
-        self.speciation_threshold = conf.speciation_threshold
         self.repeat_evaluations = conf.repeat_evaluations
+
+        # self.pop_size = conf.population_size
+        # if self.pop_size < 2:
+            # self.pop_size = 2
+
+        # self.tournament_size = conf.tournament_size
+        # if self.tournament_size > self.pop_size:
+            # self.tournament_size = self.pop_size
+        # if self.tournament_size < 2:
+            # self.tournament_size = 2
+
+        # self.num_children = conf.num_children
+
+        # self.weight_mutation_probability = conf.weight_mutation_probability
+        # self.param_mutation_probability = conf.param_mutation_probability
+        # self.structural_augmentation_probability = conf.structural_augmentation_probability
+        # self.structural_removal_probability = conf.structural_removal_probability
+        # self.speciation_threshold = conf.speciation_threshold
+
 
 
 
@@ -120,39 +135,6 @@ class RobotLearner:
         self.reset_fitness()
         yield From(self.activate_brain(world, first_brain))
 
-
-    def get_init_brains(self):
-
-        '''
-        generate an initial population by mutating the default brain
-        :return:
-        '''
-
-        # get default brain from robot morphology:
-        init_genotype = self.robot_to_genotype(self.robot)
-
-        # FOR DEBUG
-        ##########################################
-        print "initial genotype:"
-        print init_genotype
-        ##########################################
-        init_pop = []
-        for _ in range(self.pop_size):
-            mutated_genotype = init_genotype.copy()
-
-            self.apply_structural_mutation(mutated_genotype)
-            
-            self.mutator.mutate_connection_params(
-                genotype=mutated_genotype,
-                probability=self.weight_mutation_probability)
-
-            self.mutator.mutate_neuron_params(
-                genotype=mutated_genotype,
-                probability=self.param_mutation_probability)
-
-            init_pop.append(mutated_genotype)
-
-        return init_pop
 
 
     @trollius.coroutine
@@ -200,7 +182,7 @@ class RobotLearner:
     def update_fitness(self):
         current_position = self.robot.last_position
 
-        # displacement from the last update:
+        # displacement from the last update (this is useful if we want to calculate path length):
         diff = math.sqrt(pow(current_position[0] - self.last_position[0], 2) + \
                          pow(current_position[1] - self.last_position[1], 2))
 
@@ -214,8 +196,6 @@ class RobotLearner:
         self.fitness = displacement
 
 
-    def get_fitness(self):
-        return self.fitness
 
 
     @trollius.coroutine
@@ -237,13 +217,11 @@ class RobotLearner:
             print "Evaluation over"
 
             print "%%%%%%%%%%%%%%%%%%\n\nEvaluated {0} brains".format(str(self.total_brains_evaluated+1))
-            # print "last evaluated: {0}".format(self.active_brain)
             print "queue length = {0}".format(len(self.evaluation_queue))
             print "distance covered: {0}".format(self.fitness )
             print "evaluation time was {0}s\n\n%%%%%%%%%%%%%%%%%%".format(self.evaluation_time_actual)
-  #          print "simulation time: {0}".format(world.get_world_time())
 
-            self.fitness_buffer.append(self.get_fitness() / self.evaluation_time_actual)
+            self.fitness_buffer.append(self.fitness / self.evaluation_time_actual)
 
             # if repeated brain evaluation is not over
             if len(self.fitness_buffer) < self.repeat_evaluations:
@@ -254,20 +232,18 @@ class RobotLearner:
             # if repeated brain evaluation is over
             else:
                 yield From(wait_for(world.pause(True)))
-                aver_fitness = sum(self.fitness_buffer) / float(len(self.fitness_buffer))
 
-                self.brain_fitness[self.active_brain] = aver_fitness
+                aver_fitness = sum(self.fitness_buffer) / float(len(self.fitness_buffer))
                 self.brain_velocity[self.active_brain] = aver_fitness
+
                 print "Brain evaluations are over, average result = {0} ".format(aver_fitness)
 
                 # if all brains are evaluated, produce new generation:
                 if len(self.evaluation_queue) == 0:
 
-                    # distribute fitness based on similarity:
-                    self.share_fitness()
-
-                    # this method fills the evaluation queue with new brains:
-                    self.produce_new_generation(logging_callback)
+                    self.evaluation_queue = 
+                        deque(self.evolution.produce_new_generation(self.brain_velocity.items()))
+                    self.brain_velocity.clear()
                     self.generation_number += 1
 
                 # continue evaluating brains from the queue:
@@ -311,149 +287,93 @@ class RobotLearner:
             raise Return(False)
 
 
-    def share_fitness(self):
-        new_fitness = {}
+    # def share_fitness(self):
+    #     new_fitness = {}
 
-        for cur_brain, cur_fitness in self.brain_fitness.items():
-            species_size = 1
-            for other_brain, other_fitness in self.brain_fitness.items():
-                if not other_brain == cur_brain:
-                    distance = GeneticEncoding.get_dissimilarity(other_brain, cur_brain)
-                    # out_f.write("{0},".format(distance))
-                    if distance < self.speciation_threshold:
-                        species_size += 1
-                # else:
-                    # out_f.write("{0},".format(0))
-            # out_f.write("\n")
+    #     for cur_brain, cur_fitness in self.brain_fitness.items():
+    #         species_size = 1
+    #         for other_brain, other_fitness in self.brain_fitness.items():
+    #             if not other_brain == cur_brain:
+    #                 distance = GeneticEncoding.get_dissimilarity(other_brain, cur_brain)
+    #                 # out_f.write("{0},".format(distance))
+    #                 if distance < self.speciation_threshold:
+    #                     species_size += 1
+    #             # else:
+    #                 # out_f.write("{0},".format(0))
+    #         # out_f.write("\n")
 
-            new_fitness[cur_brain] = cur_fitness / float(species_size)
+    #         new_fitness[cur_brain] = cur_fitness / float(species_size)
             
-            # FOR DEBUG
-            ################################################
-            print 'SHARED FITNESS = {0}, species size = {1}'.format(new_fitness[cur_brain], species_size)
-            ################################################
+    #         # FOR DEBUG
+    #         ################################################
+    #         print 'SHARED FITNESS = {0}, species size = {1}'.format(new_fitness[cur_brain], species_size)
+    #         ################################################
 
-        self.brain_fitness = new_fitness
+    #     self.brain_fitness = new_fitness
 
 
-    def produce_new_generation(self, logging_callback = None):
-        # this is list with shared fitnesses:
-        brain_fitness_list = self.brain_fitness.items()
+    # def produce_new_generation(self, logging_callback = None):
+    #     # this is list with shared fitnesses:
+    #     brain_fitness_list = self.brain_fitness.items()
 
-        # this is list with unshared fitnesses:
-        brain_velocity_list = in self.brain_velocity.items()
+    #     # this is list with unshared fitnesses:
+    #     brain_velocity_list = in self.brain_velocity.items()
 
         
-        # sort parents from best to worst:
-        brain_fitness_list = sorted(brain_fitness_list, key = lambda elem: elem[1], reverse=True)
-        brain_velocity_list = sorted(brain_velocity_list, key = lambda elem: elem[1], reverse=True)
+    #     # sort parents from best to worst:
+    #     brain_fitness_list = sorted(brain_fitness_list, key = lambda elem: elem[1], reverse=True)
+    #     brain_velocity_list = sorted(brain_velocity_list, key = lambda elem: elem[1], reverse=True)
 
 
-        # brain_list = [br for (br, velo) in brain_velocity_list]
-        # hm_params = GeneticEncoding.get_space_map(brain_list, self.brain_spec)
-        # vector_list = [br.to_vector(hm_params, self.brain_spec) for br in brain_list]
-        #
-        # recycled_brains = [br.copy() for br in brain_list]
-        # for brain, vector in zip(recycled_brains, vector_list):
-        #     brain.from_vector(vector, hm_params, self.brain_spec)
+    #     # brain_list = [br for (br, velo) in brain_velocity_list]
+    #     # hm_params = GeneticEncoding.get_space_map(brain_list, self.brain_spec)
+    #     # vector_list = [br.to_vector(hm_params, self.brain_spec) for br in brain_list]
+    #     #
+    #     # recycled_brains = [br.copy() for br in brain_list]
+    #     # for brain, vector in zip(recycled_brains, vector_list):
+    #     #     brain.from_vector(vector, hm_params, self.brain_spec)
 
 
-        parent_pairs = []
+    #     parent_pairs = []
 
-        # create children:
-        for _ in range(self.num_children):
+    #     # create children:
+    #     for _ in range(self.num_children):
 
-            # we select brains using their shared fitnesses:
-            selected = self.select_for_tournament(brain_fitness_list)
+    #         # we select brains using their shared fitnesses:
+    #         selected = self.select_for_tournament(brain_fitness_list)
 
-            # select 2 best parents from the tournament:
-            parent_a = selected[0]
-            parent_b = selected[1]
+    #         # select 2 best parents from the tournament:
+    #         parent_a = selected[0]
+    #         parent_b = selected[1]
 
-            # first in pair must be the best of two:
-            parent_pairs.append((parent_a, parent_b))
+    #         # first in pair must be the best of two:
+    #         parent_pairs.append((parent_a, parent_b))
 
-        # create children and append them to the queue:
-        for i, pair in enumerate(parent_pairs):
-            child_genotype = self.produce_child(pair[0][0], pair[1][0])
-            self.evaluation_queue.append(child_genotype)
+    #     # create children and append them to the queue:
+    #     for i, pair in enumerate(parent_pairs):
+    #         child_genotype = self.produce_child(pair[0][0], pair[1][0])
+    #         self.evaluation_queue.append(child_genotype)
 
-        # bringing the best parents into next generation:
-        for i in range(self.pop_size - self.num_children):
-            print "saving parent #{0}, velocity = {1}".format(str(i+1), brain_velocity_list[i][1])
-            self.evaluation_queue.append(brain_velocity_list[i][0])
+    #     # bringing the best parents into next generation:
+    #     for i in range(self.pop_size - self.num_children):
+    #         print "saving parent #{0}, velocity = {1}".format(str(i+1), brain_velocity_list[i][1])
+    #         self.evaluation_queue.append(brain_velocity_list[i][0])
 
-        # do not store information about old generations:
-        self.brain_fitness.clear()
-        self.brain_velocity.clear()
+    #     # do not store information about old generations:
+    #     self.brain_fitness.clear()
+    #     self.brain_velocity.clear()
 
-        # log important information:
-        if logging_callback:
-            self.exec_logging_callback(logging_callback, brain_velocity_list)
-
-
-    def produce_child(self, parent1, parent2):
-        # apply crossover:
-        if self.asexual:
-            child_genotype = parent1.copy()
-        else:
-            child_genotype = crossover(parent1, parent2)
-            validate_genotype(child_genotype, "crossover created invalid genotype")
-
-        # apply mutations:
-        self.mutator.mutate_connection_params(
-            genotype=child_genotype,
-            probability=self.weight_mutation_probability)
-        validate_genotype(child_genotype, "weight mutation created invalid genotype")
-
-        self.mutator.mutate_neuron_params(
-            genotype=child_genotype,
-            probability=self.param_mutation_probability)
-            # sigma=self.param_mutation_sigma)
-        validate_genotype(child_genotype, "neuron parameters mutation created invalid genotype")
-
-        # apply structural mutations:
-        self.apply_structural_mutation(child_genotype)
-
-        return child_genotype
+    #     # log important information:
+    #     if logging_callback:
+    #         self.exec_logging_callback(logging_callback, brain_velocity_list)
 
 
-    def apply_structural_mutation(self, genotype):
+   
 
-        # apply augmentation mutation:
-        if random.random() < self.structural_augmentation_probability:
+    # def select_for_tournament(self, candidates):
 
-            # if no connections, add connection
-            if len(genotype.connection_genes) == 0:
-                self.mutator.add_connection_mutation(genotype) #, self.mutator.new_connection_sigma)
-                validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
-
-            # otherwise add connection or neuron with equal probability
-            else:
-                if random.random() < 0.5:
-                    self.mutator.add_connection_mutation(genotype) #, self.mutator.new_connection_sigma)
-                    validate_genotype(genotype, "inserting new CONNECTION created invalid genotype")
-
-                else:
-                    self.mutator.add_neuron_mutation(genotype)
-                    validate_genotype(genotype, "inserting new NEURON created invalid genotype")
-
-
-        # apply removal mutation:
-        if random.random() < self.structural_removal_probability:
-            if random.random() < 0.5:
-                self.mutator.remove_connection_mutation(genotype)
-                validate_genotype(genotype, "removing a CONNECTION created invalid genotype")
-            else:
-                self.mutator.remove_neuron_mutation(genotype)
-                validate_genotype(genotype, "removing a NEURON created invalid genotype")
-
-
-
-    def select_for_tournament(self, candidates):
-
-        selected = sorted(random.sample(candidates, self.tournament_size), key = lambda elem: elem[1], reverse=True)
-        return selected
+    #     selected = sorted(random.sample(candidates, self.tournament_size), key = lambda elem: elem[1], reverse=True)
+    #     return selected
 
 
     def exec_logging_callback(self, logging_callback, brain_velocity_list, vector_list=None):
