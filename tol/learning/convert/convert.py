@@ -67,8 +67,6 @@ class NeuralNetworkParser:
 
 
 
-
-
     def brain_to_genotype(self, pb_brain, mutator):
 
         pb_neurons = pb_brain.neuron

@@ -82,7 +82,7 @@ def get_neuron_genes(neurons):
     neuron_genes = []
     for neuron_info in neurons:
         Id = neuron_info.get('id', False) or neuron_info['neuron_id']
-        neuron_type = neuron_info.get('type', False) or neuron_info['neuron_type']
+        neuron_type = neuron_info.get('gene_type', False) or neuron_info['neuron_type']
         layer = neuron_info['layer']
         part_id = neuron_info['part_id']
         params = neuron_info['params']

@@ -313,8 +313,6 @@ class RobotLearner:
 
     def share_fitness(self):
         new_fitness = {}
-        # with open('/home/dmitry/projects/debug/gene_dissim/gene_dissim_{0}.log'.format(
-            # self.generation_number), 'w') as out_f:
 
         for cur_brain, cur_fitness in self.brain_fitness.items():
             species_size = 1
@@ -340,10 +338,10 @@ class RobotLearner:
 
     def produce_new_generation(self, logging_callback = None):
         # this is list with shared fitnesses:
-        brain_fitness_list = [(br, fit) for br, fit in self.brain_fitness.items()]
+        brain_fitness_list = self.brain_fitness.items()
 
         # this is list with unshared fitnesses:
-        brain_velocity_list = [(br, velo) for br, velo in self.brain_velocity.items()]
+        brain_velocity_list = in self.brain_velocity.items()
 
         
         # sort parents from best to worst:
