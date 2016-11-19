@@ -15,5 +15,5 @@
 # Pass this file into the --test-bot argument: --test-bot "../testBots/my_robot_body_diff_single"
 # Using this as a starting brain for NEAT, rather than a completely empty brain, will make initial learning much faster
  
-python start.py --output-directory output --restore-directory restore --population-size 5 --num-children 4 --tournament-size 4 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/spider_diff_single" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.8
+python start.py --output-directory output --restore-directory restore --population-size 50 --num-children 45 --tournament-size 40 --evaluation-time 30 --warmup-time 3 --speciation-threshold 0.0 --test-bot "../testBots/spider_diff_single" --max-generations 50 --repeat-evaluations 1 --structural-augmentation-probability 0.8 --online
 

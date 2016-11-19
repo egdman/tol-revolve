@@ -42,6 +42,9 @@ from tol.util import random_rotation, rotate_vertical
 
 import logging
 
+from neat import GeneticEncoding
+import yaml
+
 
 # Log output to console
 output_console()
@@ -140,11 +143,12 @@ def run():
     if genotype_yaml:
 
         # convert YAML stream to genotype:
-        brain_genotype = yaml_to_genotype(genotype_yaml, brain_spec)
+        # brain_genotype = yaml_to_genotype(genotype_yaml, brain_spec)
+        brain_genotype = GeneticEncoding().from_yaml(yaml.load(genotype_yaml))
 
         if conf.online:
-            # brain_pb = robot_pb.brain
-            brain_pb = nn_parser.genotype_to_brain(brain_genotype)
+            brain_pb = robot_pb.brain
+            # brain_pb = nn_parser.genotype_to_brain(brain_genotype)
         else: 
             # convert genotype to protobuf brain:   
             brain_pb = nn_parser.genotype_to_brain(brain_genotype)

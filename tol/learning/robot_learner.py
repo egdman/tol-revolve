@@ -4,6 +4,7 @@ import trollius
 from trollius import From, Return, Future
 from collections import deque
 import random
+from operator import itemgetter
 
 # sdfbuilder
 from sdfbuilder.math import Vector3
@@ -310,7 +311,10 @@ class RobotLearner:
 
     def exec_logging_callback(self, logging_callback, brain_velocity_list, vector_list=None):
 
+        brain_velocity_list = sorted(brain_velocity_list, key=itemgetter(1), reverse=True)
+
         log_data = {}
+
 
         # Log best 3 genotypes in this generation:`
         best_genotypes_string = ""
