@@ -241,10 +241,8 @@ def run():
         init_brain_list = None
 
         if (os.path.isdir(path_to_log_dir)):
-            gen_files = [fname for fname in os.listdir(path_to_log_dir) if fnmatch.fnmatch(file_name, "gen_*_genotypes.log")]
-            # for file_name in os.listdir(path_to_log_dir):
-            #     if fnmatch.fnmatch(file_name, "gen_*_genotypes.log"):
-            #         gen_files.append(file_name)
+            gen_files = list(fname for fname in os.listdir(path_to_log_dir) if \
+                fnmatch.fnmatch(fname, "gen_*_genotypes.log"))
 
         # if we are reading an initial population from a file:
         if len(gen_files) > 0:
@@ -252,7 +250,7 @@ def run():
             gen_files = sorted(gen_files, key=lambda item: int(item.split('_')[1]))
             last_gen_file = gen_files[-1]
 
-            num_generations = int(last_gen_file.split('_')[1]) + 1
+            num_generations = int(last_gen_file.split('_')[1]) # + 1
             num_brains_evaluated = conf.population_size * num_generations
 
             print "last generation file = {0}".format(last_gen_file)

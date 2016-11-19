@@ -256,13 +256,13 @@ class RobotLearner:
 
                     self.evaluation_queue = \
                         deque(self.evolution.produce_new_generation(self.brain_velocity.items()))
-                    self.generation_number += 1
 
                     # do logging stuff
                     if logging_callback:
                         self.exec_logging_callback(logging_callback, self.brain_velocity.items())
 
                     self.brain_velocity.clear()
+                    self.generation_number += 1
 
 
 

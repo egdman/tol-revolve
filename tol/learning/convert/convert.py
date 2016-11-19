@@ -154,14 +154,14 @@ class NeuralNetworkParser:
 
                 pb_neuron = pb_brain.neuron.add()
 
-                pb_neuron.type      = neuron_gene.neuron_type
+                pb_neuron.type      = neuron_gene.gene_type
 
                 pb_neuron.id        = neuron_params.pop('id')
                 pb_neuron.layer     = neuron_params.pop('layer')
                 pb_neuron.partId    = neuron_params.pop('part_id')
 
                 # serialize the remaining params and put them into the protobuf 'param' attribute
-                neuron_spec = self.spec.get(neuron_gene.neuron_type)
+                neuron_spec = self.spec.get(neuron_gene.gene_type)
                 serialized_params = neuron_spec.serialize_params(neuron_params)
 
                 # add parameter names and values
