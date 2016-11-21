@@ -72,7 +72,7 @@ class RobotLearner:
         connection_param_mut_proba = conf.weight_mutation_probability,
         structural_augmentation_proba = conf.structural_augmentation_probability,
         structural_removal_proba = conf.structural_removal_probability,
-        speciation_threshold = conf.speciation_threshold
+        speciation_threshold = conf.speciation_threshold,
         )
         self.evolution = NEAT(mutator=mutator, **evo_conf)
 
