@@ -19,13 +19,8 @@ from revolve.convert.yaml import yaml_to_robot
 from revolve.angle import Tree
 
 #ToL
-from ..config import parser
 from ..manage import World
 from ..logging import logger, output_console
-from ..spec import get_body_spec, get_brain_spec
-
-from .robot_learner import RobotLearner, RobotLearnerOnline
-
 
 
 
@@ -224,7 +219,7 @@ class LearningManager(World):
 
             for learner, log_name in self.learners.items():
                 if log_name is not None:
-                    log_callback = lambda log_data: self.log_info(log_data, log_name)
+                    log_callback = lambda log_data, log_name=log_name: self.log_info(log_data, log_name)
                 else:
                     log_callback = None
                 result = yield From(learner.update(self, log_callback))
@@ -238,5 +233,3 @@ class LearningManager(World):
 
             # this line is important!
             yield From(trollius.sleep(0.1))
-
-

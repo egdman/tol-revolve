@@ -1,4 +1,3 @@
-import sys
 import math
 import trollius
 from trollius import From, Return, Future
@@ -8,24 +7,19 @@ from operator import itemgetter
 
 # sdfbuilder
 from sdfbuilder.math import Vector3
-from sdfbuilder import Pose, Model, Link, SDF
+from sdfbuilder import Pose
 
 # Revolve
 from revolve.util import multi_future, wait_for
 from revolve.angle import Tree
 
 # ToL
-# from .encoding import Crossover, GeneticEncoding, validate_genotype
 from .convert import NeuralNetworkParser
 from ..util import StateSwitch, rotate_vertical
 
 # NEAT
 from neat import NEAT, validate_genotype
 
-
-def validate_genotype(genotype, error_msg):
-    if not genotype.check_validity():
-        raise RuntimeError(error_msg + '\n' + str(genotype))
 
 
 class RobotLearner:
@@ -315,12 +309,11 @@ class RobotLearner:
 
         log_data = {}
 
-
         # Log best 3 genotypes in this generation:`
         best_genotypes_string = ""
         best_genotypes_string += "- generation : {0}\n".format(self.generation_number)
 
-        for i in range(3):
+        for i in range( min(3, len(brain_velocity_list)) ):
             best_genotypes_string += "  - velocity : {0}\n".format(brain_velocity_list[i][1])
             best_genotypes_string += '    '
             best_genotypes_string += brain_velocity_list[i][0].to_yaml().replace('\n', '\n    ')
@@ -385,12 +378,6 @@ class RobotLearner:
 
 
 
-
-
-
-
-
-
 class RobotLearnerOnline(RobotLearner):
 
     @trollius.coroutine
@@ -433,6 +420,3 @@ class SoundGaitLearner(RobotLearner):
         current_distance = math.sqrt(pow(current_position[0] - self.sound_source_pos[0], 2) + \
                                  pow(current_position[1] - self.sound_source_pos[1], 2))
         self.fitness = self.init_distance - current_distance
-
-
-

@@ -1,10 +1,7 @@
 import argparse
-
-from .convert import yaml_to_genotype
-from ..spec import get_brain_spec
-
 import yaml
 
+from ..spec import get_brain_spec
 from neat import GeneticEncoding
 
 
@@ -20,21 +17,6 @@ def get_brains_from_file(brain_file_path, brain_spec):
 
     yaml_list = yaml.load(yaml_str)
     brain_list = list(GeneticEncoding().from_yaml(yaml_brain) for yaml_brain in yaml_list)
-
-
-    # brain_list = []
-    # with open(brain_file_path, 'r') as brain_file:
-    #     yaml_string = ''
-    #     for line in brain_file:
-    #         if 'velocity' in line:
-    #             if yaml_string != '':
-    #                 # brain_list.append(yaml_to_genotype(yaml_string, brain_spec, keep_historical_marks=True))
-    #                 brain_list.append(GeneticEncoding().from_yaml(yaml_string))
-    #                 yaml_string = ''
-    #             continue
-    #         yaml_string += line
-    #     # brain_list.append(yaml_to_genotype(yaml_string, brain_spec, keep_historical_marks=True))
-    #     brain_list.append(GeneticEncoding().from_yaml(yaml_string))
 
 
     # find min and max historical marks:
