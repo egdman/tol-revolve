@@ -155,6 +155,9 @@ def run():
     # create the learning manager
     world = yield From(LearningManager.create(conf))
 
+    # set drive direction
+    yield From(world.set_drive_direction(0.5, 0.75, 0.))
+
     path_to_log_dir = os.path.join(world.path_to_log_dir, "learner1")
     body_spec = get_body_spec(conf)
 

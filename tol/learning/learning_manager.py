@@ -8,6 +8,7 @@ import trollius
 from trollius import From, Return, Future
 from pygazebo.msg.request_pb2 import Request
 from pygazebo.msg.response_pb2 import Response
+from pygazebo.msg.vector3d_pb2 import Vector3d
 
 # sdfbuilder
 from sdfbuilder.math import Vector3
@@ -17,6 +18,7 @@ from sdfbuilder import Pose
 from revolve.util import wait_for
 from revolve.convert.yaml import yaml_to_robot
 from revolve.angle import Tree
+from revolve.gazebo import MessagePublisher
 
 #ToL
 from ..manage import World
@@ -70,6 +72,28 @@ class LearningManager(World):
                 self.write_fitness = csv.writer(self.fitness_file, delimiter=',')
                 self.write_fitness.writerow(['t_sim', 'robot_id', 'age', 'displacement',
                                              'vel', 'dvel', 'fitness'])
+
+
+
+    def _init(self):
+        yield From(super(LearningManager, self)._init())
+
+        # create publisher for the drive direction updates
+        self.drive_publisher = yield From(MessagePublisher.create(
+            self.manager,
+            '/gazebo/default/revolve/drive_direction_update',
+            'gazebo.msgs.Vector3d'))
+
+
+
+    @trollius.coroutine
+    def set_drive_direction(self, x, y, z):
+        '''
+        publish message containing Vector3d.proto object
+        '''
+        msg = Vector3d(x=x, y=y, z=z)
+        yield From(self.drive_publisher.publish(msg))
+
 
 
     def get_world_time(self):
@@ -178,7 +202,6 @@ class LearningManager(World):
 
 
 
-
     @trollius.coroutine
     def modify_brain(self, msg, robot_name):
         fut = Future()
@@ -186,6 +209,7 @@ class LearningManager(World):
         pub = self.nn_publishers[robot_name]
         yield From(pub.publish(msg))
         raise Return(fut)
+
 
 
     def is_request_satisfied(self, robot_name):
