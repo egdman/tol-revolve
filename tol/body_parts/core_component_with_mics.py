@@ -56,13 +56,18 @@ class CoreComponentWithMics(CoreComponent):
         # The second argument ("logical_camera") is the type of the sensor that is checked in SensorFactory.cpp.
         # Any existing type of gazebo sensors can be used. I don't know how to register my own sensor type
         # in gazebo yet.
-        mic_1 = SdfSensor("sound_sensor_1", "logical_camera", pose=mic_pose_1, update_rate=self.conf.sensor_update_rate)
-        mic_2 = SdfSensor("sound_sensor_2", "logical_camera", pose=mic_pose_2, update_rate=self.conf.sensor_update_rate)
-        mic_3 = SdfSensor("sound_sensor_3", "logical_camera", pose=mic_pose_3, update_rate=self.conf.sensor_update_rate)
-        mic_4 = SdfSensor("sound_sensor_4", "logical_camera", pose=mic_pose_4, update_rate=self.conf.sensor_update_rate)
+        # mic_1 = SdfSensor("sound_sensor_1", "logical_camera", pose=mic_pose_1, update_rate=self.conf.sensor_update_rate)
+        # mic_2 = SdfSensor("sound_sensor_2", "logical_camera", pose=mic_pose_2, update_rate=self.conf.sensor_update_rate)
+        # mic_3 = SdfSensor("sound_sensor_3", "logical_camera", pose=mic_pose_3, update_rate=self.conf.sensor_update_rate)
+        # mic_4 = SdfSensor("sound_sensor_4", "logical_camera", pose=mic_pose_4, update_rate=self.conf.sensor_update_rate)
+
+
+        mic_1 = SdfSensor("sound_sensor_1", "direction", pose=mic_pose_1, update_rate=self.conf.sensor_update_rate)
+        mic_2 = SdfSensor("sound_sensor_2", "direction", pose=mic_pose_2, update_rate=self.conf.sensor_update_rate)
+        mic_3 = SdfSensor("sound_sensor_3", "direction", pose=mic_pose_3, update_rate=self.conf.sensor_update_rate)
+        mic_4 = SdfSensor("sound_sensor_4", "direction", pose=mic_pose_4, update_rate=self.conf.sensor_update_rate)
 
         self.link.add_sensor(mic_1)
         self.link.add_sensor(mic_2)
         self.link.add_sensor(mic_3)
         self.link.add_sensor(mic_4)
-

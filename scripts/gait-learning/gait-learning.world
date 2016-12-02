@@ -39,5 +39,6 @@
     </include>
 
     <plugin name="tol-control" filename="libtolworldcontrol.so" />
+    
   </world>
 </sdf>

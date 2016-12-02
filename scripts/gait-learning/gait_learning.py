@@ -27,7 +27,6 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
 from tol.config import parser
 from tol.logging import logger, output_console
 from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline
-# from tol.learning.encoding import Mutator, get_default_mutation_spec
 from tol.learning import get_brains_from_file
 from tol.spec import (get_body_spec, get_brain_spec, get_extended_brain_spec,
                       get_extended_mutation_spec)
@@ -104,36 +103,12 @@ parser.add_argument(
     help='when this flag is set, the online gait learning mode is used instead of the offline mode'
 )
 
-# parser.add_argument(
-#     '--pso-local-coef',
-#     type=float,
-#     default=0,
-#     help='coefficient for the local pso component')
-
-# parser.add_argument(
-#     '--pso-global-coef',
-#     type=float,
-#     default=0,
-#     help='coefficient for the global pso component')
-
-# parser.add_argument(
-#     '--pso-temperature',
-#     type=float,
-#     default=0,
-#     help='temperature value for PSO')
-
 
 parser.add_argument(
     '--asexual',
     action='store_true',
     help='when this flag is set, the reproduction is asexual'
 )
-
-# parser.add_argument(
-#     '--extended',
-#     action='store_true',
-#     help='when this flag is set, the neuron types from the extended spec are available'
-# )
 
 
 parser.add_argument(
@@ -174,6 +149,9 @@ def run():
     conf.initial_age_sigma = 1
     conf.age_cutoff = 99999
 
+    conf.sensor_update_rate = 10.
+
+
     # create the learning manager
     world = yield From(LearningManager.create(conf))
 
@@ -184,28 +162,14 @@ def run():
     brain_spec = get_extended_brain_spec(conf)
 
 
-    # # mutation spec that contains info about what types of neurons can be added
-    # # and what parameters of neurons can be mutated
-    # mut_spec = get_default_mutation_spec(brain_spec)
-
-    # # Use only Simple and Sigmoid and Differential neurons:
-    # types_of_new_neurons = filter(lambda item: 
-    #     item == "Simple" or item == "Sigmoid" or item == 'DifferentialCPG', mut_spec['types'])
-
-    # # # Use only Simple and Sigmoid and Oscillator neurons:
-    # # types_of_new_neurons = filter(lambda item:
-    # #     item == "Simple" or item == "Sigmoid" or item == 'Oscillator', mut_spec['types'])
-
-    # mut_spec['types'] = types_of_new_neurons
-
-    # print "New types: {0}".format(mut_spec['types'])
-
-    # mutator = Mutator(brain_spec, mutation_spec=mut_spec)
-
-
-
+    # mutation spec that contains info about what types of neurons can be added
+    # and what parameters of neurons can be mutated
     mut_spec = get_extended_mutation_spec(conf.param_mutation_sigma, conf.weight_mutation_sigma)
-    allowed_types = ["Simple", "Sigmoid", "DifferentialCPG"]
+
+    # allowed_types = ["Simple", "Sigmoid", "DifferentialCPG"]
+    # allowed_types = ["Simple", "Sigmoid"]
+    allowed_types = ["Simple"]
+    
     mutator = Mutator(mut_spec, allowed_neuron_types = allowed_types)
 
 

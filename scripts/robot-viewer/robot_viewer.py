@@ -34,7 +34,7 @@ from tol.config import parser
 from tol.logging import logger, output_console
 from tol.spec import get_body_spec, get_extended_brain_spec
 
-from tol.learning.convert import NeuralNetworkParser, yaml_to_genotype
+from tol.learning.convert import NeuralNetworkParser
 
 from tol.learning import LearningManager as World
 
