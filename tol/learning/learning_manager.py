@@ -77,15 +77,16 @@ class LearningManager(World):
                                              'vel', 'dvel', 'fitness'])
 
 
+
     @trollius.coroutine
     def set_drive_direction(self, x, y, z):
         '''
-        publish message containing Vector3d.proto object
+        publish message containing a Vector3d protobuf object
         '''
         msg = Vector3d(x=x, y=y, z=z)
 
         if self.drive_publisher is None:
-            # create publisher for the drive direction updates
+            # create publisher for drive direction updates
             self.drive_publisher = yield From(MessagePublisher.create(
                 self.manager,
                 '/gazebo/default/revolve/drive_direction_update',
@@ -94,24 +95,13 @@ class LearningManager(World):
         yield From(self.drive_publisher.publish(msg))
 
 
+
     def get_world_time(self):
         if self.last_time:
             return self.last_time
         else:
             return 0.0
 
-
-    @classmethod
-    @trollius.coroutine
-    def create(cls, conf):
-        """
-        Coroutine to instantiate a Revolve.Angle WorldManager
-        :param conf:
-        :return:
-        """
-        self = cls(_private=cls._PRIVATE, conf=conf)
-        yield From(self._init())
-        raise Return(self)
 
 
     @trollius.coroutine

@@ -220,11 +220,11 @@ class RobotLearner:
 
         elif state == 'next_brain':
 
-            # print("Evaluation over")
-            # print("%%%%%%%%%%%%%%%%%%\n\nEvaluated {0} brains".format(str(self.total_brains_evaluated+1)))
-            # print("queue length = {0}".format(len(self.evaluation_queue)))
-            # print("distance covered: {0}".format(self.fitness ))
-            # print("evaluation time was {0}s\n\n%%%%%%%%%%%%%%%%%%".format(self.evaluation_time_actual))
+            print("Evaluation over")
+            print("%%%%%%%%%%%%%%%%%%\n\nEvaluated {0} brains".format(str(self.total_brains_evaluated+1)))
+            print("queue length = {0}".format(len(self.evaluation_queue)))
+            print("distance covered: {0}".format(self.fitness ))
+            print("evaluation time was {0}s\n\n%%%%%%%%%%%%%%%%%%".format(self.evaluation_time_actual))
 
             self.fitness_buffer.append(self.fitness / self.evaluation_time_actual)
 
@@ -381,7 +381,7 @@ class RobotLearner:
 
 
 
-
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
 class RobotLearnerOnline(RobotLearner):
 
     @trollius.coroutine
@@ -400,6 +400,87 @@ class RobotLearnerOnline(RobotLearner):
 
 
 
+
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
+from pygazebo.msg.request_pb2 import Request
+
+class RobotLearnerOnlineRefac(RobotLearnerOnline):
+
+    def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
+        self.finished = False
+        self.eval_over = False
+        RobotLearnerOnline.__init__(self, world, robot, insert_position,
+                                    body_spec, brain_spec, mutator, conf)
+
+
+
+    @trollius.coroutine
+    def initialize(self, world, init_genotypes=None):
+        yield From(RobotLearnerOnline.initialize(self, world, init_genotypes))
+
+        self.fitness_subscr = (
+            world.manager.subscribe(
+                topic_name='/gazebo/default/{0}/fitness'.format(self.robot.name),
+                msg_type='gazebo.msgs.Request',
+                callback=self.fitness_evaluated_callback
+            )
+        )
+        yield From(self.fitness_subscr.wait_for_connection())
+
+
+    def fitness_evaluated_callback(self, data):
+        msg = Request()
+        msg.ParseFromString(data)
+        fitness = msg.dbl_data
+
+        self.brain_velocity[self.active_brain] = fitness
+        self.eval_over = True
+
+
+
+    @trollius.coroutine
+    def update(self, world, logging_callback=None):
+        if self.eval_over:
+            # pause world
+            yield From(wait_for(world.pause(True)))
+
+            print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            print("Brain evaluation is over, result = {:.7f}".format(
+                self.brain_velocity[self.active_brain]))
+            print("Evaluated {0} brains".format(str(self.total_brains_evaluated+1)))
+            print("queue length = {0}\n".format(len(self.evaluation_queue))) 
+
+            # if all brains are evaluated, produce new generation:
+            if len(self.evaluation_queue) == 0:
+
+                self.evaluation_queue = \
+                    deque(self.evolution.produce_new_generation(self.brain_velocity.items()))
+
+                # do logging stuff
+                if logging_callback:
+                    self.exec_logging_callback(logging_callback, self.brain_velocity.items())
+
+                self.brain_velocity.clear()
+                self.generation_number += 1
+                print("GENERATION #{}".format(self.generation_number))
+
+
+            next_brain = self.evaluation_queue[0]
+            yield From(self.activate_brain(world, next_brain))
+            # -----------------------------------------------------------------------------------
+            # if we are past this line, the simulator did not crash while inserting a new brain
+            # -----------------------------------------------------------------------------------
+            self.eval_over = False
+            self.evaluation_queue.popleft()
+            self.total_brains_evaluated += 1
+            if self.generation_number >= self.max_generations: self.finished = True
+
+        raise Return(self.finished)
+
+
+
+
+#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
 class SoundGaitLearner(RobotLearner):
     def __init__(self, world, robot, body_spec, brain_spec, mutator, conf):
         # coordinates of the sound source:

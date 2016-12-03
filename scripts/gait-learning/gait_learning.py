@@ -24,7 +24,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
 #ToL
 from tol.config import parser
 from tol.logging import logger, output_console
-from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline
+from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline, RobotLearnerOnlineRefac
 from tol.learning import get_brains_from_file
 
 from tol.spec import (
@@ -159,7 +159,7 @@ def run():
 
     # create the learning manager
     world = yield From(LearningManager.create(conf))
-
+    yield From(world.pause(True))
 
     path_to_log_dir = os.path.join(world.path_to_log_dir, "learner1")
 
@@ -190,7 +190,7 @@ def run():
         robot = yield From(wait_for(world.insert_robot(tree, pose)))
 
         if conf.online:
-            learner = RobotLearnerOnline(world=world,
+            learner = RobotLearnerOnlineRefac(world=world,
                                    robot=robot,
                                    insert_position=Vector3(0, 0, 0.2),
                                    body_spec=body_spec,
