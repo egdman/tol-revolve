@@ -115,7 +115,6 @@ class RobotLearner:
 
 
 
-
     def get_init_brains(self):
 
         '''
@@ -128,8 +127,8 @@ class RobotLearner:
 
         # FOR DEBUG
         ##########################################
-        print "initial genotype:"
-        print init_genotype
+        print("initial genotype:")
+        print(init_genotype)
         ##########################################
         init_pop = self.evolution.produce_init_generation(init_genotype)
         return init_pop
@@ -168,7 +167,7 @@ class RobotLearner:
             # create and insert robot with new brain:
             tree = Tree.from_body_brain(pb_body, pb_brain, self.body_spec)
         except Exception as ex:
-            print brain_genotype
+            print(brain_genotype)
             raise ex
 
         pose = Pose(position=self.insert_pos,
@@ -211,7 +210,7 @@ class RobotLearner:
         state = self.state_switch.update(world.get_world_time())
 
         # if old_state != state:
-        #     print 'state: {0}, time = {1}, fitness = {2}'.format(state, world.get_world_time(), self.get_fitness())
+        #     print('state: {0}, time = {1}, fitness = {2}'.format(state, world.get_world_time(), self.get_fitness()))
 
         if state == 'warmup':
             self.reset_fitness()
@@ -221,14 +220,18 @@ class RobotLearner:
 
         elif state == 'next_brain':
 
-            print "Evaluation over"
-
-            print "%%%%%%%%%%%%%%%%%%\n\nEvaluated {0} brains".format(str(self.total_brains_evaluated+1))
-            print "queue length = {0}".format(len(self.evaluation_queue))
-            print "distance covered: {0}".format(self.fitness )
-            print "evaluation time was {0}s\n\n%%%%%%%%%%%%%%%%%%".format(self.evaluation_time_actual)
+            # print("Evaluation over")
+            # print("%%%%%%%%%%%%%%%%%%\n\nEvaluated {0} brains".format(str(self.total_brains_evaluated+1)))
+            # print("queue length = {0}".format(len(self.evaluation_queue)))
+            # print("distance covered: {0}".format(self.fitness ))
+            # print("evaluation time was {0}s\n\n%%%%%%%%%%%%%%%%%%".format(self.evaluation_time_actual))
 
             self.fitness_buffer.append(self.fitness / self.evaluation_time_actual)
+
+
+            # set another drive direction
+            yield From(world.set_drive_direction(0.5, 0.75, 0.))
+
 
             # if repeated brain evaluation is not over
             if len(self.fitness_buffer) < self.repeat_evaluations:
@@ -243,7 +246,7 @@ class RobotLearner:
                 aver_fitness = sum(self.fitness_buffer) / float(len(self.fitness_buffer))
                 self.brain_velocity[self.active_brain] = aver_fitness
 
-                print "Brain evaluations are over, average result = {0} ".format(aver_fitness)
+                print("Brain evaluations are over, average result = {0} ".format(aver_fitness))
 
 
                 # if all brains are evaluated, produce new generation:
@@ -258,14 +261,15 @@ class RobotLearner:
 
                     self.brain_velocity.clear()
                     self.generation_number += 1
+                    print("GENERATION #{}".format(self.generation_number))
 
 
 
                 # continue evaluating brains from the queue:
                 next_brain = self.evaluation_queue[0]
 
-            # make snapshot:
-            yield From(world.create_snapshot())
+            # # make snapshot (disable when learning is online, crashes only happen when offline):
+            # yield From(world.create_snapshot())
 
             # insert the next brain:
             yield From(self.activate_brain(world, next_brain))

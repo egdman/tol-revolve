@@ -10,8 +10,6 @@ from trollius.py33_exceptions import ConnectionResetError, ConnectionRefusedErro
 # Trollius / Pygazebo
 import trollius
 from trollius import From, Return, Future
-from pygazebo.msg.request_pb2 import Request
-
 
 from sdfbuilder.math import Vector3
 from sdfbuilder import Pose
@@ -28,8 +26,13 @@ from tol.config import parser
 from tol.logging import logger, output_console
 from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline
 from tol.learning import get_brains_from_file
-from tol.spec import (get_body_spec, get_brain_spec, get_extended_brain_spec,
-                      get_extended_mutation_spec)
+
+from tol.spec import (
+    get_body_spec,
+    get_brain_spec,
+    get_extended_brain_spec,
+    get_extended_mutation_spec
+)
 
 from neat import Mutator
 
@@ -71,7 +74,7 @@ parser.add_argument(
 parser.add_argument(
     '--test-bot',
     type=str,
-    help="path to file containing robot morphology to test learning on"
+    help="path to file containing robot morphology to use"
 )
 
 parser.add_argument(
@@ -139,6 +142,10 @@ def run():
     # this is the world state update frequency in simulation Hz
     conf.pose_update_frequency = 5 # in simulation Hz
 
+    # update frequency of sensors in simulation Hz (default 10Hz)
+    # conf.sensor_update_rate = 10.
+
+
     # these are irrelevant parameters but we need to set them anyway,
     # otherwise it won't work
     conf.min_parts = 1
@@ -149,26 +156,20 @@ def run():
     conf.initial_age_sigma = 1
     conf.age_cutoff = 99999
 
-    conf.sensor_update_rate = 10.
-
 
     # create the learning manager
     world = yield From(LearningManager.create(conf))
 
-    # set drive direction
-    yield From(world.set_drive_direction(0.5, 0.75, 0.))
 
     path_to_log_dir = os.path.join(world.path_to_log_dir, "learner1")
+
     body_spec = get_body_spec(conf)
-
-
     brain_spec = get_extended_brain_spec(conf)
 
-
-    # mutation spec that contains info about what types of neurons can be added
-    # and what parameters of neurons can be mutated
+    # mutation spec contains info about what parameters of neurons can be mutated
     mut_spec = get_extended_mutation_spec(conf.param_mutation_sigma, conf.weight_mutation_sigma)
 
+    # what types of neurons can be added to the network
     # allowed_types = ["Simple", "Sigmoid", "DifferentialCPG"]
     # allowed_types = ["Simple", "Sigmoid"]
     allowed_types = ["Simple"]
@@ -220,13 +221,13 @@ def run():
             num_generations = int(last_gen_file.split('_')[1]) # + 1
             num_brains_evaluated = conf.population_size * num_generations
 
-            print "last generation file = {0}".format(last_gen_file)
+            print("last generation file = {0}".format(last_gen_file))
 
             # get list of brains from the last generation log file:
             init_brain_list, min_mark, max_mark = \
                 get_brains_from_file(os.path.join(path_to_log_dir, last_gen_file), brain_spec)
 
-            print "Max historical mark = {0}".format(max_mark)
+            print("Max historical mark = {0}".format(max_mark))
 
             # set mutator's innovation number according to the max historical mark:
             mutator.innovation_number = max_mark + 1
@@ -236,7 +237,7 @@ def run():
 
         # initialize learner with initial list of brains:
         yield From(world.add_learner(learner, "learner1", init_brain_list))
-        print learner.parameter_string()
+        print(learner.parameter_string())
 
         # log experiment parameter values:
         create_param_log_file(conf, learner.generation_number, os.path.join(path_to_log_dir, "parameters.log"))
@@ -245,10 +246,10 @@ def run():
 
     # if we are restoring a saved state:
     else:
-        print "WORLD RESTORED FROM {0}".format(world.world_snapshot_filename)
-        print "STATE RESTORED FROM {0}".format(world.snapshot_filename)
+        print("WORLD RESTORED FROM {0}".format(world.world_snapshot_filename))
+        print("STATE RESTORED FROM {0}".format(world.snapshot_filename))
 
-    print "WORLD CREATED"
+    print("WORLD CREATED")
     yield From(world.run())
 
 
@@ -260,7 +261,7 @@ def create_param_log_file(conf, cur_generation, filename):
 
 
 def main():
-    print "START"
+    print("START")
 
     def handler(loop, context):
         exc = context['exception']
@@ -276,7 +277,7 @@ def main():
 #        logging.basicConfig(level=logging.DEBUG)
         loop.set_exception_handler(handler)
         loop.run_until_complete(run())
-        print "EXPERIMENT FINISHED"
+        print("EXPERIMENT FINISHED")
 
     except KeyboardInterrupt:
         print("Got Ctrl+C, shutting down.")

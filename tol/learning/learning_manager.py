@@ -60,6 +60,9 @@ class LearningManager(World):
         # subscribers that listen to responses about successful neural network modifications:
         self.nn_subscribers = {}
 
+        # publisher that sends drive_direction_update messages
+        self.drive_publisher = None
+
         if self.output_directory:
             self.fitness_filename = os.path.join(self.output_directory, 'fitness.csv')
 
@@ -74,26 +77,21 @@ class LearningManager(World):
                                              'vel', 'dvel', 'fitness'])
 
 
-
-    def _init(self):
-        yield From(super(LearningManager, self)._init())
-
-        # create publisher for the drive direction updates
-        self.drive_publisher = yield From(MessagePublisher.create(
-            self.manager,
-            '/gazebo/default/revolve/drive_direction_update',
-            'gazebo.msgs.Vector3d'))
-
-
-
     @trollius.coroutine
     def set_drive_direction(self, x, y, z):
         '''
         publish message containing Vector3d.proto object
         '''
         msg = Vector3d(x=x, y=y, z=z)
-        yield From(self.drive_publisher.publish(msg))
 
+        if self.drive_publisher is None:
+            # create publisher for the drive direction updates
+            self.drive_publisher = yield From(MessagePublisher.create(
+                self.manager,
+                '/gazebo/default/revolve/drive_direction_update',
+                'gazebo.msgs.Vector3d'))
+
+        yield From(self.drive_publisher.publish(msg))
 
 
     def get_world_time(self):
@@ -155,8 +153,6 @@ class LearningManager(World):
                     genotype_log_file.write(data)
 
 
-
-
     @trollius.coroutine
     def delete_robot(self, robot):
         yield From(super(LearningManager, self).delete_robot(robot))
@@ -201,7 +197,6 @@ class LearningManager(World):
         self.nn_subscribers[robot_name] = modify_nn_response_subscriber
 
 
-
     @trollius.coroutine
     def modify_brain(self, msg, robot_name):
         fut = Future()
@@ -211,13 +206,11 @@ class LearningManager(World):
         raise Return(fut)
 
 
-
     def is_request_satisfied(self, robot_name):
         if robot_name in self.pending_requests:
             return False
         else:
             return True
-
 
 
     @trollius.coroutine
@@ -233,7 +226,6 @@ class LearningManager(World):
         # initialize learner with initial list of brains:
         yield From(learner.initialize(world=self, init_genotypes=init_brain_list))
         self.learners[learner] = log_name
-
 
 
     @trollius.coroutine
@@ -252,8 +244,7 @@ class LearningManager(World):
                     del self.learners[learner]
 
             # if there are no learners left, stop the loop
-            if len(self.learners) == 0:
-                break
+            if len(self.learners) == 0: break
 
             # this line is important!
             yield From(trollius.sleep(0.1))
