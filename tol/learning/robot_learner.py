@@ -16,6 +16,7 @@ from revolve.angle import Tree
 # ToL
 from .convert import NeuralNetworkParser
 from ..util import StateSwitch, rotate_vertical
+from ..logging import logger, output_console
 
 # NEAT
 from neat import NEAT, validate_genotype
@@ -25,7 +26,6 @@ from neat import NEAT, validate_genotype
 class RobotLearner:
 
     def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
-        self.asexual = conf.asexual
         self.robot = robot
         self.insert_pos = insert_position
         self.active_brain = None
@@ -92,6 +92,8 @@ class RobotLearner:
 
         self.max_generations = conf.max_generations
         self.repeat_evaluations = conf.repeat_evaluations
+
+        self.asexual = conf.asexual
 
 
 
@@ -229,8 +231,8 @@ class RobotLearner:
             self.fitness_buffer.append(self.fitness / self.evaluation_time_actual)
 
 
-            # set another drive direction
-            yield From(world.set_drive_direction(0.5, 0.75, 0.))
+            # # set another drive direction
+            # yield From(world.set_drive_direction(0.5, 0.75, 0.))
 
 
             # if repeated brain evaluation is not over
@@ -268,8 +270,8 @@ class RobotLearner:
                 # continue evaluating brains from the queue:
                 next_brain = self.evaluation_queue[0]
 
-            # # make snapshot (disable when learning is online, crashes only happen when offline):
-            # yield From(world.create_snapshot())
+            # make snapshot (disable when learning is online, crashes only happen when offline):
+            yield From(world.create_snapshot())
 
             # insert the next brain:
             yield From(self.activate_brain(world, next_brain))
@@ -444,11 +446,11 @@ class RobotLearnerOnlineRefac(RobotLearnerOnline):
             # pause world
             yield From(wait_for(world.pause(True)))
 
-            print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-            print("Brain evaluation is over, result = {:.7f}".format(
+            # output info to console
+            logger.info("{}/{} : fitness = {:.7f}".format(
+                self.total_brains_evaluated+1,
+                len(self.evaluation_queue),
                 self.brain_velocity[self.active_brain]))
-            print("Evaluated {0} brains".format(str(self.total_brains_evaluated+1)))
-            print("queue length = {0}\n".format(len(self.evaluation_queue))) 
 
             # if all brains are evaluated, produce new generation:
             if len(self.evaluation_queue) == 0:
@@ -462,11 +464,14 @@ class RobotLearnerOnlineRefac(RobotLearnerOnline):
 
                 self.brain_velocity.clear()
                 self.generation_number += 1
-                print("GENERATION #{}".format(self.generation_number))
+                logger.info("GENERATION #{}".format(self.generation_number))
 
 
             next_brain = self.evaluation_queue[0]
             yield From(self.activate_brain(world, next_brain))
+
+            # # make snapshot (disable when learning is online, crashes only happen when offline):
+            # yield From(world.create_snapshot())
             # -----------------------------------------------------------------------------------
             # if we are past this line, the simulator did not crash while inserting a new brain
             # -----------------------------------------------------------------------------------

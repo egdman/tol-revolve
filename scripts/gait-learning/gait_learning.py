@@ -3,6 +3,7 @@ import sys
 import logging
 import fnmatch
 import shutil
+from time import time
 
 from pygazebo.pygazebo import DisconnectError
 from trollius.py33_exceptions import ConnectionResetError, ConnectionRefusedError
@@ -39,7 +40,10 @@ from neat import Mutator
 
 # Log output to console
 output_console()
+
+# # set logging level
 logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.INFO)
 
 
 parser.add_argument(
@@ -262,7 +266,7 @@ def create_param_log_file(conf, cur_generation, filename):
 
 def main():
     print("START")
-
+    start_time = time()
     def handler(loop, context):
         exc = context['exception']
         if isinstance(exc, DisconnectError) or isinstance(exc, ConnectionResetError):
@@ -273,7 +277,7 @@ def main():
 
     try:
         loop = trollius.get_event_loop()
-        loop.set_debug(enabled=True)
+        loop.set_debug(enabled=False)
 #        logging.basicConfig(level=logging.DEBUG)
         loop.set_exception_handler(handler)
         loop.run_until_complete(run())
@@ -283,6 +287,8 @@ def main():
         print("Got Ctrl+C, shutting down.")
     except ConnectionRefusedError:
         print("Connection refused, are the world and the analyzer loaded?")
+
+    print("Experiment duration = {:.1f} seconds".format(time() - start_time))
 
 if __name__ == '__main__':
     main()
