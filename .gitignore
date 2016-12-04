@@ -69,11 +69,13 @@ target/
 # gedit backup files
 *.*~
 
-# learning-test snapshots directory
-scripts/gait-learning/output/*
-
 # emacs backup files
 \#*
 
 # files with .invis suffix
 *.invis
+
+# user directories in robot-viewer
+scripts/robot-viewer/traj
+scripts/robot-viewer/body
+scripts/robot-viewer/brain

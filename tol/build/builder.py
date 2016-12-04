@@ -30,9 +30,31 @@ def get_simulation_robot(robot, name, builder, conf):
 
     apply_surface_parameters(model)
 
+    # add eval times
+    add_eval_durations(model, conf)
+
     sdf = SDF()
     sdf.add_element(model)
     return sdf
+
+
+
+def add_eval_durations(model, conf):
+    if not hasattr(conf, 'evaluation_time') or not hasattr(conf, 'warmup_time'): return
+
+    robot_config = (model
+        .filter_elements(
+            lambda elem: hasattr(elem, 'tag_name') and elem.tag_name == 'rv:robot_config',
+            recursive=True
+        )
+    )
+
+    if len(robot_config) == 0: return
+
+    robot_config = robot_config[0]
+    robot_config.add_element(Element(tag_name='rv:evaluation_time', body=nf(conf.evaluation_time)))
+    robot_config.add_element(Element(tag_name='rv:warmup_time', body=nf(conf.warmup_time)))
+
 
 
 def apply_surface_parameters(model):
