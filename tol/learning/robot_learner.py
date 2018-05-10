@@ -23,7 +23,7 @@ from neat import NEAT, validate_genotype
 
 
 
-class RobotLearner:
+class RobotLearner(object):
 
     def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
         self.robot = robot
@@ -146,7 +146,6 @@ class RobotLearner:
         # pause world:
         yield From(wait_for(world.pause(True)))
         yield From(self.insert_brain(world, brain))
-        # self.active_brain = brain
         # unpause world:
         yield From(wait_for(world.pause(False)))
 
@@ -363,10 +362,17 @@ class RobotLearner:
 
 
 
-
-
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
+from pygazebo.msg.request_pb2 import Request
 class RobotLearnerOnline(RobotLearner):
+
+    def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
+        self.finished = False
+        self.eval_over = False
+        super(RobotLearnerOnline, self).__init__(
+            world, robot, insert_position,
+            body_spec, brain_spec, mutator, conf)
+
 
     @trollius.coroutine
     def insert_brain(self, world, brain_genotype):
@@ -383,24 +389,9 @@ class RobotLearnerOnline(RobotLearner):
         yield From(fut)
 
 
-
-
-#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
-from pygazebo.msg.request_pb2 import Request
-
-class RobotLearnerOnlineRefac(RobotLearnerOnline):
-
-    def __init__(self, world, robot, insert_position, body_spec, brain_spec, mutator, conf):
-        self.finished = False
-        self.eval_over = False
-        RobotLearnerOnline.__init__(self, world, robot, insert_position,
-                                    body_spec, brain_spec, mutator, conf)
-
-
-
     @trollius.coroutine
     def initialize(self, world, init_genotypes=None):
-        yield From(RobotLearnerOnline.initialize(self, world, init_genotypes))
+        yield From(RobotLearner.initialize(self, world, init_genotypes))
 
         self.fitness_subscr = (
             world.manager.subscribe(
@@ -441,6 +432,9 @@ class RobotLearnerOnlineRefac(RobotLearnerOnline):
                 self.active_brain = 0
                 self.evaluation_queue = self.evolution.produce_new_generation(self.brain_velocity)
 
+                _, best_fitness_in_gen = max(self.brain_velocity, key = itemgetter(1))
+                logger.info("best in gen: {}".format(best_fitness_in_gen))
+
                 # do logging stuff
                 if logging_callback:
                     self.exec_logging_callback(logging_callback, self.brain_velocity)
@@ -463,27 +457,27 @@ class RobotLearnerOnlineRefac(RobotLearnerOnline):
 
 
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
-class SoundGaitLearner(RobotLearner):
-    def __init__(self, world, robot, body_spec, brain_spec, mutator, conf):
-        # coordinates of the sound source:
-        self.sound_source_pos = Vector3(0,0,0)
+# class SoundGaitLearner(RobotLearner):
+#     def __init__(self, world, robot, body_spec, brain_spec, mutator, conf):
+#         # coordinates of the sound source:
+#         self.sound_source_pos = Vector3(0,0,0)
 
-        # initial distance from robot to source:
-        self.init_distance = 0
+#         # initial distance from robot to source:
+#         self.init_distance = 0
 
-        RobotLearner.__init__(self, world, robot, body_spec, brain_spec, mutator, conf)
+#         RobotLearner.__init__(self, world, robot, body_spec, brain_spec, mutator, conf)
 
 
-    def set_sound_source_pos(self, position):
-        self.sound_source_pos = position
+#     def set_sound_source_pos(self, position):
+#         self.sound_source_pos = position
 
-    def reset_fitness(self):
-        RobotLearner.reset_fitness(self)
-        self.init_distance = math.sqrt(pow(self.sound_source_pos[0] - self.initial_position[0], 2) + \
-                                 pow(self.sound_source_pos[1] - self.initial_position[1], 2))
+#     def reset_fitness(self):
+#         RobotLearner.reset_fitness(self)
+#         self.init_distance = math.sqrt(pow(self.sound_source_pos[0] - self.initial_position[0], 2) + \
+#                                  pow(self.sound_source_pos[1] - self.initial_position[1], 2))
 
-    def update_fitness(self):
-        current_position = self.robot.last_position
-        current_distance = math.sqrt(pow(current_position[0] - self.sound_source_pos[0], 2) + \
-                                 pow(current_position[1] - self.sound_source_pos[1], 2))
-        self.fitness = self.init_distance - current_distance
+#     def update_fitness(self):
+#         current_position = self.robot.last_position
+#         current_distance = math.sqrt(pow(current_position[0] - self.sound_source_pos[0], 2) + \
+#                                  pow(current_position[1] - self.sound_source_pos[1], 2))
+#         self.fitness = self.init_distance - current_distance
