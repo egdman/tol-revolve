@@ -30,7 +30,7 @@ def get_simulation_robot(robot, name, builder, conf):
 
     apply_surface_parameters(model)
 
-    # add eval times
+    # set durations of evaluation and warmup
     add_eval_durations(model, conf)
 
     sdf = SDF()

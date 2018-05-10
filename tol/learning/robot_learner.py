@@ -337,8 +337,8 @@ class RobotLearner:
         all_genotypes_string = ""
         for i in range(len(brain_velocity_list)):
             velocities_string += "  - {0}\n".format(brain_velocity_list[i][1])
-            neuron_sizes_string += "  - {0}\n".format(brain_velocity_list[i][0].num_neuron_genes())
-            connection_sizes_string += "  - {0}\n".format(brain_velocity_list[i][0].num_connection_genes())
+            neuron_sizes_string += "  - {0}\n".format(len(brain_velocity_list[i][0].neuron_genes))
+            connection_sizes_string += "  - {0}\n".format(len(brain_velocity_list[i][0].connection_genes))
 
             all_genotypes_string += "- velocity : {0}\n".format(brain_velocity_list[i][1])
             all_genotypes_string += "  "

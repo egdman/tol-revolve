@@ -80,10 +80,13 @@ class NeuralNetworkParser:
         id_mark_map = {}
 
         for neuron_id, neuron_type, neuron_params in neuron_map:
+            layer = neuron_params["layer"]
+            is_input = layer == "input"
+            is_output = layer == "output"
 
-            mark = mutator.add_neuron(genotype, neuron_type, **neuron_params)
+            mark = mutator.add_neuron(genotype, neuron_type, protected = is_input or is_output, **neuron_params)
             id_mark_map[neuron_id] = mark
-            if protect: mutator.protect_gene(mark)
+            # if protect: mutator.protect_gene(mark)
 
 
         for pb_connection in pb_connections:
@@ -100,7 +103,7 @@ class NeuralNetworkParser:
                 weight=pb_connection.weight,
                 **other_params
             )
-            if protect: mutator.protect_gene(mark)            
+            # if protect: mutator.protect_gene(mark)
 
         return genotype
 
@@ -148,47 +151,41 @@ class NeuralNetworkParser:
     def _parse_neuron_genes(self, genotype, pb_brain):
 
         for neuron_gene in genotype.neuron_genes:
-            if neuron_gene.enabled:
 
-                neuron_params = neuron_gene.copy_params()
+            neuron_params = neuron_gene.copy_params()
+            pb_neuron = pb_brain.neuron.add()
+            pb_neuron.type      = neuron_gene.gene_type
+            pb_neuron.id        = neuron_params.pop('id')
+            pb_neuron.layer     = neuron_params.pop('layer')
+            pb_neuron.partId    = neuron_params.pop('part_id')
 
-                pb_neuron = pb_brain.neuron.add()
+            # serialize the remaining params and put them into the protobuf 'param' attribute
+            neuron_spec = self.spec.get(neuron_gene.gene_type)
+            serialized_params = neuron_spec.serialize_params(neuron_params)
 
-                pb_neuron.type      = neuron_gene.gene_type
-
-                pb_neuron.id        = neuron_params.pop('id')
-                pb_neuron.layer     = neuron_params.pop('layer')
-                pb_neuron.partId    = neuron_params.pop('part_id')
-
-                # serialize the remaining params and put them into the protobuf 'param' attribute
-                neuron_spec = self.spec.get(neuron_gene.gene_type)
-                serialized_params = neuron_spec.serialize_params(neuron_params)
-
-                # add parameter names and values
-                for param_name, param_value in neuron_params.items():
-                    pb_param = pb_neuron.param.add()
-                    pb_param.name = param_name
-                    pb_param.value = param_value
+            # add parameter names and values
+            for param_name, param_value in neuron_params.items():
+                pb_param = pb_neuron.param.add()
+                pb_param.name = param_name
+                pb_param.value = param_value
 
 
 
     def _parse_connection_genes(self, genotype, pb_brain):
         for conn_gene in genotype.connection_genes:
-            if conn_gene.enabled:
+            mark_from = conn_gene.mark_from
+            mark_to = conn_gene.mark_to
 
-                mark_from = conn_gene.mark_from
-                mark_to = conn_gene.mark_to
+            from_id = genotype.find_gene_by_mark(mark_from).id
+            to_id = genotype.find_gene_by_mark(mark_to).id
 
-                from_id = genotype.find_gene_by_mark(mark_from).id
-                to_id = genotype.find_gene_by_mark(mark_to).id
+            pb_conn = pb_brain.connection.add()
+            pb_conn.src = from_id
+            pb_conn.dst = to_id
+            pb_conn.weight = conn_gene.weight
 
-                pb_conn = pb_brain.connection.add()
-                pb_conn.src = from_id
-                pb_conn.dst = to_id
-                pb_conn.weight = conn_gene.weight
-
-                # add 'socket' property if found in gene
-                try:
-                    pb_conn.socket = conn_gene.socket
-                except AttributeError:
-                    pass
+            # add 'socket' property if found in gene
+            try:
+                pb_conn.socket = conn_gene.socket
+            except AttributeError:
+                pass
