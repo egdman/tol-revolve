@@ -42,12 +42,9 @@ class RobotLearner:
         self.nn_parser = NeuralNetworkParser(brain_spec)
         self.mutator = mutator
 
-
-        self.evaluation_queue = deque()
-
-        self.brain_velocity = {}
+        self.evaluation_queue = []
+        self.brain_velocity = []
         self.generation_number = 0
-
         self.total_brains_evaluated = 0
 
         # set experiment parameters:
@@ -101,19 +98,17 @@ class RobotLearner:
     @trollius.coroutine
     def initialize(self, world, init_genotypes=None):
         # this call establishes minimally viable genome based on robot body morphology
-        brain_population = self.get_init_brains()
+        if init_genotypes:
+            self.evaluation_queue = init_genotypes
+        else:
+            self.evaluation_queue = self.get_init_brains()
 
-        if init_genotypes is not None:
-            brain_population = init_genotypes
-
-        for br in brain_population:
-            validate_genotype(br, "initial generation created invalid genotype")
-            self.evaluation_queue.append(br)
-
-        first_brain = self.evaluation_queue.popleft()
+        for brain in self.evaluation_queue:
+            validate_genotype(brain, "initial generation created invalid genotype")
 
         self.reset_fitness()
-        yield From(self.activate_brain(world, first_brain))
+        self.active_brain = 0
+        yield From(self.activate_brain(world, self.evaluation_queue[self.active_brain]))
 
 
 
@@ -151,7 +146,7 @@ class RobotLearner:
         # pause world:
         yield From(wait_for(world.pause(True)))
         yield From(self.insert_brain(world, brain))
-        self.active_brain = brain
+        # self.active_brain = brain
         # unpause world:
         yield From(wait_for(world.pause(False)))
 
@@ -234,47 +229,35 @@ class RobotLearner:
             # # set another drive direction
             # yield From(world.set_drive_direction(0.5, 0.75, 0.))
 
-
-            # if repeated brain evaluation is not over
-            if len(self.fitness_buffer) < self.repeat_evaluations:
-
-                # continue evaluating the same brain:
-                next_brain = self.active_brain
-
             # if repeated brain evaluation is over
-            else:
+            if len(self.fitness_buffer) >= self.repeat_evaluations:
                 yield From(wait_for(world.pause(True)))
 
                 aver_fitness = sum(self.fitness_buffer) / float(len(self.fitness_buffer))
-                self.brain_velocity[self.active_brain] = aver_fitness
-
+                self.brain_velocity.append((self.evaluation_queue[self.active_brain], aver_fitness))
                 print("Brain evaluations are over, average result = {0} ".format(aver_fitness))
 
+                self.active_brain += 1
 
                 # if all brains are evaluated, produce new generation:
-                if len(self.evaluation_queue) == 0:
-
-                    self.evaluation_queue = \
-                        deque(self.evolution.produce_new_generation(self.brain_velocity.items()))
+                if self.active_brain >= len(self.evaluation_queue):
+                    self.active_brain = 0
+                    self.evaluation_queue = self.evolution.produce_new_generation(self.brain_velocity)
 
                     # do logging stuff
                     if logging_callback:
-                        self.exec_logging_callback(logging_callback, self.brain_velocity.items())
+                        self.exec_logging_callback(logging_callback, self.brain_velocity)
 
-                    self.brain_velocity.clear()
+                    self.brain_velocity = []
                     self.generation_number += 1
                     print("GENERATION #{}".format(self.generation_number))
 
-
-
-                # continue evaluating brains from the queue:
-                next_brain = self.evaluation_queue[0]
 
             # make snapshot (disable when learning is online, crashes only happen when offline):
             yield From(world.create_snapshot())
 
             # insert the next brain:
-            yield From(self.activate_brain(world, next_brain))
+            yield From(self.activate_brain(world, self.evaluation_queue[self.active_brain]))
 
             # -----------------------------------------------------------------------------------
             # if we are past this line, the simulator did not crash while inserting a new brain
@@ -283,7 +266,6 @@ class RobotLearner:
             if len(self.fitness_buffer) >= self.repeat_evaluations:
                 del self.fitness_buffer[:]
                 self.total_brains_evaluated += 1
-                self.evaluation_queue.popleft()
 
             self.reset_fitness()
             # randomize evaluation time:
@@ -435,7 +417,7 @@ class RobotLearnerOnlineRefac(RobotLearnerOnline):
         msg.ParseFromString(data)
         fitness = msg.dbl_data
 
-        self.brain_velocity[self.active_brain] = fitness
+        self.brain_velocity.append((self.evaluation_queue[self.active_brain], fitness))
         self.eval_over = True
 
 
@@ -447,38 +429,33 @@ class RobotLearnerOnlineRefac(RobotLearnerOnline):
             yield From(wait_for(world.pause(True)))
 
             # output info to console
+            _, latest_fitness = self.brain_velocity[-1]
             logger.info("{}/{} : fitness = {:.7f}".format(
                 self.total_brains_evaluated+1,
-                len(self.evaluation_queue),
-                self.brain_velocity[self.active_brain]))
+                len(self.evaluation_queue) - len(self.brain_velocity),
+                latest_fitness))
 
+            self.active_brain += 1
             # if all brains are evaluated, produce new generation:
-            if len(self.evaluation_queue) == 0:
-
-                self.evaluation_queue = \
-                    deque(self.evolution.produce_new_generation(self.brain_velocity.items()))
+            if self.active_brain >= len(self.evaluation_queue):
+                self.active_brain = 0
+                self.evaluation_queue = self.evolution.produce_new_generation(self.brain_velocity)
 
                 # do logging stuff
                 if logging_callback:
-                    self.exec_logging_callback(logging_callback, self.brain_velocity.items())
+                    self.exec_logging_callback(logging_callback, self.brain_velocity)
 
-                self.brain_velocity.clear()
+                self.brain_velocity = []
                 self.generation_number += 1
                 logger.info("GENERATION #{}".format(self.generation_number))
 
 
-            next_brain = self.evaluation_queue[0]
-            yield From(self.activate_brain(world, next_brain))
+            yield From(self.activate_brain(world, self.evaluation_queue[self.active_brain]))
 
-            # # make snapshot (disable when learning is online, crashes only happen when offline):
-            # yield From(world.create_snapshot())
-            # -----------------------------------------------------------------------------------
-            # if we are past this line, the simulator did not crash while inserting a new brain
-            # -----------------------------------------------------------------------------------
             self.eval_over = False
-            self.evaluation_queue.popleft()
             self.total_brains_evaluated += 1
-            if self.generation_number >= self.max_generations: self.finished = True
+            if self.generation_number >= self.max_generations:
+                self.finished = True
 
         raise Return(self.finished)
 
