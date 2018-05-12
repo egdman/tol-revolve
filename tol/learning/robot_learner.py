@@ -1,7 +1,6 @@
 import math
 import trollius
 from trollius import From, Return, Future
-from collections import deque
 import random
 from operator import itemgetter
 
@@ -91,24 +90,6 @@ class RobotLearner(object):
         self.repeat_evaluations = conf.repeat_evaluations
 
         self.asexual = conf.asexual
-
-
-
-
-    @trollius.coroutine
-    def initialize(self, world, init_genotypes=None):
-        # this call establishes minimally viable genome based on robot body morphology
-        if init_genotypes:
-            self.evaluation_queue = init_genotypes
-        else:
-            self.evaluation_queue = self.get_init_brains()
-
-        for brain in self.evaluation_queue:
-            validate_genotype(brain, "initial generation created invalid genotype")
-
-        self.reset_fitness()
-        self.active_brain = 0
-        yield From(self.activate_brain(world, self.evaluation_queue[self.active_brain]))
 
 
 
@@ -374,110 +355,36 @@ class RobotLearnerOnline(RobotLearner):
             body_spec, brain_spec, mutator, conf)
 
 
-    @trollius.coroutine
-    def insert_brain(self, world, brain_genotype):
-        '''
-        Send a ModifyNeuralNetwork message that contains the new brain
-        :param world:
-        :param brain_genotype:
-        :return:
-        '''
-
-        # send a ModifyNeuralNetwork message that contains the new brain:
-        msg = self.nn_parser.genotype_to_modify_msg(brain_genotype)
-        fut = yield From(world.modify_brain(msg, self.robot.name))
-        yield From(fut)
+    async def evaluate_fitness(self, genome):
+        msg = self.nn_parser.genotype_to_modify_msg(genome)
+        future = await self.world.run_brain(self.robot.name, msg)
+        fitness = await future
+        return fitness
 
 
-    @trollius.coroutine
-    def initialize(self, world, init_genotypes=None):
-        yield From(RobotLearner.initialize(self, world, init_genotypes))
+    async def run(self, world, logging_callback=None):
+        while self.generation_number < self.max_generations:
+            for genome in self.evaluation_queue:
+                fitness = await self.evaluate_fitness(genome)
+                self.brain_velocity.append((genome, fitness))
 
-        self.fitness_subscr = (
-            world.manager.subscribe(
-                topic_name='/gazebo/default/{0}/fitness'.format(self.robot.name),
-                msg_type='gazebo.msgs.Request',
-                callback=self.fitness_evaluated_callback
-            )
-        )
-        yield From(self.fitness_subscr.wait_for_connection())
+                self.total_brains_evaluated += 1
+                left_to_evaluate = len(self.evaluation_queue) - len(self.brain_velocity)
 
+                logger.info("{}/{} : fitness = {:.7f}".format(
+                    self.total_brains_evaluated,
+                    left_to_evaluate,
+                    fitness))
 
-    def fitness_evaluated_callback(self, data):
-        msg = Request()
-        msg.ParseFromString(data)
-        fitness = msg.dbl_data
+            self.evaluation_queue = self.evolution.produce_new_generation(self.brain_velocity)
 
-        self.brain_velocity.append((self.evaluation_queue[self.active_brain], fitness))
-        self.eval_over = True
+            _, best_fitness_in_gen = max(self.brain_velocity, key = itemgetter(1))
+            logger.info("best in gen: {}".format(best_fitness_in_gen))
 
+            # do logging stuff
+            if logging_callback:
+                self.exec_logging_callback(logging_callback, self.brain_velocity)
 
-
-    @trollius.coroutine
-    def update(self, world, logging_callback=None):
-        if self.eval_over:
-            # pause world
-            yield From(wait_for(world.pause(True)))
-
-            # output info to console
-            _, latest_fitness = self.brain_velocity[-1]
-            logger.info("{}/{} : fitness = {:.7f}".format(
-                self.total_brains_evaluated+1,
-                len(self.evaluation_queue) - len(self.brain_velocity),
-                latest_fitness))
-
-            self.active_brain += 1
-            # if all brains are evaluated, produce new generation:
-            if self.active_brain >= len(self.evaluation_queue):
-                self.active_brain = 0
-                self.evaluation_queue = self.evolution.produce_new_generation(self.brain_velocity)
-
-                _, best_fitness_in_gen = max(self.brain_velocity, key = itemgetter(1))
-                logger.info("best in gen: {}".format(best_fitness_in_gen))
-
-                # do logging stuff
-                if logging_callback:
-                    self.exec_logging_callback(logging_callback, self.brain_velocity)
-
-                self.brain_velocity = []
-                self.generation_number += 1
-                logger.info("GENERATION #{}".format(self.generation_number))
-
-
-            yield From(self.activate_brain(world, self.evaluation_queue[self.active_brain]))
-
-            self.eval_over = False
-            self.total_brains_evaluated += 1
-            if self.generation_number >= self.max_generations:
-                self.finished = True
-
-        raise Return(self.finished)
-
-
-
-
-#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ####
-# class SoundGaitLearner(RobotLearner):
-#     def __init__(self, world, robot, body_spec, brain_spec, mutator, conf):
-#         # coordinates of the sound source:
-#         self.sound_source_pos = Vector3(0,0,0)
-
-#         # initial distance from robot to source:
-#         self.init_distance = 0
-
-#         RobotLearner.__init__(self, world, robot, body_spec, brain_spec, mutator, conf)
-
-
-#     def set_sound_source_pos(self, position):
-#         self.sound_source_pos = position
-
-#     def reset_fitness(self):
-#         RobotLearner.reset_fitness(self)
-#         self.init_distance = math.sqrt(pow(self.sound_source_pos[0] - self.initial_position[0], 2) + \
-#                                  pow(self.sound_source_pos[1] - self.initial_position[1], 2))
-
-#     def update_fitness(self):
-#         current_position = self.robot.last_position
-#         current_distance = math.sqrt(pow(current_position[0] - self.sound_source_pos[0], 2) + \
-#                                  pow(current_position[1] - self.sound_source_pos[1], 2))
-#         self.fitness = self.init_distance - current_distance
+            self.brain_velocity = []
+            self.generation_number += 1
+            logger.info("GENERATION #{}".format(self.generation_number))
