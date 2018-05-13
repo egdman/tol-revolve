@@ -14,12 +14,9 @@ async def connect(address=default_address):
 class MessagePublisher(object):
 
     @classmethod
-    async def create(cls, manager, topic, msg_type):
+    async def create(cls, connection, topic, msg_type):
         self = cls()
-        self.publisher await manager.advertise(
-            topic,
-            msg_type)
-
+        self.publisher = await connection.advertise(topic, msg_type)
         await self.publisher.wait_for_listener()
         return self
 
@@ -35,9 +32,11 @@ class RequestHandler(object):
     """
     # Object used to make constructor private
 
-    def __init__(self, manager, request_class, request_type,
-                 response_class, response_type,
-                 advertise, subscribe, id_attr, request_attr, msg_id_base):
+    def __init__(
+        self, connection,
+        request_class, request_type,
+        response_class, response_type,
+        advertise, subscribe, id_attr, request_attr):
         """
         Private constructor, use the `create` coroutine instead.
         :param manager:
@@ -51,22 +50,22 @@ class RequestHandler(object):
         self.subscribe = subscribe
         self.advertise = advertise
         self.response_class = response_class
-        self.manager = manager
+        self.connection = connection
         self.pending_requests = {}
         self.publisher = None
-        self.msg_id = int(msg_id_base)
+
 
     @classmethod
-    async def create(cls, manager,
-               request_class=request_pb2.Request,
-               request_type='gazebo.msgs.Request',
-               response_class=response_pb2.Response,
-               response_type='gazebo.msgs.Response',
-               advertise='/gazebo/default/request',
-               subscribe='/gazebo/default/response',
-               id_attr='id',
-               request_attr='request',
-               msg_id_base=0):
+    async def create(
+        cls, connection,
+        request_class=request_pb2.Request,
+        request_type='gazebo.msgs.Request',
+        response_class=response_pb2.Response,
+        response_type='gazebo.msgs.Response',
+        advertise='/gazebo/default/request',
+        subscribe='/gazebo/default/response',
+        id_attr='id',
+        request_attr='request'):
         """
 
         :param manager:
@@ -80,7 +79,7 @@ class RequestHandler(object):
         :param msg_id_base:
         :return:
         """
-        handler = cls(manager, request_class, request_type, response_class, response_type,
+        handler = cls(connection, request_class, request_type, response_class, response_type,
                       advertise, subscribe, id_attr, request_attr, msg_id_base)
         await handler._init()
         return handler
@@ -93,12 +92,12 @@ class RequestHandler(object):
         if self.publisher is not None:
             return
 
-        self.subscriber = self.manager.subscribe(
+        self.subscriber = self.connection.subscribe(
             self.subscribe,
             self.response_type,
             self._callback)
 
-        self.publisher = await self.manager.advertise(
+        self.publisher = await self.connection.advertise(
             self.advertise,
             self.request_type)
 
@@ -113,9 +112,7 @@ class RequestHandler(object):
         """
         msg = self.response_class()
         msg.ParseFromString(data)
-
-        msg_id = str(self.get_id_from_msg(msg))
-        request_type = str(self.get_request_type_from_msg(msg))
+        msg_id = self.get_id_from_msg(msg)
 
         # Call the future's set_result
         self.pending_requests[msg_id].set_result(msg)
@@ -137,45 +134,6 @@ class RequestHandler(object):
         :return:
         """
         return getattr(msg, self.request_attr)
-
-
-    def get_new_msg_id(self):
-        """
-        Message ID sequencer.
-        :return:
-        """
-        self.msg_id += 1
-        return self.msg_id
-
-    
-    def do_gazebo_request(self, request, data=None, dbl_data=None, msg_id=None):
-        """
-        Convenience wrapper to use `do_request` with a default Gazebo
-        `Request` message. See that method for more info.
-
-        :param request:
-        :type request: str
-        :param data:
-        :param dbl_data:
-        :param msg_id: Force the message to use this ID. Sequencer is used if no message
-                       ID is specified.
-        :type msg_id: int
-        :return:
-        """
-        if msg_id is None:
-            msg_id = self.get_new_msg_id()
-
-        req = request_pb2.Request()
-        req.id = msg_id
-        req.request = request
-
-        if data is not None:
-            req.data = data
-
-        if dbl_data is not None:
-            req.dbl_data = dbl_data
-
-        return await self.do_request(req)
 
 
     async def do_request(self, msg):

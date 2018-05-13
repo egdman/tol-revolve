@@ -114,17 +114,19 @@ class NeuralNetworkParser:
 
     def genotype_to_modify_msg(self, genotype):
         pb_brain = self.genotype_to_brain(genotype)
-        msg = ModifyNeuralNetwork()
+        msg = NeuralNetwork()
         pb_neurons = pb_brain.neuron
         pb_connections = pb_brain.connection
 
+        # add only hidden neurons
         for pb_neuron in pb_neurons:
             if pb_neuron.layer == "hidden":
-                add_neuron = msg.add_hidden.add()
-                add_neuron.CopyFrom(pb_neuron)
+                added_neuron = msg.neuron.add()
+                added_neuron.CopyFrom(pb_neuron)
+
         for pb_connection in pb_connections:
-            add_connection = msg.set_weights.add()
-            add_connection.CopyFrom(pb_connection)
+            added_connection = msg.connection.add()
+            added_connection.CopyFrom(pb_connection)
         return msg
 
 

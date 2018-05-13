@@ -1,33 +1,15 @@
 # External / system
-from __future__ import print_function, absolute_import
-import random
 import sys
 import math
-import trollius
-from trollius import From, Return, Future
+import asyncio
 import time
-import itertools
 import csv
 import os
-from datetime import datetime
 from functools import partial
 
-# Pygazebo
-from pygazebo.msg import world_control_pb2, poses_stamped_pb2, world_stats_pb2
-
-# Revolve / sdfbuilder
-from revolve.angle import Tree
-from sdfbuilder.math import Vector3
-from sdfbuilder import SDF, Model, Pose, Link
-
-# Local
-from revolve.util import multi_future
-from revolve.spec.msgs import ModelInserted
-
-from ..config import constants, parser, str_to_address
-from ..build import get_builder, get_simulation_robot
-from ..spec import get_tree_generator
-from ..logging import logger
+from .config import str_to_address
+from .logging import logger
+from .gazebo import WorldManager
 
 
 class LearningManager(WorldManager):
@@ -37,17 +19,9 @@ class LearningManager(WorldManager):
             world_address=str_to_address(conf.world_address),
             analyzer_address=str_to_address(conf.analyzer_address),
             output_directory=conf.output_directory,
-            builder=get_builder(conf),
             pose_update_frequency=conf.pose_update_frequency,
-            generator=get_tree_generator(conf),
             restore=conf.restore_directory)
 
-
-        self.fitness_filename = None
-        self.fitness_file = None
-        self.write_fitness = None
-
-        self.learners = {}
 
         # path to the logging directory
         self.path_to_log_dir = None
@@ -64,28 +38,10 @@ class LearningManager(WorldManager):
             except OSError: 
                 logger.debug("Directory " + self.path_to_log_dir + " already exists.")
 
+        self.learners = []
 
-        self.pending_requests = {}
-
-        # publishers that send ModifyNeuralNetwork messages:
-        self.nn_publishers = {}
-
-        # subscribers that listen to responses about successful neural network modifications:
-        self.nn_subscribers = {}
-
-        if self.output_directory:
-            self.fitness_filename = os.path.join(self.output_directory, 'fitness.csv')
-
-            if self.do_restore:
-                shutil.copy(self.fitness_filename + '.snapshot', self.fitness_filename)
-                self.fitness_file = open(self.fitness_filename, 'ab', buffering=1)
-                self.write_fitness = csv.writer(self.fitness_file, delimiter=',')
-            else:
-                self.fitness_file = open(self.fitness_filename, 'wb', buffering=1)
-                self.write_fitness = csv.writer(self.fitness_file, delimiter=',')
-                self.write_fitness.writerow(['t_sim', 'robot_id', 'age', 'displacement',
-                                             'vel', 'dvel', 'fitness'])
-
+        # message passing handlers for each robot
+        self.robot_handlers = {}
 
 
     @classmethod
@@ -100,27 +56,26 @@ class LearningManager(WorldManager):
         return self
 
 
-    def get_world_time(self):
-        if self.last_time:
-            return self.last_time
-        else:
-            return 0.0
+    # def get_world_time(self):
+    #     if self.last_time:
+    #         return self.last_time
+    #     else:
+    #         return 0.0
 
 
-    async def get_snapshot_data(self):
-        data = await super(LearningManager, self).get_snapshot_data()
+    def get_snapshot_data(self):
+        data = super(LearningManager, self).get_snapshot_data()
         data['learners'] = self.learners
         return data
 
 
     async def restore_snapshot(self, data):
-        await super(LearningManager, self).restore_snapshot(data)
+        super(LearningManager, self).restore_snapshot(data)
         self.learners = data['learners']
 
-        for learner in self.learners:
-            if learner.robot.name not in self.nn_publishers \
-            or learner.robot.name not in self.nn_subscribers:
-                await self.create_nn_publisher(learner.robot.name)
+        for _, learner in self.learners:
+            if learner.robot.name not in self.robot_handlers:
+                await self.create_handler_for_robot(learner.robot.name)
 
 
 
@@ -133,56 +88,33 @@ class LearningManager(WorldManager):
 
 
 
-    async def delete_robot(self, robot):
-        await super(LearningManager, self).delete_robot(robot)
-        # delete .sdf and .pb files when deleting a robot:
-        try:
-            os.remove(os.path.join(self.output_directory, 'robot_{0}.sdf'.format(robot.robot.id)))
-        except OSError:
-            pass
+    # async def delete_robot(self, robot):
+    #     await super(LearningManager, self).delete_robot(robot)
+    #     # delete .sdf and .pb files when deleting a robot:
+    #     try:
+    #         os.remove(os.path.join(self.output_directory, 'robot_{0}.sdf'.format(robot.robot.id)))
+    #     except OSError:
+    #         pass
 
-        try:
-            os.remove(os.path.join(self.output_directory, 'robot_{0}.pb'.format(robot.robot.id)))
-        except OSError:
-            pass
-
-
-
-    async def create_nn_publisher(self, robot_name):
-        # initialize publisher for ModifyNeuralNetwork messages:
-        modify_nn_publisher = await self.manager.advertise(
-                '/gazebo/default/{0}/modify_neural_network'.format(robot_name),
-                'gazebo.msgs.ModifyNeuralNetwork')
-
-        # Wait for connections
-        await modify_nn_publisher.wait_for_listener()
-
-        def request_done(data):
-            resp = Response()
-            resp.ParseFromString(data)
-            evaluation_result = resp.dbl_data()
-            robot_name = resp.response
-            fut = self.pending_requests[robot_name]
-            fut.set_result(evaluation_result)
-            del self.pending_requests[robot_name]
+    #     try:
+    #         os.remove(os.path.join(self.output_directory, 'robot_{0}.pb'.format(robot.robot.id)))
+    #     except OSError:
+    #         pass
 
 
-        modify_nn_response_subscriber = self.manager.subscribe(
-                topic_name='/gazebo/default/{0}/fitness'.format(robot.name),
-                msg_type='gazebo.msgs.Request',
-                request_done)
+    async def create_handler_for_robot(self, robot_name):
+        handler = await RequestHandler.create(
+            self.connection,
+            request_class = SendNeuralNetwork,
+            request_type = "gazebo.msgs.SendNeuralNetwork",
+            response_class = EvaluationResult,
+            response_type = "gazebo.msgs.EvaluationResult",
+            advertise = "/gazebo/default/{0}/modify_neural_network".format(robot_name),
+            subscribe = "/gazebo/default/{0}/fitness".format(robot_name),
+            id_attr = "id")
 
-        await modify_nn_response_subscriber.wait_for_connection()
-        self.nn_publishers[robot_name] = modify_nn_publisher
-        self.nn_subscribers[robot_name] = modify_nn_response_subscriber
+        self.robot_handlers[robot_name] = handler
 
-
-
-    async def run_brain(self, robot_name, brain_msg):
-        future = asyncio.Future()
-        self.pending_requests[robot_name] = future
-        await self.nn_publishers[robot_name].publish(brain_msg)
-        return future
 
 
     async def add_learner(self, learner, log_name=None, init_brain_list=None):
@@ -193,13 +125,29 @@ class LearningManager(WorldManager):
             except OSError:
                 pass
 
-        await self.create_nn_publisher(learner.robot.name)
-        # initialize learner with initial list of brains:
-        self.learners[learner] = log_name
+        await self.create_handler_for_robot(learner.robot.name)
+        self.learners.append((log_name, learner))
+
+
+
+    async def run_brain(self, robot_name, brain_msg):
+        msg = SendNeuralNetwork()
+        msg.id = self.get_unique_id()
+        msg.neuralNetwork = brain_msg
+
+        handler = self.robot_handlers[robot_name]
+        return await handler.do_request(msg)
 
 
 
     async def run(self):
-        for learner, log_name in self.learners.items():
+        futures = []
+        for log_name, learner in self.learners:
             log_callback = None if log_name is None else partial(self.log_info, log_name)
-            await learner.run(self, log_callback)
+            future = asyncio.ensure_future(learner.run(self, log_callback))
+            futures.append(future)
+
+        still_running = len(futures)
+        while still_running > 0:
+            await asyncio.sleep(.1) # this line is important
+            still_running = sum((1 for f in futures if not f.done()))

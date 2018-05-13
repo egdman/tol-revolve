@@ -193,22 +193,16 @@ def run():
 
         robot = yield From(wait_for(world.insert_robot(tree, pose)))
 
-        if conf.online:
-            learner = RobotLearnerOnline(world=world,
-                                   robot=robot,
-                                   insert_position=Vector3(0, 0, 0.2),
-                                   body_spec=body_spec,
-                                   brain_spec=brain_spec,
-                                   mutator=mutator,
-                                   conf=conf)
-        else:
-            learner = RobotLearner(world=world,
-                                   robot=robot,
-                                   insert_position=Vector3(0, 0, 0.2),
-                                   body_spec=body_spec,
-                                   brain_spec=brain_spec,
-                                   mutator=mutator,
-                                   conf=conf)
+        learner = (RobotLearnerOnline if conf.online else RobotLearner)(
+            world=world,
+            robot=robot,
+            insert_position=Vector3(0, 0, 0.2),
+            body_spec=body_spec,
+            brain_spec=brain_spec,
+            mutator=mutator,
+            conf=conf)
+
+
         gen_files = []
         init_brain_list = None
 
