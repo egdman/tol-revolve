@@ -1,1 +1,1 @@
-from neuron import *
+from .neuron import *

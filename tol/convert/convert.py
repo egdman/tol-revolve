@@ -1,5 +1,5 @@
 # Revolve
-from ..angle.spec import NeuralNetwork, ModifyNeuralNetwork
+from ..angle.spec import NeuralNetwork
 from ..angle.spec.exception import err
 
 # ToL

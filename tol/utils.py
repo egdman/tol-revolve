@@ -1,8 +1,9 @@
 import argparse
 import yaml
-
-from ..spec import get_brain_spec
 from neat import GeneticEncoding
+
+from .spec import get_brain_spec
+
 
 
 def get_brains_from_file(brain_file_path, brain_spec):

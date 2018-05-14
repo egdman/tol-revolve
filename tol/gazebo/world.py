@@ -4,7 +4,7 @@ from pygazebo.msg import world_control_pb2
 
 # Revolve
 from .connect import connect, RequestHandler
-from ...logging import logger
+from ..logging import logger
 
 
 class WorldManager(object):
@@ -240,7 +240,7 @@ class WorldManager(object):
         await self.pause(True)
 
         # Obtain a copy of the current world SDF from Gazebo and write it to file
-        response = await await self._do_gazebo_request("world_sdf")
+        response = await self._do_gazebo_request("world_sdf")
         if response.response == "error":
             logger.warning("WARNING: requesting world state resulted in error. Snapshot failed.")
             return False

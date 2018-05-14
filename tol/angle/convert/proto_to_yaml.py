@@ -1,5 +1,4 @@
-from ..spec import BodyImplementation, NeuralNetImplementation
-from ..spec import Body, BodyPart, NeuralNetwork
+from ..spec import BodyImplementation, NeuralNetImplementation, Body, BodyPart, NeuralNetwork
 from ..spec.exception import err
 
 

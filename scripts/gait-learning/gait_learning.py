@@ -4,6 +4,7 @@ import sys
 import logging
 import fnmatch
 import shutil
+import asyncio
 from time import time
 
 from pygazebo.pygazebo import DisconnectError
@@ -18,9 +19,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
 
 #ToL
 from tol import LearningManager, RobotLearner, get_brains_from_file
-from tol.angle import Tree
+from tol.angle.generate import Tree
+from tol.angle.convert import yaml_to_robot
 from tol.config import parser
-from tol.convert.yaml import yaml_to_robot
 from tol.logging import logger, output_console
 from tol.spec import (
     get_body_spec,

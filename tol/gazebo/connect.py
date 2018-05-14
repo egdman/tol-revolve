@@ -22,7 +22,7 @@ class MessagePublisher(object):
 
    
     async def publish(self, msg):
-        yield From(self.publisher.publish(msg))
+        await self.publisher.publish(msg)
 
 
 class RequestHandler(object):
