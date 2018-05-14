@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import sys
 import logging
@@ -6,28 +7,21 @@ import shutil
 from time import time
 
 from pygazebo.pygazebo import DisconnectError
-from trollius.py33_exceptions import ConnectionResetError, ConnectionRefusedError
 
-# Trollius / Pygazebo
-import trollius
-from trollius import From, Return, Future
-
+# Pygazebo
 from sdfbuilder.math import Vector3
 from sdfbuilder import Pose
 
-from revolve.util import wait_for
-from revolve.convert.yaml import yaml_to_robot
-from revolve.angle import Tree
 
 # Add "tol" directory to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
 
 #ToL
+from tol import LearningManager, RobotLearner, get_brains_from_file
+from tol.angle import Tree
 from tol.config import parser
+from tol.convert.yaml import yaml_to_robot
 from tol.logging import logger, output_console
-from tol.learning import LearningManager, RobotLearner, RobotLearnerOnline
-from tol.learning import get_brains_from_file
-
 from tol.spec import (
     get_body_spec,
     get_brain_spec,
@@ -132,10 +126,8 @@ parser.add_argument(
     help='Probability of structural removal'
 )
 
-@trollius.coroutine
-def run():
 
-
+async def run():
     conf = parser.parse_args()
     conf.evaluation_time_sigma = 2.0
     conf.weight_mutation_probability = 0.8
@@ -162,8 +154,8 @@ def run():
 
 
     # create the learning manager
-    world = yield From(LearningManager.create(conf))
-    yield From(world.pause(True))
+    world = await LearningManager.create(conf)
+    await world.pause(True)
 
     path_to_log_dir = os.path.join(world.path_to_log_dir, "learner1")
 
@@ -191,12 +183,11 @@ def run():
         bot = yaml_to_robot(body_spec, brain_spec, bot_yaml)
         tree = Tree.from_body_brain(bot.body, bot.brain, body_spec)
 
-        robot = yield From(wait_for(world.insert_robot(tree, pose)))
+        robot = await world.insert_robot(tree, pose)
 
-        learner = (RobotLearnerOnline if conf.online else RobotLearner)(
+        learner = RobotLearner(
             world=world,
             robot=robot,
-            insert_position=Vector3(0, 0, 0.2),
             body_spec=body_spec,
             brain_spec=brain_spec,
             mutator=mutator,
@@ -234,7 +225,7 @@ def run():
             learner.generation_number = num_generations
 
         # initialize learner with initial list of brains:
-        yield From(world.add_learner(learner, "learner1", init_brain_list))
+        await world.add_learner(learner, "learner1", init_brain_list)
         print(learner.parameter_string())
 
         # log experiment parameter values:
@@ -248,7 +239,7 @@ def run():
         print("STATE RESTORED FROM {0}".format(world.snapshot_filename))
 
     print("WORLD CREATED")
-    yield From(world.run())
+    await world.run()
 
 
 def create_param_log_file(conf, cur_generation, filename):
@@ -270,7 +261,7 @@ def main():
         raise context['exception']
 
     try:
-        loop = trollius.get_event_loop()
+        loop = asyncio.get_event_loop()
         loop.set_debug(enabled=False)
 #        logging.basicConfig(level=logging.DEBUG)
         loop.set_exception_handler(handler)

@@ -1,6 +1,6 @@
 # Revolve
-from revolve.spec.msgs import NeuralNetwork, ModifyNeuralNetwork
-from revolve.spec.exception import err
+from ..angle.spec import NeuralNetwork, ModifyNeuralNetwork
+from ..angle.spec.exception import err
 
 # ToL
 from neat import GeneticEncoding

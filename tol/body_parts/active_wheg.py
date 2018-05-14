@@ -3,8 +3,8 @@ from __future__ import print_function
 import itertools
 import math
 
-from revolve.build.sdf import BodyPart, VelocityMotor, ComponentJoint as Joint
-from revolve.build.util import in_grams, in_mm
+from ..angle.build.sdf import BodyPart, VelocityMotor, ComponentJoint as Joint
+from ..angle.build.util import in_grams, in_mm
 from sdfbuilder.joint import Limit
 from sdfbuilder.math import Vector3
 from sdfbuilder.structure import Box, Cylinder

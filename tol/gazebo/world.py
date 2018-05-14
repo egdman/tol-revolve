@@ -141,7 +141,7 @@ class WorldManager(object):
 
         self.request_handler = await RequestHandler.create(self.connection)
 
-        await await self.set_pose_update_frequency(self.pose_update_frequency)
+        await self.set_pose_update_frequency(self.pose_update_frequency)
 
         if self.do_restore:
             self.restore_snapshot(self.do_restore)

@@ -3,7 +3,7 @@ ToL constants
 """
 from __future__ import absolute_import
 import math
-from revolve.build.sdf import PID
+from ..angle.build.sdf import PID
 
 MAX_HIDDEN_NEURONS = 2000
 """ Maximum number of hidden neurons """

@@ -2,7 +2,7 @@ from operator import itemgetter
 
 # ToL
 from .convert import NeuralNetworkParser
-from ..logging import logger
+from .logging import logger
 
 # NEAT
 from neat import NEAT, validate_genotype
@@ -11,6 +11,7 @@ from neat import NEAT, validate_genotype
 class RobotLearner(object):
 
     def __init__(self, world, robot, brain_spec, mutator, conf):
+        self.world = world
         self.robot = robot
         self.nn_parser = NeuralNetworkParser(brain_spec)
         self.mutator = mutator

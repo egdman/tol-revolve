@@ -1,6 +1,6 @@
 # Revolve imports
-from revolve.build.sdf import BodyPart, ComponentJoint as Joint
-from revolve.build.util import in_grams, in_mm
+from ..angle.build.sdf import BodyPart, ComponentJoint as Joint
+from ..angle.build.util import in_grams, in_mm
 
 # SDF builder imports
 from sdfbuilder import Limit

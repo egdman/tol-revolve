@@ -136,7 +136,7 @@ class RequestHandler(object):
         return getattr(msg, self.request_attr)
 
 
-    async def do_request(self, msg):
+    def do_request(self, msg):
         """
         Performs a request. The only requirement
         of `msg` is that it has an `id` attribute.
@@ -155,5 +155,5 @@ class RequestHandler(object):
 
         future = asyncio.Future()
         self.pending_requests[msg_id] = future
-        await self.publisher.publish(msg)
+        asyncio.ensure_future(self.publisher.publish(msg))
         return future
