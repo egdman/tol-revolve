@@ -1,0 +1,6 @@
+package msgs;
+
+message EvaluationResult {
+   required int32 id = 1;
+   required double fitness = 2;
+}

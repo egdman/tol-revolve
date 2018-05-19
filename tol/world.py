@@ -9,9 +9,9 @@ from functools import partial
 
 from .config import str_to_address
 from .logging import logger
-from .gazebo import WorldManager
+from .gazebo import WorldManager, RequestHandler
 from .build import get_builder, get_simulation_robot
-from .gazebo import RequestHandler
+from .angle.spec import SendNeuralNetwork, EvaluationResult
 
 
 class LearningManager(WorldManager):
@@ -145,13 +145,13 @@ class LearningManager(WorldManager):
 
 
 
-    async def run_brain(self, robot_name, brain_msg):
+    def run_brain(self, robot_name, brain_msg):
         msg = SendNeuralNetwork()
         msg.id = self.get_unique_id()
-        msg.neuralNetwork = brain_msg
+        msg.neuralNetwork.CopyFrom(brain_msg)
 
         handler = self.robot_handlers[robot_name]
-        return await handler.do_request(msg)
+        return handler.do_request(msg)
 
 
 

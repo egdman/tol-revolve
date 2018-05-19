@@ -367,50 +367,6 @@ class WorldManager(object):
         return self.robots.get(name, None)
 
 
-    # def generate_valid_robot(self, max_attempts=100):
-    #     """
-    #     Uses tree generation in conjuction with the analyzer
-    #     to generate a valid new robot.
-
-    #     :param max_attempts:  Maximum number of tries before giving up.
-    #     :type max_attempts: int
-    #     :return:
-    #     """
-    #     for i in xrange(max_attempts):
-    #         tree = self.generator.generate_tree()
-
-    #         ret = await self.analyze_tree(tree)
-    #         if ret is None:
-    #             # Error already shown
-    #             continue
-
-    #         coll, bbox, robot = ret
-    #         if not coll:
-    #             return(tree, robot, bbox)
-
-    #     logger.error("Failed to produce a valid robot in %d attempts." % max_attempts)
-    #     return None
-
-
-    # def analyze_tree(self, tree):
-    #     """
-    #     Calls the body analyzer on a robot tree.
-    #     :param tree:
-    #     :return:
-    #     """
-    #     if not self.analyzer:
-    #         raise RuntimeError("World.analyze_tree(): No analyzer configured.")
-
-    #     robot = tree.to_robot(self.get_robot_id())
-    #     ret = await self.analyzer.analyze_robot(robot, builder=self.builder)
-    #     if ret is None:
-    #         logger.error("Error in robot analysis, skipping.")
-    #         return(None)
-
-    #     coll, bbox = ret
-    #     return(coll, bbox, robot)
-
-
     def insert_robot(self, tree, pose, parents=None):
         """
         Inserts a robot into the world. This consists of two steps:
@@ -463,30 +419,16 @@ class WorldManager(object):
         raise NotImplementedError("Implement in subclass if you want to use this method.")
 
 
-    # async def delete_robot(self, robot):
-    #     """
-    #     :param robot:
-    #     :type robot: Robot
-    #     :return:
-    #     """
-    #     # Immediately unregister the robot so no it won't be used
-    #     # for anything else while it is being deleted.
-    #     self.unregister_robot(robot)
-    #     return await self.delete_model(robot.name, req="delete_robot")
-
-
-    # async def delete_all_robots(self):
-    #     """
-    #     Deletes all robots from the world. Returns a future that resolves
-    #     when all responses have been received.
-    #     :return:
-    #     """
-    #     futures = []
-    #     for bot in self.robots.values():
-    #         future = await self.delete_robot(bot)
-    #         futures.append(future)
-
-    #     return(multi_future(futures))
+    def delete_robot(self, robot):
+        """
+        :param robot:
+        :type robot: Robot
+        :return:
+        """
+        # Immediately unregister the robot so no it won't be used
+        # for anything else while it is being deleted.
+        self.unregister_robot(robot)
+        return self.delete_model(robot.name, req="delete_robot")
 
 
     def _robot_inserted(self, robot_name, tree, robot, parents, msg, return_future):

@@ -128,13 +128,13 @@ class RequestHandler(object):
         """
         return getattr(msg, self.id_attr)
 
-    def get_request_type_from_msg(self, msg):
-        """
-        Returns the request type from a protobuf message.
-        :param msg:
-        :return:
-        """
-        return getattr(msg, self.request_attr)
+    # def get_request_type_from_msg(self, msg):
+    #     """
+    #     Returns the request type from a protobuf message.
+    #     :param msg:
+    #     :return:
+    #     """
+    #     return getattr(msg, self.request_attr)
 
 
 
@@ -151,10 +151,10 @@ class RequestHandler(object):
         :return:
         """
         msg_id = self.get_id_from_msg(msg)
-        request_type = str(self.get_request_type_from_msg(msg))
+        # request_type = str(self.get_request_type_from_msg(msg))
 
         if msg_id in self.pending_requests:
-            raise RuntimeError("Duplicate request ID: {} of type {}".format(msg_id, request_type))
+            raise RuntimeError("Duplicate request ID: {} of type {}".format(msg_id, type(msg)))
 
         future = asyncio.Future()
         self.pending_requests[msg_id] = future
