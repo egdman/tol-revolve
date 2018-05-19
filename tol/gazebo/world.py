@@ -1,6 +1,8 @@
 # Global / system
+import os
+import csv
 import uuid
-from pygazebo.msg import world_control_pb2
+from pygazebo.msg import world_control_pb2, request_pb2, poses_stamped_pb2, gz_string_pb2
 
 # Revolve
 from .connect import connect, RequestHandler
@@ -33,13 +35,13 @@ class WorldManager(object):
         self.world_address = world_address
         self.connection = None
         self.world_control = None
-        self.unique_id = uuid.uuid4().time_low
+        self.unique_id = uuid.uuid4().time_mid
 
         # Output files for robot CSV data
         self.robots_file = None
         self.poses_file = None
-        self.write_robots = None
-        self.write_poses = None
+        # self.write_robots = None
+        # self.write_poses = None
         self.output_directory = None
         self.robots_filename = None
         self.poses_filename = None
@@ -87,8 +89,8 @@ class WorldManager(object):
 
                 self.robots_file = open(self.robots_filename, 'ab')
                 self.poses_file = open(self.poses_filename, 'ab')
-                self.write_robots = csv.writer(self.robots_file, delimiter=',')
-                self.write_poses = csv.writer(self.poses_file, delimiter=',')
+                # self.write_robots = csv.writer(self.robots_file, delimiter=',')
+                # self.write_poses = csv.writer(self.poses_file, delimiter=',')
             else:
                 # Open poses file, this is written *a lot* so use default OS buffering
                 self.poses_file = open(os.path.join(self.output_directory, 'poses.csv'), 'wb')
@@ -96,11 +98,11 @@ class WorldManager(object):
                 # Open robots file line buffered so we can see it on the fly, isn't written
                 # too often.
                 self.robots_file = open(os.path.join(self.output_directory, 'robots.csv'), 'wb', buffering=1)
-                self.write_robots = csv.writer(self.robots_file, delimiter=',')
-                self.write_poses = csv.writer(self.poses_file, delimiter=',')
+                # self.write_robots = csv.writer(self.robots_file, delimiter=',')
+                # self.write_poses = csv.writer(self.poses_file, delimiter=',')
 
-                self.write_robots.writerow(self.robots_header())
-                self.write_poses.writerow(self.poses_header())
+                # self.write_robots.writerow(self.robots_header())
+                # self.write_poses.writerow(self.poses_header())
 
 
 
@@ -309,7 +311,7 @@ class WorldManager(object):
         :return:
         """
         req = request_pb2.Request()
-        req.id = get_unique_id()
+        req.id = self.get_unique_id()
         req.request = request
 
         if data is not None:
@@ -318,7 +320,7 @@ class WorldManager(object):
         if dbl_data is not None:
             req.dbl_data = dbl_data
 
-        return await self.connection.do_request(req)
+        return await self.request_handler.do_request(req)
 
 
 
@@ -520,10 +522,10 @@ class WorldManager(object):
             raise ValueError("Duplicate robot: %s" % robot.name)
 
         self.robots[robot.name] = robot
-        if self.output_directory:
-            # Write robot details and CSV row to files
-            robot.write_robot('%s/robot_%d.pb' % (self.output_directory, robot.robot.id),
-                              self.write_robots)
+        # if self.output_directory:
+        #     # Write robot details and CSV row to files
+        #     robot.write_robot('%s/robot_%d.pb' % (self.output_directory, robot.robot.id),
+        #                       self.write_robots)
 
 
     def unregister_robot(self, robot):
@@ -557,7 +559,7 @@ class WorldManager(object):
                 continue
 
             position = Vector3(pose.position.x, pose.position.y, pose.position.z)
-            robot.update_position(t, position, self.write_poses)
+            # robot.update_position(t, position, self.write_poses)
 
         self.call_update_triggers()
 

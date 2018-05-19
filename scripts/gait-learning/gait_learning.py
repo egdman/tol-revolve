@@ -158,7 +158,7 @@ async def run():
     world = await LearningManager.create(conf)
     await world.pause(True)
 
-    path_to_log_dir = os.path.join(world.path_to_log_dir, "learner1")
+    # path_to_log_dir = os.path.join(world.path_to_log_dir, "learner1")
 
     body_spec = get_body_spec(conf)
     brain_spec = get_extended_brain_spec(conf)
@@ -198,9 +198,9 @@ async def run():
         gen_files = []
         init_brain_list = None
 
-        if (os.path.isdir(path_to_log_dir)):
-            gen_files = list(fname for fname in os.listdir(path_to_log_dir) if \
-                fnmatch.fnmatch(fname, "gen_*_genotypes.log"))
+        # if (os.path.isdir(path_to_log_dir)):
+        #     gen_files = list(fname for fname in os.listdir(path_to_log_dir) if \
+        #         fnmatch.fnmatch(fname, "gen_*_genotypes.log"))
 
         # if we are reading an initial population from a file:
         if len(gen_files) > 0:
@@ -214,8 +214,8 @@ async def run():
             print("last generation file = {0}".format(last_gen_file))
 
             # get list of brains from the last generation log file:
-            init_brain_list, min_mark, max_mark = \
-                get_brains_from_file(os.path.join(path_to_log_dir, last_gen_file), brain_spec)
+            # init_brain_list, min_mark, max_mark = \
+            #     get_brains_from_file(os.path.join(path_to_log_dir, last_gen_file), brain_spec)
 
             print("Max historical mark = {0}".format(max_mark))
 
@@ -230,9 +230,9 @@ async def run():
         print(learner.parameter_string())
 
         # log experiment parameter values:
-        create_param_log_file(conf, learner.generation_number, os.path.join(path_to_log_dir, "parameters.log"))
+        # create_param_log_file(conf, learner.generation_number, os.path.join(path_to_log_dir, "parameters.log"))
         # copy the robot body file:
-        shutil.copy(conf.test_bot, path_to_log_dir)
+        # shutil.copy(conf.test_bot, path_to_log_dir)
 
     # if we are restoring a saved state:
     else:

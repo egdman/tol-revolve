@@ -59,11 +59,29 @@ processes["gazebo"] = _launch_with_ready_str(gazebo_cmd, gazebo_ready)
 
 print("Launching experiment manager...")
 
-manager_args = [sys.executable, "gait_learning.py"] + sys.argv[1:]
+manager_args = (
+' --output-directory test_run'
+' --test-bot ../testBots/spiral_diff_coupled'
+' --population-size 50'
+' --num-children 45'' --tournament-size 40'
+' --evaluation-time 90'
+' --warmup-time 3'
+' --speciation-threshold 0.05'
+' --max-generations 100'
+' --repeat-evaluations 1'
+' --structural-augmentation-probability 0.8'
+' --online'
+' --restore-directory restore'
+)
+print (manager_args)
+
+manager_args = [sys.executable, "gait_learning.py"] + manager_args.split() + sys.argv[1:]
+
+os.chdir(here)
 processes['manager'] = subprocess.Popen(manager_args, stdout=subprocess.PIPE)
 # self._add_output_stream('manager')
 
-
+time.sleep(5)
 
 
 

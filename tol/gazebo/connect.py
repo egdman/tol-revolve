@@ -1,5 +1,7 @@
+import asyncio
 import pygazebo
 from pygazebo.msg import request_pb2, response_pb2
+
 
 # Default connection address to keep things DRY. This is an array
 # rather than a tuple, so it is writeable as long as you change
@@ -80,7 +82,7 @@ class RequestHandler(object):
         :return:
         """
         handler = cls(connection, request_class, request_type, response_class, response_type,
-                      advertise, subscribe, id_attr, request_attr, msg_id_base)
+                      advertise, subscribe, id_attr, request_attr)
         await handler._init()
         return handler
 
@@ -92,17 +94,16 @@ class RequestHandler(object):
         if self.publisher is not None:
             return
 
+        self.publisher = await self.connection.advertise(
+            self.advertise,
+            self.request_type)
+        await self.publisher.wait_for_listener()
+
         self.subscriber = self.connection.subscribe(
             self.subscribe,
             self.response_type,
             self._callback)
-
-        self.publisher = await self.connection.advertise(
-            self.advertise,
-            self.request_type)
-
         await self.subscriber.wait_for_connection()
-        await self.publisher.wait_for_listener()
 
 
     def _callback(self, data):
@@ -136,6 +137,8 @@ class RequestHandler(object):
         return getattr(msg, self.request_attr)
 
 
+
+
     def do_request(self, msg):
         """
         Performs a request. The only requirement
@@ -147,7 +150,7 @@ class RequestHandler(object):
         :param msg: Message object to publish
         :return:
         """
-        msg_id = str(self.get_id_from_msg(msg))
+        msg_id = self.get_id_from_msg(msg)
         request_type = str(self.get_request_type_from_msg(msg))
 
         if msg_id in self.pending_requests:
@@ -155,5 +158,6 @@ class RequestHandler(object):
 
         future = asyncio.Future()
         self.pending_requests[msg_id] = future
+
         asyncio.ensure_future(self.publisher.publish(msg))
         return future
