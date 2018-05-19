@@ -10,6 +10,8 @@ from functools import partial
 from .config import str_to_address
 from .logging import logger
 from .gazebo import WorldManager
+from .build import get_builder, get_simulation_robot
+from .gazebo import RequestHandler
 
 
 class LearningManager(WorldManager):
@@ -22,6 +24,7 @@ class LearningManager(WorldManager):
             pose_update_frequency=conf.pose_update_frequency,
             restore=conf.restore_directory)
 
+        self.conf = conf
 
         # path to the logging directory
         self.path_to_log_dir = None
@@ -61,6 +64,18 @@ class LearningManager(WorldManager):
     #         return self.last_time
     #     else:
     #         return 0.0
+
+
+    def get_simulation_sdf(self, robot, robot_name):
+        """
+
+        :param robot:
+        :type robot: PbRobot
+        :param robot_name:
+        :return:
+        :rtype: SDF
+        """
+        return get_simulation_robot(robot, robot_name, get_builder(self.conf), self.conf)
 
 
     def get_snapshot_data(self):

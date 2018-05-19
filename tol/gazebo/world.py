@@ -2,9 +2,16 @@
 import os
 import csv
 import uuid
-from pygazebo.msg import world_control_pb2, request_pb2, poses_stamped_pb2, gz_string_pb2
+import asyncio
 
-# Revolve
+from pygazebo.msg import world_control_pb2, request_pb2, poses_stamped_pb2, gz_string_pb2
+from sdfbuilder.math import Vector3
+
+from .robot import Robot
+
+from ..angle.spec import ModelInserted
+from ..angle.util import Time
+
 from .connect import connect, RequestHandler
 from ..logging import logger
 
@@ -166,7 +173,7 @@ class WorldManager(object):
         return await self.world_control.publish(msg)
 
 
-    async def insert_model(self, sdf):
+    def insert_model(self, sdf):
         """
         Insert a model wrapped in an SDF tag into the world. Make
         sure it has a unique name, as it will be literally inserted into the world.
@@ -179,10 +186,10 @@ class WorldManager(object):
         :type sdf: SDF
         :return:
         """
-        return await self._do_gazebo_request("insert_sdf", data=str(sdf))
+        return self._do_gazebo_request("insert_sdf", data=str(sdf))
 
 
-    async def delete_model(self, name, req="entity_delete"):
+    def delete_model(self, name, req="entity_delete"):
         """
         Deletes the model with the given name from the world.
         :param name:
@@ -192,7 +199,7 @@ class WorldManager(object):
         occurring from deleting sensors.
         :return:
         """
-        return await self._do_gazebo_request(req, data=name)
+        return self._do_gazebo_request(req, data=name)
 
 
 
@@ -296,7 +303,7 @@ class WorldManager(object):
         }
 
 
-    async def _do_gazebo_request(self, request, data=None, dbl_data=None):
+    def _do_gazebo_request(self, request, data=None, dbl_data=None):
         """
         Convenience wrapper to use `do_request` with a default Gazebo
         `Request` message. See that method for more info.
@@ -320,11 +327,11 @@ class WorldManager(object):
         if dbl_data is not None:
             req.dbl_data = dbl_data
 
-        return await self.request_handler.do_request(req)
+        return self.request_handler.do_request(req)
 
 
 
-    async def set_pose_update_frequency(self, freq):
+    def set_pose_update_frequency(self, freq):
         """
         Sets the pose update frequency. Defaults to 10 times per second.
         :param freq:
@@ -332,7 +339,7 @@ class WorldManager(object):
         :return:
         """
         self.pose_update_frequency = freq
-        return await self._do_gazebo_request("set_robot_pose_update_frequency", str(freq))
+        return self._do_gazebo_request("set_robot_pose_update_frequency", str(freq))
 
 
     def get_robot_id(self):
@@ -404,7 +411,7 @@ class WorldManager(object):
     #     return(coll, bbox, robot)
 
 
-    async def insert_robot(self, tree, pose, parents=None):
+    def insert_robot(self, tree, pose, parents=None):
         """
         Inserts a robot into the world. This consists of two steps:
 
@@ -435,10 +442,12 @@ class WorldManager(object):
             with open(os.path.join(self.output_directory, 'robot_%d.sdf' % robot_id), 'w') as f:
                 f.write(str(sdf))
 
-        return_future = Future()
-        insert_future = await self.insert_model(sdf)
+        return_future = asyncio.Future()
+        insert_future = self.insert_model(sdf)
         insert_future.add_done_callback(lambda fut: self._robot_inserted(
             robot_name, tree, robot, parents, fut.result(), return_future))
+
+        asyncio.ensure_future(insert_future)
         return return_future
 
 
@@ -454,16 +463,16 @@ class WorldManager(object):
         raise NotImplementedError("Implement in subclass if you want to use this method.")
 
 
-    async def delete_robot(self, robot):
-        """
-        :param robot:
-        :type robot: Robot
-        :return:
-        """
-        # Immediately unregister the robot so no it won't be used
-        # for anything else while it is being deleted.
-        self.unregister_robot(robot)
-        return await self.delete_model(robot.name, req="delete_robot")
+    # async def delete_robot(self, robot):
+    #     """
+    #     :param robot:
+    #     :type robot: Robot
+    #     :return:
+    #     """
+    #     # Immediately unregister the robot so no it won't be used
+    #     # for anything else while it is being deleted.
+    #     self.unregister_robot(robot)
+    #     return await self.delete_model(robot.name, req="delete_robot")
 
 
     # async def delete_all_robots(self):

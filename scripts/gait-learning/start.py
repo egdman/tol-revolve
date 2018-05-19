@@ -3,12 +3,8 @@ import sys
 import time
 import subprocess
 
-
 here = os.path.dirname(os.path.abspath(__file__))
 tol_path = os.path.abspath(os.path.join(here, '..', '..'))
-# rv_path = os.path.abspath(os.path.join(tol_path, '..', 'revolve'))
-
-# args = parser.parse_args()
 
 os.environ['GAZEBO_PLUGIN_PATH'] = os.path.join(tol_path, 'build')
 os.environ['GAZEBO_MODEL_PATH'] = os.path.join(tol_path, 'tools', 'models')
@@ -63,7 +59,8 @@ manager_args = (
 ' --output-directory test_run'
 ' --test-bot ../testBots/spiral_diff_coupled'
 ' --population-size 50'
-' --num-children 45'' --tournament-size 40'
+' --num-children 45'
+' --tournament-size 40'
 ' --evaluation-time 90'
 ' --warmup-time 3'
 ' --speciation-threshold 0.05'
