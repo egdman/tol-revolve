@@ -13,8 +13,8 @@ class RobotLearner(object):
     def __init__(self, world, robot, brain_spec, mutator, conf):
         self.world = world
         self.robot = robot
-        self.nn_parser = NeuralNetworkParser(brain_spec)
         self.mutator = mutator
+        self.nn_parser = NeuralNetworkParser(brain_spec)
 
         self.evaluation_queue = []
         self.brain_velocity = []
@@ -56,7 +56,7 @@ class RobotLearner(object):
                     left_to_evaluate,
                     fitness))
 
-            self.evaluation_queue = self.evolution.produce_new_generation(self.brain_velocity)
+            self.evaluation_queue = list(self.evolution.produce_new_generation(self.brain_velocity))
 
             _, best_fitness_in_gen = max(self.brain_velocity, key = itemgetter(1))
             logger.info("best in gen: {}".format(best_fitness_in_gen))

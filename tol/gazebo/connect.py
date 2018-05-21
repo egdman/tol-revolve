@@ -107,51 +107,15 @@ class RequestHandler(object):
 
 
     def _callback(self, data):
-        """
-        :param data:
-        :return:
-        """
         msg = self.response_class()
         msg.ParseFromString(data)
-        msg_id = self.get_id_from_msg(msg)
-
-        # Call the future's set_result
+        msg_id = getattr(msg, self.id_attr)
         self.pending_requests[msg_id].set_result(msg)
         del self.pending_requests[msg_id]
 
 
-    def get_id_from_msg(self, msg):
-        """
-        Returns the ID given a protobuf message.
-        :param msg:
-        :return:
-        """
-        return getattr(msg, self.id_attr)
-
-    # def get_request_type_from_msg(self, msg):
-    #     """
-    #     Returns the request type from a protobuf message.
-    #     :param msg:
-    #     :return:
-    #     """
-    #     return getattr(msg, self.request_attr)
-
-
-
-
     def do_request(self, msg):
-        """
-        Performs a request. The only requirement
-        of `msg` is that it has an `id` attribute.
-
-        Publishing of the request is always yielded to prevent multiple messages
-        from going over the same pipe. The returned future is for the response.
-
-        :param msg: Message object to publish
-        :return:
-        """
-        msg_id = self.get_id_from_msg(msg)
-        # request_type = str(self.get_request_type_from_msg(msg))
+        msg_id = getattr(msg, self.id_attr)
 
         if msg_id in self.pending_requests:
             raise RuntimeError("Duplicate request ID: {} of type {}".format(msg_id, type(msg)))

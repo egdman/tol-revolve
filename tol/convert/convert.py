@@ -174,12 +174,15 @@ class NeuralNetworkParser:
 
 
     def _parse_connection_genes(self, genotype, pb_brain):
+        def find_gene(genes, mark):
+            return next((g for g in genes if g.historical_mark == mark), None)
+
         for conn_gene in genotype.connection_genes:
             mark_from = conn_gene.mark_from
             mark_to = conn_gene.mark_to
 
-            from_id = genotype.find_gene_by_mark(mark_from).id
-            to_id = genotype.find_gene_by_mark(mark_to).id
+            from_id = find_gene(genotype.neuron_genes, mark_from).id
+            to_id   = find_gene(genotype.neuron_genes, mark_to  ).id
 
             pb_conn = pb_brain.connection.add()
             pb_conn.src = from_id

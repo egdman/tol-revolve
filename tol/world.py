@@ -159,10 +159,7 @@ class LearningManager(WorldManager):
         futures = []
         for log_name, learner in self.learners:
             log_callback = None if log_name is None else partial(self.log_info, log_name)
-            future = asyncio.ensure_future(learner.run(self, log_callback))
-            futures.append(future)
+            futures.append(learner.run(self, log_callback))
 
-        still_running = len(futures)
-        while still_running > 0:
-            await asyncio.sleep(.1) # this line is important
-            still_running = sum((1 for f in futures if not f.done()))
+        if futures:
+            await asyncio.wait(futures)
