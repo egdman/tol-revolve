@@ -3,13 +3,13 @@ import os
 import re
 import fnmatch
 
-gazebo_info = check_output('pkg-config gazebo --cflags', shell=True)
+gazebo_info = check_output('pkg-config gazebo --cflags', shell=True).decode('utf-8')
 
 hit = re.search(r'-I(\S*gazebo\S*).*', gazebo_info)
 if not hit:
     sys.exit("Gazebo is not installed")
 
-gazebo_include_dir =  hit.group(1)
+gazebo_include_dir = hit.group(1)
 gazebo_proto_dir = os.path.join(gazebo_include_dir, "gazebo", "msgs", "proto")
 
 package_dir = 'spec'
@@ -27,7 +27,7 @@ check_output(
 
 
 # fix bullshit include syntax in protobuf-generated python files
-generated_files = (f for f in check_output("ls spec/msgs", shell=True).split() if fnmatch.fnmatch(f, "*_pb2.py"))
+generated_files = (f for f in check_output("ls spec/msgs", shell=True).decode('utf-8').split() if fnmatch.fnmatch(f, "*_pb2.py"))
 
 # all imports not containing msgs. and ending with _pb2 are assumed to be from pygazebo.msg
 gazebo_package_finder = re.compile(r'^import\s+((?!msgs\.).*_pb2)', re.MULTILINE)
