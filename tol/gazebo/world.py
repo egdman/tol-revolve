@@ -9,7 +9,7 @@ from sdfbuilder.math import Vector3
 
 from .robot import Robot
 
-from ..revolve.spec import ModelInserted
+from ..revolve.msgs import ModelInserted
 from ..revolve.util import Time
 
 from .connect import connect, RequestHandler
