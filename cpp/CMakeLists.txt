@@ -2,13 +2,24 @@
 cmake_minimum_required (VERSION 2.8.12)
 
 # Project Name
-project (TriangleOfLife)
+project (Revolve)
 
-# CMake flag to build to local directory
-if (LOCAL_LIB_DIR)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build")
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build")
-    message("Using local library directory: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+# CMake flag to help local projects find the build dir
+if (${LOCAL_BUILD_DIR})
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build")
+    set(HEADER_COPY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../build/include")
+
+    # Copy header files to the output directory so they can be used
+    # by other projects in development.
+    file(
+       COPY ${CMAKE_CURRENT_SOURCE_DIR}/revolve
+       DESTINATION ${HEADER_COPY_DIR}
+       FILES_MATCHING PATTERN "*.h"
+    )
+
+    message("Using local build directory.")
 endif()
 
 # Pass source dir to preprocessor
@@ -21,88 +32,19 @@ add_definitions(-pedantic -Wno-long-long -Wall -Wextra -Wformat=2
                 -Wswitch-enum -Wuninitialized 
                 -Wswitch-default -Winit-self -Wfloat-equal -fPIC )
 
-# Use C++11 (removed, this is added below by the Gazebo flags)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+# Use C++11 (removed - the Gazebo flags below do this)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-# Debug Flags
+# Debug Flags 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
 
 # Release flags
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -funroll-loops -finline-functions -fomit-frame-pointer -DNDEBUG")
+#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -funroll-loops -finline-functions -fomit-frame-pointer -DNDEBUG")
 
-##### Protobuf messages #####
-# Get protobuf library
-#find_package(Protobuf REQUIRED)
-
-# Directory where the .proto file resides
-#set(SPEC_DIR "${CMAKE_SOURCE_DIR}/tol/msgs")
-#include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS})
-
-# Include the binary dir since that is where the protobuf files are
-# going to be placed.
-#include_directories(${CMAKE_CURRENT_BINARY_DIR})
-#file(GLOB_RECURSE REVOLVE_PROTO ${SPEC_DIR}/*.proto)
-#PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${REVOLVE_PROTO})
-
-# Generate messages library
-#add_library(tol-msgs STATIC ${PROTO_SRCS} )
-#target_link_libraries(tol-msgs ${PROTOBUF_LIBRARIES})
-
-##### Plugins #####
-# Find Boost and add to include dirs
-find_package(Boost REQUIRED COMPONENTS system)
-
-# Plugin CPP files
-file(GLOB_RECURSE
-	 TOL_WORLD_SRC
-	 tol/plugin/WorldController.cpp
-)
-
-file(GLOB_RECURSE
-	 TOL_ROBOT_SRC
-	 tol/plugin/RobotController.cpp
-)
-
-# file(GLOB_RECURSE
-#         TOL_DRIVE_SRC
-#         tol/plugin/DrivePlugin.cpp
-# )
-
-add_library(tolworldcontrol SHARED ${TOL_WORLD_SRC})
-add_library(tolrobotcontrol SHARED ${TOL_ROBOT_SRC})
-# add_library(toldriveplugin  SHARED ${TOL_DRIVE_SRC})
-
-if (DEFINED REVOLVE_BUILD_PATH)
-    message("Deriving include path / libary path from custom build path.")
-    set(REVOLVE_INCLUDE_PATH ${REVOLVE_BUILD_PATH}/include)
-    set(REVOLVE_LIBRARIES ${REVOLVE_BUILD_PATH}/lib/librevolve-gazebo.a ${REVOLVE_BUILD_PATH}/lib/librevolve-spec.a)
-endif()
-
-if (NOT DEFINED REVOLVE_INCLUDE_PATH)
-    # Add Revolve as an external project
-    # TODO In the future this should fetch from a repository instead
-    message("Adding REVOLVE as external project.")
-    message("To prevent this, pass REVOLVE_INCLUDE_PATH and REVOLVE_LIBRARIES or REVOLVE_BUILD_PATH.")
-    include(ExternalProject)
-    ExternalProject_Add(
-      revolve
-      SOURCE_DIR ${CMAKE_SOURCE_DIR}/../../revolve/cpp
-      INSTALL_DIR revolve
-      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/revolve
-    )
-
-    # Get Revolve lib / include directories
-    ExternalProject_Get_Property(revolve INSTALL_DIR)
-    set(REVOLVE_INCLUDE_PATH ${INSTALL_DIR}/include)
-    set(REVOLVE_LIBRARIES ${INSTALL_DIR}/lib/librevolve-gazebo.a ${INSTALL_DIR}/lib/librevolve-spec.a)
-    add_dependencies(tolmodelcontrol revolve)
-endif()
-
-### Include Gazebo as well
 # Find and include Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
-    find_package(gazebo 6.5 REQUIRED
+    find_package(gazebo 6.5 REQUIRED CONFIG
             PATHS "${LOCAL_GAZEBO_DIR}"
             NO_DEFAULT_PATH)
     message(WARNING "Using local Gazebo @ ${gazebo_DIR}")
@@ -111,10 +53,15 @@ else()
 endif()
 include_directories(${GAZEBO_INCLUDE_DIRS})
 
-# Add Gazebo's C++ flags
-list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
+#### Protobuf ####
+# This part is currently a mess, but it works for what I need it to
+# (which is have includes that work in this project and in the other
+#  project I'm working on simultaneously). I might rework it later.
+# Get protobuf library
+find_package(Protobuf REQUIRED)
 
-# Need to include the Gazebo protobuf include path
+# Find the protobuf import directory for Gazebo. Found in this
+# tutorial: http://gazebosim.org/tutorials?tut=custom_messages&cat=transport
 set(GAZEBO_PROTOBUF_DIR)
 foreach(ITR ${GAZEBO_INCLUDE_DIRS})
   if(ITR MATCHES ".*gazebo-[0-9.]+$")
@@ -122,22 +69,116 @@ foreach(ITR ${GAZEBO_INCLUDE_DIRS})
     set(GAZEBO_PROTO_INCLUDE "${ITR}/gazebo/msgs")
   endif()
 endforeach()
-include_directories(${GAZEBO_PROTO_INCLUDE})
+include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS} ${GAZEBO_PROTO_INCLUDE})
 
-# Set include dirs and dependencies
-include_directories(${Boost_INCLUDE_DIRS} ${REVOLVE_INCLUDE_PATH} ${GAZEBO_INCLUDE_DIRS})
-set(TOL_DEPS ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${REVOLVE_LIBRARIES} ${GAZEBO_LIBRARIES})
+# Add Gazebo C++ flags (this includes c++11)
+list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
-target_link_libraries(tolworldcontrol ${TOL_DEPS})
-target_link_libraries(tolrobotcontrol ${TOL_DEPS})
-# target_link_libraries(toldriveplugin  ${TOL_DEPS})
+# Directory where the .proto files reside
+set(SPEC_DIR "${CMAKE_SOURCE_DIR}/../tol/angle/spec/msgs")
 
-# Evolution keys library
-find_package(Qt4)
-find_package(Protobuf REQUIRED)
-include(${QT_USE_FILE})
-add_definitions(${QT_DEFINITIONS})
-QT4_WRAP_CPP(headers_MOC tol/plugin/InteractiveEvolutionPlugin.h)
-add_library(tolinteractiveevolution SHARED ${headers_MOC} tol/plugin/InteractiveEvolutionPlugin.cpp)
+# All protobuf files we need, including the Gazebo ones
+file(GLOB_RECURSE ABACA_PROTO ${SPEC_DIR}/*.proto)
 
-target_link_libraries(tolinteractiveevolution ${GAZEBO_LIBRARIES} ${QT_LIBRARIES} ${PROTOBUF_LIBRARIES})
+# Do the protobuf generation by hand for more flexibility. I'm generating
+# the files in a subdirectory such that it can potentially be added to
+# the include path for work-in-progress projects I co-develop with
+# this.
+# Copied most of this code from
+# http://stackoverflow.com/questions/29346488/protobuf-generate-cpp-not-generating-src-and-header-files
+# Also see
+# https://github.com/Kitware/CMake/blob/master/Modules/FindProtobuf.cmake
+set(PROTO_SRCS)
+set(PROTO_HDRS)
+if (HEADER_COPY_DIR)
+    set(PROTO_OUTPUT_BASE ${HEADER_COPY_DIR})
+else()
+    set(PROTO_OUTPUT_BASE ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
+# Include the directory where the protobuf files will be placed
+include_directories(${PROTO_OUTPUT_BASE} ${PROTO_OUTPUT_BASE}/revolve)
+
+message("gazebo proto path: ${GAZEBO_PROTO_PATH}")
+
+file(MAKE_DIRECTORY ${PROTO_OUTPUT_BASE}/revolve/msgs)
+foreach(PROTO_FILE ${ABACA_PROTO})
+    get_filename_component(PROTO_FILE_ABS ${PROTO_FILE} ABSOLUTE)
+    get_filename_component(FIL_WE ${PROTO_FILE} NAME_WE)
+    get_filename_component(PROTO_DIR ${PROTO_FILE} DIRECTORY)
+    get_filename_component(PROTO_DIR ${PROTO_DIR}/.. ABSOLUTE) # go up a level
+
+    message(${PROTO_FILE_ABS})
+    message(${PROTO_DIR})
+    list(APPEND PROTO_SRCS "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.cc")
+    list(APPEND PROTO_HDRS "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.h")
+
+    add_custom_command(
+      OUTPUT "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.cc"
+             "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.h"
+      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+      ARGS -I ${PROTO_DIR}
+           -I ${GAZEBO_PROTO_PATH}
+           --cpp_out ${PROTO_OUTPUT_BASE}/revolve/ ${PROTO_FILE_ABS}
+      DEPENDS ${PROTO_FILE_ABS}
+      COMMENT "Running C++ protocol buffer compiler on ${PROTO_FILE}"
+      VERBATIM )
+endforeach()
+
+# Tell the compiler these files were generated
+set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES GENERATED TRUE)
+
+# Generate spec library with the messages
+add_library(revolve-spec STATIC ${PROTO_SRCS} )
+target_link_libraries(revolve-spec ${PROTOBUF_LIBRARIES})
+
+#### Other sources #######
+# Find Boost and add to include dirs
+find_package(Boost REQUIRED COMPONENTS system)
+include_directories(${Boost_INCLUDE_DIRS})
+
+# Gazebo control plugins
+
+# Plugin CPP files
+file(GLOB_RECURSE
+	 REVOLVE_GZ_SRC
+	 revolve/gazebo/brain/*.cpp
+	 revolve/gazebo/motors/*.cpp
+	 revolve/gazebo/sensors/*.cpp
+	 revolve/gazebo/plugin/BodyAnalyzer.cpp
+	 revolve/gazebo/plugin/RobotController.cpp
+	 revolve/gazebo/plugin/WorldController.cpp
+)
+
+# Create the library containing the Revolve API
+add_library(revolve-gazebo ${REVOLVE_GZ_SRC})
+target_link_libraries(revolve-gazebo ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+
+# Add the file that registers the body analyzer as a separate library that
+# can be used as a world plugin directly.
+add_library(revolve-body-analyzer SHARED revolve/gazebo/plugin/register_analyzer.cpp)
+target_link_libraries(revolve-body-analyzer revolve-gazebo revolve-spec ${GAZEBO_LIBRARIES})
+
+# Add the analyzer server standalone
+add_executable(body-analyzer revolve/gazebo/standalone/body_analyzer_server.cpp)
+target_link_libraries(body-analyzer revolve-body-analyzer ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+
+# Add neural network test executable
+# add_executable(network-test revolve/gazebo/test/NeuralNetworkTest.cpp)
+# target_link_libraries(network-test revolve-gazebo ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+
+
+# Install libraries into "lib", header files into "include"
+install(
+    TARGETS revolve-spec revolve-gazebo
+    DESTINATION lib
+)
+
+install(
+   DIRECTORY revolve
+   DESTINATION include
+   FILES_MATCHING PATTERN "*.h"
+)
+
+
+
