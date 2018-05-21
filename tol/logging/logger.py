@@ -3,7 +3,6 @@ import logging
 
 logger = logging.getLogger("tol")
 
-
 def output_console():
     logger.addHandler(logging.StreamHandler())
 

@@ -1,5 +1,5 @@
-package msgs;
-import "msgs/parameter.proto";
+package revolve.msgs;
+import "revolve/msgs/parameter.proto";
 
 message NeuralConnection {
   required string src = 1;

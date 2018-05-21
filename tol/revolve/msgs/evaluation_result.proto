@@ -1,4 +1,4 @@
-package msgs;
+package revolve.msgs;
 
 message EvaluationResult {
    required int32 id = 1;

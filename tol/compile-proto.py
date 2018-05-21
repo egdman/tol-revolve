@@ -12,13 +12,13 @@ if not hit:
 gazebo_include_dir = hit.group(1)
 gazebo_proto_dir = os.path.join(gazebo_include_dir, "gazebo", "msgs", "proto")
 
-package_dir = 'spec'
+package_dir = 'revolve'
 proto_dir = 'msgs'
 generated_dir = os.path.join(package_dir, proto_dir)
 
 # generate protobuf python files
 check_output(
-    'protoc -I {GAZEBO_PROTO_DIR} -I {PKG_DIR} --python_out={PKG_DIR}/ {PKG_DIR}/{PROTO_DIR}/*.proto'
+    'protoc -I {GAZEBO_PROTO_DIR} -I ./ --python_out=./ {PKG_DIR}/{PROTO_DIR}/*.proto'
     .format(
         GAZEBO_INCLUDE_DIR = gazebo_include_dir,
         GAZEBO_PROTO_DIR = gazebo_proto_dir,
@@ -32,8 +32,8 @@ check_output(
 generated_files = (f for f in check_output("ls {}".format(generated_dir), shell=True)
     .decode('utf-8').split() if fnmatch.fnmatch(f, "*_pb2.py"))
 
-# all imports not starting with ${proto_dir}. and ending with _pb2 are assumed to be from pygazebo.msg
-patt = r'^import\s+((?!{PROTO_DIR}\.)\w*_pb2)'.format(PROTO_DIR = proto_dir)
+# all imports of 'import foo_pb2' kind are assumed to be from pygazebo.msg
+patt = r'^import\s+(\w*_pb2)'
 replace_with = r'from pygazebo.msg import \1'
 
 pygazebo_package_finder = re.compile(patt, re.MULTILINE)

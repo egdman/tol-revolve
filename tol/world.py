@@ -11,7 +11,7 @@ from .config import str_to_address
 from .logging import logger
 from .gazebo import WorldManager, RequestHandler
 from .build import get_builder, get_simulation_robot
-from .angle.spec import SendNeuralNetwork, EvaluationResult
+from .revolve.msgs import SendNeuralNetwork, EvaluationResult
 
 
 class LearningManager(WorldManager):
