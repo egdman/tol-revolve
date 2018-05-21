@@ -1,8 +1,8 @@
 from __future__ import absolute_import, print_function
 
 # Revolve imports
-from ..angle.build.sdf import BodyPart
-from ..angle.build.util import in_grams, in_mm
+from ..revolve.build.sdf import BodyPart
+from ..revolve.build.util import in_grams, in_mm
 
 # sdfbuilder imports
 from sdfbuilder.math import Vector3

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from ..angle.generate import NeuralNetworkGenerator
-from ..angle.spec import default_neural_net
+from ..revolve.generate import NeuralNetworkGenerator
+from ..revolve.spec import default_neural_net
 
 from ..config import constants
 

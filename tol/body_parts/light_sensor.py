@@ -2,8 +2,8 @@ from __future__ import print_function
 import sys
 
 # Revolve imports
-from ..angle.build.sdf import Box
-from ..angle.build.util import in_grams, in_mm
+from ..revolve.build.sdf import Box
+from ..revolve.build.util import in_grams, in_mm
 
 # SDF builder imports
 from sdfbuilder.math import Vector3

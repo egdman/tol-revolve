@@ -9,8 +9,8 @@ from sdfbuilder.math import Vector3
 
 from .robot import Robot
 
-from ..angle.spec import ModelInserted
-from ..angle.util import Time
+from ..revolve.spec import ModelInserted
+from ..revolve.util import Time
 
 from .connect import connect, RequestHandler
 from ..logging import logger

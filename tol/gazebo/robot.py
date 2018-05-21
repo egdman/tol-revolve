@@ -2,7 +2,7 @@ import math
 from collections import deque
 
 from sdfbuilder.math import Vector3
-from ..angle.util import Time
+from ..revolve.util import Time
 
 
 class Robot(object):
