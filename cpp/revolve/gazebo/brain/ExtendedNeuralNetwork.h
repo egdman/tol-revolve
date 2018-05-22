@@ -25,13 +25,16 @@
 namespace revolve {
 namespace gazebo {
 
-typedef const boost::shared_ptr<revolve::msgs::ModifyNeuralNetwork const> ConstModifyNeuralNetworkPtr;
+typedef const boost::shared_ptr<revolve::msgs::SendNeuralNetwork const> ConstModifyNeuralNetworkPtr;
 
 class ExtendedNeuralNetwork : public Brain
 {
 public:
-	ExtendedNeuralNetwork(std::string modelName, sdf::ElementPtr node,
-				  std::vector< MotorPtr > & motors, std::vector< SensorPtr > & sensors);
+	ExtendedNeuralNetwork(
+		std::string modelName,
+		sdf::ElementPtr node,
+		const std::vector<MotorPtr>& motors,
+		const std::vector<SensorPtr>& sensors);
 
 	virtual ~ExtendedNeuralNetwork();
 
@@ -88,7 +91,7 @@ protected:
 	/**
 	 * Add hidden neurons and connections from a protobuf message
 	 */
-	void modify(ConstModifyNeuralNetworkPtr &);
+	void modify(ConstModifyNeuralNetworkPtr&);
 
 
     /**

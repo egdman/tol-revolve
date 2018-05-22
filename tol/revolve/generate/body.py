@@ -2,7 +2,8 @@
 Body generation utilities,
 """
 import random
-from ..spec import BodyImplementation, PartSpec, BodyPart, Body
+from ..spec import BodyImplementation, PartSpec
+from ..msgs.body_pb2 import BodyPart, Body
 
 
 def _init_part_list(spec, parts):

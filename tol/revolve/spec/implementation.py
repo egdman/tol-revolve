@@ -1,7 +1,7 @@
 from __future__ import print_function
 import random
 from .exception import err
-from .msgs.body_pb2 import BodyPart
+from ..msgs.body_pb2 import BodyPart
 
 try:
     basestring

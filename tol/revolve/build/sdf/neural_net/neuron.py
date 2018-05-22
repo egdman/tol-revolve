@@ -1,6 +1,6 @@
 from sdfbuilder import Element
 from sdfbuilder.util import number_format as nf
-from ....spec import Neuron as ProtoNeuron, NeuralConnection as ProtoNeuralConnection
+from ....msgs.neural_net_pb2 import Neuron as ProtoNeuron, NeuralConnection as ProtoNeuralConnection
 
 
 class Neuron(Element):

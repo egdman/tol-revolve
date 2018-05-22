@@ -6,7 +6,7 @@ import subprocess
 here = os.path.dirname(os.path.abspath(__file__))
 tol_path = os.path.abspath(os.path.join(here, '..', '..'))
 
-os.environ['GAZEBO_PLUGIN_PATH'] = os.path.join(tol_path, 'build')
+os.environ['GAZEBO_PLUGIN_PATH'] = os.path.join(tol_path, 'build', 'lib')
 os.environ['GAZEBO_MODEL_PATH'] = os.path.join(tol_path, 'tools', 'models')
 world_file = os.path.join(here, 'gait-learning.world')
 

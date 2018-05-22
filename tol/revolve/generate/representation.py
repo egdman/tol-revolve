@@ -1,5 +1,8 @@
 import copy
-from ..spec import Robot, BodyPart, Neuron, NeuralNetwork, Body, BodyImplementation
+from ..spec import BodyImplementation
+from ..msgs.robot_pb2 import Robot
+from ..msgs.body_pb2 import BodyPart, Body
+from ..msgs.neural_net_pb2 import Neuron, NeuralNetwork
 
 
 def _create_subtree(body_part, brain, body_spec):

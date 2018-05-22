@@ -1,5 +1,5 @@
 # Revolve
-from ..revolve.msgs import NeuralNetwork
+from ..revolve.msgs.neural_net_pb2 import NeuralNetwork
 from ..revolve.spec.exception import err
 
 # ToL

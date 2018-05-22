@@ -1,6 +1,6 @@
-from .msgs.robot_pb2 import Robot
-from .msgs.body_pb2 import BodyPart, BodyConnection
-from .msgs.neural_net_pb2 import NeuralConnection
+from ..msgs.robot_pb2 import Robot
+from ..msgs.body_pb2 import BodyPart, BodyConnection
+from ..msgs.neural_net_pb2 import NeuralConnection
 from .implementation import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec
 from .exception import err
 

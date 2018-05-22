@@ -10,8 +10,11 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-ExtendedNeuralNetwork::ExtendedNeuralNetwork(std::string modelName, sdf::ElementPtr node,
-				  std::vector< MotorPtr > & motors, std::vector< SensorPtr > & sensors)
+ExtendedNeuralNetwork::ExtendedNeuralNetwork(
+	std::string modelName,
+	sdf::ElementPtr node,
+	const std::vector<MotorPtr>& motors,
+	const std::vector<SensorPtr>& sensors)
 {
 	
 	// Create transport node
@@ -442,17 +445,17 @@ void ExtendedNeuralNetwork::flush()
 
 
 
-void ExtendedNeuralNetwork::modify(ConstModifyNeuralNetworkPtr & req)
+void ExtendedNeuralNetwork::modify(ConstModifyNeuralNetworkPtr& req)
 {
 	boost::mutex::scoped_lock lock(networkMutex_);
 
 	// delete all connections and hidden neurons
 	this->flush();
 
-
+	auto newNet = req->neuralnetwork();
 	// Add requested hidden neurons
-	for (int i = 0; i < req->add_hidden_size(); ++i) {
-		auto neuron = req->add_hidden(i);
+	for (int i = 0; i < newNet.neuron_size(); ++i) {
+		auto neuron = newNet.neuron(i);
 		auto id = neuron.id();
 
 		NeuronPtr newNeuron = neuronHelper(neuron);
@@ -460,8 +463,8 @@ void ExtendedNeuralNetwork::modify(ConstModifyNeuralNetworkPtr & req)
 	}
 
 	// Add connections
-	for (int i = 0; i < req->set_weights_size(); ++i) {
-		auto conn = req->set_weights(i);
+	for (int i = 0; i < newNet.connection_size(); ++i) {
+		auto conn = newNet.connection(i);
 		auto src = conn.src();
 		auto dst = conn.dst();
 		auto weight = conn.weight();

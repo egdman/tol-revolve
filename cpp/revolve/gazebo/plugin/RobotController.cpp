@@ -7,7 +7,6 @@
 
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
-#include <revolve/gazebo/brain/NeuralNetwork.h>
 #include <revolve/gazebo/brain/ExtendedNeuralNetwork.h>
 #include <revolve/gazebo/brain/NeatLearner.h>
 

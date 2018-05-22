@@ -75,10 +75,10 @@ include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS} ${GAZEBO_PROTO_
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
 # Directory where the .proto files reside
-set(SPEC_DIR "${CMAKE_SOURCE_DIR}/../tol/angle/spec/msgs")
+set(SPEC_DIR "${CMAKE_SOURCE_DIR}/../tol/revolve/msgs")
 
 # All protobuf files we need, including the Gazebo ones
-file(GLOB_RECURSE ABACA_PROTO ${SPEC_DIR}/*.proto)
+file(GLOB_RECURSE REVOLVE_PROTO ${SPEC_DIR}/*.proto)
 
 # Do the protobuf generation by hand for more flexibility. I'm generating
 # the files in a subdirectory such that it can potentially be added to
@@ -97,16 +97,16 @@ else()
 endif()
 
 # Include the directory where the protobuf files will be placed
-include_directories(${PROTO_OUTPUT_BASE} ${PROTO_OUTPUT_BASE}/revolve)
+include_directories(${PROTO_OUTPUT_BASE})
 
 message("gazebo proto path: ${GAZEBO_PROTO_PATH}")
 
 file(MAKE_DIRECTORY ${PROTO_OUTPUT_BASE}/revolve/msgs)
-foreach(PROTO_FILE ${ABACA_PROTO})
+foreach(PROTO_FILE ${REVOLVE_PROTO})
     get_filename_component(PROTO_FILE_ABS ${PROTO_FILE} ABSOLUTE)
     get_filename_component(FIL_WE ${PROTO_FILE} NAME_WE)
     get_filename_component(PROTO_DIR ${PROTO_FILE} DIRECTORY)
-    get_filename_component(PROTO_DIR ${PROTO_DIR}/.. ABSOLUTE) # go up a level
+    get_filename_component(PROTO_DIR ${PROTO_DIR}/../.. ABSOLUTE) # go up 2 levels
 
     message(${PROTO_FILE_ABS})
     message(${PROTO_DIR})
@@ -119,7 +119,7 @@ foreach(PROTO_FILE ${ABACA_PROTO})
       COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
       ARGS -I ${PROTO_DIR}
            -I ${GAZEBO_PROTO_PATH}
-           --cpp_out ${PROTO_OUTPUT_BASE}/revolve/ ${PROTO_FILE_ABS}
+           --cpp_out ${PROTO_OUTPUT_BASE} ${PROTO_FILE_ABS}
       DEPENDS ${PROTO_FILE_ABS}
       COMMENT "Running C++ protocol buffer compiler on ${PROTO_FILE}"
       VERBATIM )
@@ -145,7 +145,6 @@ file(GLOB_RECURSE
 	 revolve/gazebo/brain/*.cpp
 	 revolve/gazebo/motors/*.cpp
 	 revolve/gazebo/sensors/*.cpp
-	 revolve/gazebo/plugin/BodyAnalyzer.cpp
 	 revolve/gazebo/plugin/RobotController.cpp
 	 revolve/gazebo/plugin/WorldController.cpp
 )
@@ -156,12 +155,12 @@ target_link_libraries(revolve-gazebo ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
 
 # Add the file that registers the body analyzer as a separate library that
 # can be used as a world plugin directly.
-add_library(revolve-body-analyzer SHARED revolve/gazebo/plugin/register_analyzer.cpp)
-target_link_libraries(revolve-body-analyzer revolve-gazebo revolve-spec ${GAZEBO_LIBRARIES})
+# add_library(revolve-body-analyzer SHARED revolve/gazebo/plugin/register_analyzer.cpp)
+# target_link_libraries(revolve-body-analyzer revolve-gazebo revolve-spec ${GAZEBO_LIBRARIES})
 
 # Add the analyzer server standalone
-add_executable(body-analyzer revolve/gazebo/standalone/body_analyzer_server.cpp)
-target_link_libraries(body-analyzer revolve-body-analyzer ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+# add_executable(body-analyzer revolve/gazebo/standalone/body_analyzer_server.cpp)
+# target_link_libraries(body-analyzer revolve-body-analyzer ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
 
 # Add neural network test executable
 # add_executable(network-test revolve/gazebo/test/NeuralNetworkTest.cpp)
@@ -179,6 +178,29 @@ install(
    DESTINATION include
    FILES_MATCHING PATTERN "*.h"
 )
+
+
+file(GLOB_RECURSE
+   TOL_WORLD_SRC
+   tol/plugin/WorldController.cpp
+)
+
+file(GLOB_RECURSE
+   TOL_ROBOT_SRC
+   tol/plugin/RobotController.cpp
+)
+
+add_library(tolworldcontrol SHARED ${TOL_WORLD_SRC})
+add_library(tolrobotcontrol SHARED ${TOL_ROBOT_SRC})
+
+set(REVOLVE_LIBRARIES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/librevolve-gazebo.a ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/librevolve-spec.a)
+
+set(TOL_DEPENDS ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES} ${REVOLVE_LIBRARIES} ${GAZEBO_LIBRARIES})
+
+target_link_libraries(tolworldcontrol ${TOL_DEPENDS})
+target_link_libraries(tolrobotcontrol ${TOL_DEPENDS})
+
+
 
 
 
