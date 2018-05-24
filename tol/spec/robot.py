@@ -1,4 +1,4 @@
-from ..revolve.generate import TreeGenerator, Node
+from revolve.angle import TreeGenerator, Node
 from ..spec.body import get_body_generator
 from ..spec.brain import get_brain_generator
 

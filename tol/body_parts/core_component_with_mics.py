@@ -8,8 +8,8 @@ from sdfbuilder.math import Vector3, Quaternion
 from sdfbuilder.structure import Box, Mesh
 
 # Revolve imports
-from ..revolve.build.sdf import BodyPart
-from ..revolve.build.util import in_grams, in_mm
+from revolve.build.sdf import BodyPart
+from revolve.build.util import in_grams, in_mm
 
 # Local imports
 from .util import ColorMixin

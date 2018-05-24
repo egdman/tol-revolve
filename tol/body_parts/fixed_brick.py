@@ -1,6 +1,6 @@
 # Revolve / sdfbuilder imports
-from ..revolve.build.sdf import Box
-from ..revolve.build.util import in_grams, in_mm
+from revolve.build.sdf import Box
+from revolve.build.util import in_grams, in_mm
 from sdfbuilder.structure import Box as BoxGeom, Mesh
 from sdfbuilder.math import Vector3
 

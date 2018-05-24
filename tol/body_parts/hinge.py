@@ -1,8 +1,8 @@
 # Revolve imports
 from __future__ import absolute_import
 import math
-from ..revolve.build.sdf import BodyPart, ComponentJoint as Joint
-from ..revolve.build.util import in_grams, in_mm
+from revolve.build.sdf import BodyPart, ComponentJoint as Joint
+from revolve.build.util import in_grams, in_mm
 
 # SDF builder imports
 from sdfbuilder import Limit
