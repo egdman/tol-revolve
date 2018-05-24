@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import random
 
-from ..revolve.generate import FixedOrientationBodyGenerator
-from ..revolve.spec import BodyImplementation, PartSpec, ParamSpec
+from revolve.generate import FixedOrientationBodyGenerator
+from revolve.spec import BodyImplementation, PartSpec, ParamSpec
 from ..body_parts import *
 
 # A utility function to generate color property parameters. Note that color parameters do not mutate.
